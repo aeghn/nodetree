@@ -9,7 +9,7 @@ pub mod sqlite_mapper;
 mod constants;
 
 #[async_trait]
-pub trait Mapper: Sync {
+pub trait Mapper: Sync + Send {
     async fn ensure_table_nodes(&self) -> anyhow::Result<()>;
     async fn ensure_table_tags(&self) -> anyhow::Result<()>;
     async fn ensure_table_alarm_instances(&self) -> anyhow::Result<()>;

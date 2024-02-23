@@ -8,7 +8,7 @@ pub struct SqliteMapper {
     pool: Pool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct SqliteConfig {
     filepath: String,
 }

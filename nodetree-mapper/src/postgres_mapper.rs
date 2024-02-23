@@ -6,7 +6,7 @@ use tracing::info;
 
 use crate::{constants, Mapper};
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct PostgresConfig {
     user: String,
     pass: String,
