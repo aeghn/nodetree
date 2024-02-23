@@ -6,4 +6,11 @@ pub enum TodoStatus {
     Cancelled,
 }
 
+pub struct TodoObject {
+    start_status: TodoStatus,
+    end_status: TodoStatus,
+    start_time: usize,
+    end_time: usize
+}
+
 pub trait TodoMapper {}
