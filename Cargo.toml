@@ -1,0 +1,7 @@
+[workspace]
+
+members = [
+    "nodetree-core",
+    "nodetree-mapper",
+    "nodetree-server"
+]
