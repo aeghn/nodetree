@@ -1,16 +1,12 @@
-pub enum TodoStatus {
-    Todo,
-    Wait,
-    Doing,
-    Done,
-    Cancelled,
-}
+use serde::{Deserialize, Serialize};
+
+
 
 pub struct TodoObject {
-    start_status: TodoStatus,
-    end_status: TodoStatus,
+    start_status: String,
+    end_status: String,
     start_time: usize,
-    end_time: usize
+    end_time: usize,
 }
 
 pub trait TodoMapper {}

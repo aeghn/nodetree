@@ -1,27 +1,50 @@
-use crate::{tag::Tag, todo::TodoStatus};
+use std::time::SystemTime;
 
+use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
+
+use crate::tag::Tag;
+
+#[derive(Serialize, Deserialize)]
 pub struct Node {
-    id: String,
-    version: u32,
+    pub id: String,
+    pub version: i16,
 
-    name: String,
-    content: String,
+    pub name: String,
+    pub content: String,
 
-    is_private: bool,
-    todo_status: TodoStatus,
-    tags: Vec<Tag>,
+    pub user: String,
+    pub todo_status: Option<String>,
+    pub tags: Vec<Tag>,
 
-    parent_id: String,
-    prev_sliding_id: Option<String>,
+    pub parent_id: String,
+    pub prev_sliding_id: Option<String>,
 
-    create_date: usize,
-    first_version_date: usize,
+    pub create_date: String,
+    pub first_version_date: String,
 }
 
-pub trait NodeMapper {
-    fn update_or_insert_node(&self, node: &Node) -> anyhow::Result<()>;
-    fn delete_node_by_id(&self, id: &str) -> anyhow::Result<()>;
-    fn query_sorted_nodes(&self, ancestor: &str) -> Vec<Node>;
+#[derive(Clone, Debug, Deserialize)]
+pub enum NodeFilter {
+    All,
+    FromParent(String),
+    FromChild(String),
+    Tag(String),
+    And(Box<NodeFilter>),
+    Not(Box<NodeFilter>),
+    Or(Box<NodeFilter>),
+}
 
-    fn move_nodes(&self, node_id: &str, parent_id: &str, prev_slibing: Option<&str>);
+#[async_trait]
+pub trait NodeMapper {
+    async fn update_or_insert_node(&self, node: &Node) -> anyhow::Result<()>;
+    async fn delete_node_by_id(&self, id: &str) -> anyhow::Result<()>;
+    async fn query_nodes(&self, node_filter: NodeFilter) -> anyhow::Result<Vec<Node>>;
+
+    async fn move_nodes(
+        &self,
+        node_id: &str,
+        parent_id: &str,
+        prev_slibing: Option<&str>,
+    ) -> anyhow::Result<()>;
 }

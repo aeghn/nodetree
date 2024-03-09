@@ -21,10 +21,6 @@ static CONFIG: Lazy<Config> = Lazy::new(|| {
     )
     .unwrap()
 });
-static MAPPER: Lazy<Arc<dyn Mapper + 'static>> = Lazy::new(|| {
-    let mapper: anyhow::Result<Arc<dyn Mapper + 'static>> = CONFIG.db_config.clone().into();
-    mapper.unwrap()
-});
 
 #[tokio::main]
 async fn main() {
@@ -34,5 +30,9 @@ async fn main() {
         .with_timer(tracing_subscriber::fmt::time::time())
         .init();
 
-    MAPPER.ensure_tables().await.unwrap();
+    let mapper: anyhow::Result<Arc<dyn Mapper + 'static>> = CONFIG.db_config.clone().into();
+    let mapper = mapper.unwrap();
+
+    mapper.ensure_tables().await.unwrap();
+    controller::serve(mapper, "0.0.0.0", &CONFIG.server.port).await;
 }

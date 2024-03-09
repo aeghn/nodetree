@@ -1,0 +1,20 @@
+### Create Node
+POST http://localhost:3011/insertNode
+Content-Type: application/json
+
+{
+    "id": "asdasd",
+    "version": 0,
+    "name": "test1",
+    "content": "",
+    "user": "foo",
+    "todo_status": "Todo",
+    "parent_id": "root",
+    "prev_sliding_id": "prev",
+    "create_date": "2023-12-03 12:00:00",
+    "first_version_date": "2023-12-03 12:00:00",
+    "tags": [{
+        "name": "taga",
+        "create_time": "2023-12-03 12:00:00"
+    }]
+}

@@ -17,6 +17,11 @@ pub enum DbConfig {
     Sqlite(SqliteConfig),
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct Server {
+    pub port: u16,
+}
+
 impl Into<anyhow::Result<Arc<dyn Mapper>>> for DbConfig {
     fn into(self) -> anyhow::Result<Arc<(dyn Mapper + 'static)>> {
         let mapper = match self {
@@ -32,11 +37,10 @@ impl Into<anyhow::Result<Arc<dyn Mapper>>> for DbConfig {
 pub struct Config {
     #[serde(rename = "mapper")]
     pub db_config: DbConfig,
+    pub server: Server,
 }
 
 pub mod tests {
-    use super::Config;
-
     #[test]
     fn test_db_deserialize() {
         let toml_str = r#"
@@ -45,7 +49,7 @@ pub mod tests {
         filepath = "/home/123"
     "#;
 
-        let config: Config = toml::from_str(toml_str).unwrap();
+        let config: super::Config = toml::from_str(toml_str).unwrap();
         println!("{:?}", config);
     }
 }

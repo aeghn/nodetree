@@ -1,9 +1,9 @@
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize)]
 pub struct Tag {
-    id: String, 
     name: String,
-    create_time: usize
+    create_time: String,
 }
 
-pub trait TagMapper {
-    
-}
+pub trait TagMapper {}

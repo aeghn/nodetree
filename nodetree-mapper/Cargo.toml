@@ -14,12 +14,13 @@ tokio = "1.36"
 
 ntcore = { package = "nodetree-core", path = "../nodetree-core" }
 
-serde = { version = "1.0.197", features = ["derive"] }
-anyhow = "1.0"
-async-trait = "0.1.77"
-
 tracing = "0.1"
 tracing-subscriber = "0.3"
+
+anyhow = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+
+async-trait = { workspace = true }
 
 [features]
 default = ["postgres", "sqlite"]

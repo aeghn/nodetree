@@ -1,0 +1,10 @@
+[mapper]
+type = "postgres"
+user = "nodetree"
+pass = "nodetree"
+dbname = "nodetree"
+host = "127.0.0.1"
+port = 5432
+
+[server]
+port = 3011

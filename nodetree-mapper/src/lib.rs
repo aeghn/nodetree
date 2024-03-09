@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use ntcore::node::NodeMapper;
 
 #[cfg(feature = "postgres")]
 pub mod postgres_mapper;
@@ -9,7 +10,7 @@ pub mod sqlite_mapper;
 mod constants;
 
 #[async_trait]
-pub trait Mapper: Sync + Send {
+pub trait Mapper: Sync + Send + NodeMapper {
     async fn ensure_table_nodes(&self) -> anyhow::Result<()>;
     async fn ensure_table_tags(&self) -> anyhow::Result<()>;
     async fn ensure_table_alarm_instances(&self) -> anyhow::Result<()>;
