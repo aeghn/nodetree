@@ -17,7 +17,6 @@ tokio = { version = "1.0", features = ["rt-multi-thread", "macros"] }
 serde = { version = "1.0.197", features = ["derive"] }
 
 ntcore = { package = "nodetree-core", path = "../nodetree-core" }
-ntmapper = { package = "nodetree-mapper", path = "../nodetree-mapper" }
 
 toml = "0.8.10"
 once_cell = "*"

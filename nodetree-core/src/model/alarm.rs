@@ -11,9 +11,8 @@ pub struct AlarmDefination {
 pub struct AlarmInstance {
     defi: AlarmDefination,
     unix_timestamp: usize,
-    create_time: usize
+    create_time: usize,
 }
-
 
 pub trait AlarmMapper {
     fn update_or_insert_alarm(&self, node: &AlarmDefination) -> anyhow::Result<()>;

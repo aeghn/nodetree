@@ -806,20 +806,11 @@ dependencies = [
  "anyhow",
  "async-trait",
  "chrono",
- "serde",
-]
-
-[[package]]
-name = "nodetree-mapper"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
  "deadpool-postgres",
  "deadpool-sqlite",
- "nodetree-core",
  "postgres-types",
  "serde",
+ "serde_json",
  "tokio",
  "tokio-postgres",
  "tracing",
@@ -834,7 +825,6 @@ dependencies = [
  "axum",
  "clap",
  "nodetree-core",
- "nodetree-mapper",
  "once_cell",
  "serde",
  "tokio",

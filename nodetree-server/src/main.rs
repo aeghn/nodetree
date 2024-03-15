@@ -3,7 +3,7 @@ use std::sync::Arc;
 use arguments::Arguments;
 use clap::Parser;
 use config::Config;
-use ntmapper::Mapper;
+use ntcore::mapper::Mapper;
 use once_cell::sync::Lazy;
 use tracing::Level;
 

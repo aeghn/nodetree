@@ -1,11 +1,17 @@
 use anyhow::Ok;
 use async_trait::async_trait;
 use deadpool_postgres::{Client, Pool};
-use ntcore::node::{Node, NodeMapper};
 use serde::Deserialize;
+use tokio_postgres::Row;
 use tracing::info;
 
-use crate::{constants, Mapper};
+use crate::{
+    constants,
+    model::node::{Node, NodeMapper},
+    model::nodefilter::NodeFilter,
+};
+
+use super::Mapper;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct PostgresConfig {
@@ -71,11 +77,28 @@ impl PostgresMapper {
         }
         Ok(())
     }
+
+    fn map_nodes_row(row: &Row) -> Node {
+        let id = row.get("id");
+        Node {
+            id,
+            version: row.get("version"),
+            name: row.get("name"),
+            content: row.get("content"),
+            user: row.get("username"),
+            todo_status: row.get("todo_status"),
+            tags: vec![],
+            parent_id: row.get("parent_id"),
+            prev_sliding_id: row.get("prev_sliding_id"),
+            create_date: row.get("create_date"),
+            first_version_date: row.get("first_version_date"),
+        }
+    }
 }
 
 #[async_trait]
 impl NodeMapper for PostgresMapper {
-    async fn update_or_insert_node(&self, node: &ntcore::node::Node) -> anyhow::Result<()> {
+    async fn update_or_insert_node(&self, node: &Node) -> anyhow::Result<()> {
         let stmt = self.pool.get().await?;
         stmt.execute("insert into nodes(id, version, name, content, username, parent_id, todo_status,
              prev_sliding_id, create_date, first_version_date) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
@@ -105,38 +128,29 @@ impl NodeMapper for PostgresMapper {
             .map_err(|e| anyhow::Error::new(e))
     }
 
-    async fn query_nodes(
-        &self,
-        node_filter: ntcore::node::NodeFilter,
-    ) -> anyhow::Result<Vec<ntcore::node::Node>> {
+    async fn query_nodes(&self, node_filter: NodeFilter) -> anyhow::Result<Vec<Node>> {
         match node_filter {
-            ntcore::node::NodeFilter::FromParent(id) => {
+            NodeFilter::Descendants(id) => {
                 let stmt = self.pool.get().await?;
 
                 let nodes: Vec<Node> = stmt
                     .query("select * from nodes where id = ?", &[&id])
                     .await
-                    .map(|rows| {
-                        rows.iter()
-                            .map(|row| Node {
-                                id: id.to_string(),
-                                version: row.get("version"),
-                                name: row.get("name"),
-                                content: row.get("content"),
-                                user: row.get("username"),
-                                todo_status: row.get("todo_status"),
-                                tags: vec![],
-                                parent_id: row.get("parent_id"),
-                                prev_sliding_id: row.get("prev_sliding_id"),
-                                create_date: row.get("create_date"),
-                                first_version_date: row.get("first_version_date"),
-                            })
-                            .collect()
-                    })?;
+                    .map(|rows| rows.iter().map(|row| Self::map_nodes_row(&row)).collect())?;
 
                 Ok(nodes)
             }
-            ot => Err(anyhow::anyhow!("unhandled node filter {:?}", ot)),
+            NodeFilter::All => {
+                let stmt = self.pool.get().await?;
+
+                let nodes: Vec<Node> = stmt
+                    .query("select * from nodes", &[])
+                    .await
+                    .map(|rows| rows.iter().map(|row| Self::map_nodes_row(&row)).collect())?;
+
+                Ok(nodes)
+            }
+            ot => Err(anyhow::anyhow!("unhandled node filter `{:?}'", ot)),
         }
     }
 
@@ -172,7 +186,7 @@ impl NodeMapper for PostgresMapper {
             .map(|e| (e.get("parent_id"), e.get("prev_sliding_id")))
             .collect();
 
-        let old_parent: String = old_row[0].0.to_string();
+        let _old_parent: String = old_row[0].0.to_string();
         let old_prev: String = old_row[0].1.to_string();
 
         if let Some(next) = old_next.get(0) {

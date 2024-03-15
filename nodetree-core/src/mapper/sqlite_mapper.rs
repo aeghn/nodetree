@@ -1,9 +1,10 @@
 use async_trait::async_trait;
 use deadpool_sqlite::Pool;
-use ntcore::node::NodeMapper;
 use serde::Deserialize;
 
-use crate::Mapper;
+use crate::model::{node::{ Node, NodeMapper}, nodefilter::NodeFilter};
+
+use super::Mapper;
 
 pub struct SqliteMapper {
     pool: Pool,
@@ -50,7 +51,7 @@ impl Mapper for SqliteMapper {
 
 #[async_trait]
 impl NodeMapper for SqliteMapper {
-    async fn update_or_insert_node(&self, node: &ntcore::node::Node) -> anyhow::Result<()> {
+    async fn update_or_insert_node(&self, node: &Node) -> anyhow::Result<()> {
         todo!()
     }
 
@@ -58,11 +59,16 @@ impl NodeMapper for SqliteMapper {
         todo!()
     }
 
-    async fn query_nodes(&self, node_filter: ntcore::node::NodeFilter) -> anyhow::Result<Vec<ntcore::node::Node>> {
+    async fn query_nodes(&self, node_filter: NodeFilter) -> anyhow::Result<Vec<Node>> {
         todo!()
     }
 
-    async fn move_nodes(&self, node_id: &str, parent_id: &str, prev_slibing: Option<&str>) -> anyhow::Result<()> {
+    async fn move_nodes(
+        &self,
+        node_id: &str,
+        parent_id: &str,
+        prev_slibing: Option<&str>,
+    ) -> anyhow::Result<()> {
         todo!()
     }
 }

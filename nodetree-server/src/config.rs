@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use anyhow::Ok;
-use ntmapper::{
+use ntcore::mapper::{
     postgres_mapper::{PostgresConfig, PostgresMapper},
     sqlite_mapper::{SqliteConfig, SqliteMapper},
     Mapper,

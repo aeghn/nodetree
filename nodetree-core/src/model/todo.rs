@@ -1,7 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-
-
 pub struct TodoObject {
     start_status: String,
     end_status: String,

@@ -1,13 +1,12 @@
 use async_trait::async_trait;
-use ntcore::node::NodeMapper;
+
+use crate::model::node::NodeMapper;
 
 #[cfg(feature = "postgres")]
 pub mod postgres_mapper;
 
 #[cfg(feature = "sqlite")]
 pub mod sqlite_mapper;
-
-mod constants;
 
 #[async_trait]
 pub trait Mapper: Sync + Send + NodeMapper {

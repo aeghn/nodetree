@@ -1,9 +1,9 @@
-use std::time::SystemTime;
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
-use crate::tag::Tag;
+
+use super::{nodefilter::NodeFilter, tag::Tag};
 
 #[derive(Serialize, Deserialize)]
 pub struct Node {
@@ -22,17 +22,6 @@ pub struct Node {
 
     pub create_date: String,
     pub first_version_date: String,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-pub enum NodeFilter {
-    All,
-    FromParent(String),
-    FromChild(String),
-    Tag(String),
-    And(Box<NodeFilter>),
-    Not(Box<NodeFilter>),
-    Or(Box<NodeFilter>),
 }
 
 #[async_trait]
