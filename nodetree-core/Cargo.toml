@@ -14,7 +14,7 @@ deadpool-postgres = { version = "0.12", optional = true }
 deadpool-sqlite = { version = "0.7.0", optional = true }
 
 tokio = "1.36"
-
+bytes = { version = "1.5", optional = true }
 tracing = "0.1"
 tracing-subscriber = "0.3"
 
@@ -26,5 +26,5 @@ serde_json = { workspace = true }
 
 [features]
 default = ["postgres", "sqlite"]
-postgres = ["tokio-postgres", "postgres-types", "deadpool-postgres"]
+postgres = ["tokio-postgres", "postgres-types", "deadpool-postgres", "bytes"]
 sqlite = ["deadpool-sqlite"]

@@ -2,7 +2,10 @@ use async_trait::async_trait;
 use deadpool_sqlite::Pool;
 use serde::Deserialize;
 
-use crate::model::{node::{ Node, NodeMapper}, nodefilter::NodeFilter};
+use crate::model::{
+    node::{Node, NodeId, NodeMapper},
+    nodefilter::NodeFilter,
+};
 
 use super::Mapper;
 
@@ -51,23 +54,23 @@ impl Mapper for SqliteMapper {
 
 #[async_trait]
 impl NodeMapper for SqliteMapper {
-    async fn update_or_insert_node(&self, node: &Node) -> anyhow::Result<()> {
+    async fn insert_node_simple(&self, node: &Node) -> anyhow::Result<()> {
         todo!()
     }
 
-    async fn delete_node_by_id(&self, id: &str) -> anyhow::Result<()> {
+    async fn delete_node_by_id(&self, id: &NodeId) -> anyhow::Result<()> {
         todo!()
     }
 
-    async fn query_nodes(&self, node_filter: NodeFilter) -> anyhow::Result<Vec<Node>> {
+    async fn query_nodes(&self, node_filter: &NodeFilter) -> anyhow::Result<Vec<Node>> {
         todo!()
     }
 
     async fn move_nodes(
         &self,
-        node_id: &str,
-        parent_id: &str,
-        prev_slibing: Option<&str>,
+        node_id: &NodeId,
+        parent_id: &NodeId,
+        prev_slibing: &NodeId,
     ) -> anyhow::Result<()> {
         todo!()
     }

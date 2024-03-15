@@ -1,15 +1,11 @@
-use std::{sync::Arc, vec};
+use std::sync::Arc;
 
-use axum::{
-    body::Body,
-    extract::State,
-    http::{Response, StatusCode},
-    response::{IntoResponse, IntoResponseParts},
-    routing::{get, post},
-    Json, Router,
+use axum::{extract::State, http::StatusCode, response::IntoResponse, routing::post, Json, Router};
+
+use ntcore::{
+    mapper::Mapper,
+    model::{node::Node, nodefilter::NodeFilter},
 };
-
-use ntcore::{mapper::Mapper, model::node::Node};
 use serde::Serialize;
 
 #[derive(Clone)]
@@ -21,7 +17,7 @@ pub async fn serve(mapper: Arc<dyn Mapper>, ip: &str, port: &u16) {
     let state = WebAppState { mapper };
     let app = Router::new()
         .route("/insertNode", post(insert_node))
-        .route("/getNodes", post(get_all_nodes))
+        .route("/getNodes", post(query_nodes))
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind(format!("{}:{}", ip, port))
@@ -33,7 +29,7 @@ pub async fn serve(mapper: Arc<dyn Mapper>, ip: &str, port: &u16) {
 async fn insert_node(state: State<WebAppState>, Json(node): Json<Node>) -> impl IntoResponse {
     (
         StatusCode::CREATED,
-        state.mapper.update_or_insert_node(&node).await.unwrap(),
+        state.mapper.insert_and_move(&node).await.unwrap(),
     )
 }
 
@@ -46,11 +42,10 @@ impl IntoResponse for VecNodeWrapper {
     }
 }
 
-async fn get_all_nodes(state: State<WebAppState>, Json(node): Json<Node>) -> impl IntoResponse {
-    let rest = state
-        .mapper
-        .query_nodes(ntcore::model::nodefilter::NodeFilter::All)
-        .await
-        .unwrap();
+async fn query_nodes(
+    state: State<WebAppState>,
+    Json(node_filter): Json<NodeFilter>,
+) -> impl IntoResponse {
+    let rest = state.mapper.query_nodes(&node_filter).await.unwrap();
     (StatusCode::OK, VecNodeWrapper(rest))
 }

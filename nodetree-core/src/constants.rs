@@ -4,3 +4,4 @@ pub const TABLE_NAME_ALARMS: &str = "alarms";
 pub const TABLE_NAME_TODOS: &str = "todos";
 
 pub const MAGIC_ROOT_NODE_ID: &str = "##ROOT##";
+pub const MAGIC_PREV_NODE_ID_EMPTY: &str = "##NONE##";

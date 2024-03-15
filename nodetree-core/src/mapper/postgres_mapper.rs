@@ -1,14 +1,18 @@
 use anyhow::Ok;
 use async_trait::async_trait;
+use bytes::BytesMut;
 use deadpool_postgres::{Client, Pool};
+use postgres_types::{to_sql_checked, ToSql};
 use serde::Deserialize;
 use tokio_postgres::Row;
 use tracing::info;
 
 use crate::{
     constants,
-    model::node::{Node, NodeMapper},
-    model::nodefilter::NodeFilter,
+    model::{
+        node::{Node, NodeId, NodeMapper},
+        nodefilter::NodeFilter,
+    },
 };
 
 use super::Mapper;
@@ -98,7 +102,7 @@ impl PostgresMapper {
 
 #[async_trait]
 impl NodeMapper for PostgresMapper {
-    async fn update_or_insert_node(&self, node: &Node) -> anyhow::Result<()> {
+    async fn insert_node_simple(&self, node: &Node) -> anyhow::Result<()> {
         let stmt = self.pool.get().await?;
         stmt.execute("insert into nodes(id, version, name, content, username, parent_id, todo_status,
              prev_sliding_id, create_date, first_version_date) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
@@ -119,7 +123,7 @@ impl NodeMapper for PostgresMapper {
         .map(|_| ())
     }
 
-    async fn delete_node_by_id(&self, id: &str) -> anyhow::Result<()> {
+    async fn delete_node_by_id(&self, id: &NodeId) -> anyhow::Result<()> {
         let stmt = self.pool.get().await?;
 
         stmt.execute("delete from nodes where id = ?", &[&id])
@@ -128,7 +132,7 @@ impl NodeMapper for PostgresMapper {
             .map_err(|e| anyhow::Error::new(e))
     }
 
-    async fn query_nodes(&self, node_filter: NodeFilter) -> anyhow::Result<Vec<Node>> {
+    async fn query_nodes(&self, node_filter: &NodeFilter) -> anyhow::Result<Vec<Node>> {
         match node_filter {
             NodeFilter::Descendants(id) => {
                 let stmt = self.pool.get().await?;
@@ -156,43 +160,40 @@ impl NodeMapper for PostgresMapper {
 
     async fn move_nodes(
         &self,
-        node_id: &str,
-        parent_id: &str,
-        prev_slibing: Option<&str>,
+        node_id: &NodeId,
+        parent_id: &NodeId,
+        prev_slibing: &NodeId,
     ) -> anyhow::Result<()> {
         let stmt = self.pool.get().await?;
 
         let rows = stmt
             .query(
-                "select * from nodes where id = ? or prev_sliding_id = ?",
+                "select * from nodes where id in $1 or prev_sliding_id == $2 or (parent_id = $3 and prev_node = $4)",
                 &[&node_id, &node_id],
             )
             .await?;
 
-        let old_next: Vec<String> = rows
-            .iter()
-            .filter_map(|e| {
-                if e.get::<&str, String>("prev_sliding_id") == node_id {
-                    Some(e.get::<&str, String>("id"))
-                } else {
-                    None
-                }
-            })
-            .collect();
+        let mut node = None;
+        let mut new_next = None;
+        let mut old_next = None;
 
-        let old_row: Vec<(String, String)> = rows
-            .iter()
-            .filter(|e| e.get::<&str, String>("id") == node_id)
-            .map(|e| (e.get("parent_id"), e.get("prev_sliding_id")))
-            .collect();
+        for row in rows {
+            let n = Self::map_nodes_row(&row);
+            if &n.id == node_id {
+                node.replace(n);
+            } else if &n.prev_sliding_id == prev_slibing && &n.parent_id == parent_id {
+                new_next.replace(n);
+            } else if &n.prev_sliding_id == node_id {
+                old_next.replace(n);
+            }
+        }
 
-        let _old_parent: String = old_row[0].0.to_string();
-        let old_prev: String = old_row[0].1.to_string();
+        let old_prev_id = &node.unwrap().prev_sliding_id;
 
-        if let Some(next) = old_next.get(0) {
+        if let Some(old_next) = old_next {
             stmt.execute(
-                "update prev_sliding_id = ? where id = ?",
-                &[&old_prev, next],
+                "update prev_sliding_id = $1 where id = $2 and version = $3",
+                &[old_prev_id, &old_next.id, &old_next.version],
             )
             .await?;
         }
@@ -202,6 +203,14 @@ impl NodeMapper for PostgresMapper {
             &[&prev_slibing, &parent_id, &node_id],
         )
         .await?;
+
+        if let Some(new_next) = new_next {
+            stmt.execute(
+                "update prev_sliding_id = $1 where id = $2 and version = $3",
+                &[node_id, &new_next.id, &new_next.version],
+            )
+            .await?;
+        }
 
         Ok(())
     }
@@ -213,7 +222,7 @@ impl Mapper for PostgresMapper {
         self.create_table(
             constants::TABLE_NAME_NODES,
             "CREATE TABLE nodes (
-    id VARCHAR(40) PRIMARY KEY,
+    id VARCHAR(40) NOT NULL,
     version SMALLINT NOT NULL,
     name VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
@@ -222,7 +231,8 @@ impl Mapper for PostgresMapper {
     parent_id VARCHAR(255) NOT NULL,
     prev_sliding_id VARCHAR(255),
     create_date VARCHAR(19) NOT NULL,
-    first_version_date VARCHAR(19) NOT NULL
+    first_version_date VARCHAR(19) NOT NULL,
+    primary key (id, version)
 );",
         )
         .await
@@ -240,3 +250,65 @@ impl Mapper for PostgresMapper {
         Ok(())
     }
 }
+
+impl<'a> tokio_postgres::types::FromSql<'a> for NodeId {
+    fn from_sql(
+        ty: &tokio_postgres::types::Type,
+        raw: &'a [u8],
+    ) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
+        <&str as tokio_postgres::types::FromSql>::from_sql(ty, raw).map(|o| {
+            let s = o.to_string();
+            NodeId::from(s)
+        })
+    }
+
+    fn accepts(ty: &tokio_postgres::types::Type) -> bool {
+        <&str as tokio_postgres::types::FromSql>::accepts(ty)
+    }
+}
+
+impl tokio_postgres::types::ToSql for NodeId {
+    fn to_sql(
+        &self,
+        ty: &postgres_types::Type,
+        out: &mut BytesMut,
+    ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>>
+    where
+        Self: Sized,
+    {
+        let inner = self.as_str();
+        <&str as ToSql>::to_sql(&inner, ty, out)
+    }
+
+    fn accepts(ty: &postgres_types::Type) -> bool
+    where
+        Self: Sized,
+    {
+        <&str as ToSql>::accepts(ty)
+    }
+
+    to_sql_checked!();
+}
+
+/* impl tokio_postgres::types::ToSql for NodeFilter {
+    fn to_sql(
+        &self,
+        ty: &postgres_types::Type,
+        out: &mut BytesMut,
+    ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>>
+    where
+        Self: Sized,
+    {
+        let inner = self.as_str();
+        <&str as ToSql>::to_sql(&inner, ty, out)
+    }
+
+    fn accepts(ty: &postgres_types::Type) -> bool
+    where
+        Self: Sized,
+    {
+        <&str as ToSql>::accepts(ty)
+    }
+
+    to_sql_checked!();
+} */
