@@ -1,12 +1,20 @@
 use std::sync::Arc;
 
-use axum::{extract::State, http::StatusCode, response::IntoResponse, routing::post, Json, Router};
+use axum::{
+    extract::State,
+    handler::Handler,
+    http::{Response, StatusCode},
+    response::IntoResponse,
+    routing::post,
+    Json, Router,
+};
 
 use ntcore::{
     mapper::Mapper,
     model::{node::Node, nodefilter::NodeFilter},
 };
 use serde::Serialize;
+use tracing::{error, info};
 
 #[derive(Clone)]
 pub struct WebAppState {
@@ -23,14 +31,14 @@ pub async fn serve(mapper: Arc<dyn Mapper>, ip: &str, port: &u16) {
     let listener = tokio::net::TcpListener::bind(format!("{}:{}", ip, port))
         .await
         .unwrap();
+    info!("server: {}:{}", ip, port);
+
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn insert_node(state: State<WebAppState>, Json(node): Json<Node>) -> impl IntoResponse {
-    (
-        StatusCode::CREATED,
-        state.mapper.insert_and_move(&node).await.unwrap(),
-    )
+fn ferr(s: impl ToString) -> Response<String> {
+    error!("{}", s.to_string());
+    Response::builder().status(500).body(s.to_string()).unwrap()
 }
 
 #[derive(Serialize)]
@@ -42,10 +50,20 @@ impl IntoResponse for VecNodeWrapper {
     }
 }
 
+async fn insert_node(state: State<WebAppState>, Json(node): Json<Node>) -> impl IntoResponse {
+    info!("begin to insert node: {:?}", node);
+    state
+        .mapper
+        .insert_and_move(&node)
+        .await
+        .map_err(|e| ferr(e))
+}
+
 async fn query_nodes(
     state: State<WebAppState>,
     Json(node_filter): Json<NodeFilter>,
 ) -> impl IntoResponse {
+    info!("begin to query node: {:?}", node_filter);
     let rest = state.mapper.query_nodes(&node_filter).await.unwrap();
     (StatusCode::OK, VecNodeWrapper(rest))
 }
