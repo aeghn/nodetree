@@ -90,13 +90,13 @@ impl PostgresMapper {
             name: row.get("name"),
             content: row.get("content"),
             user: row.get("username"),
-            todo_status: row.get("todo_status"),
+            todo_status: None,
             tags: vec![],
             parent_id: row.get("parent_id"),
             prev_sliding_id: row.get("prev_sliding_id"),
-            delete_date: row.get("delete_date"),
-            create_date: row.get("create_date"),
-            first_version_date: row.get("first_version_date"),
+            delete_time: row.get("delete_time"),
+            create_time: row.get("create_time"),
+            first_version_time: row.get("first_version_time"),
             is_current: row.get("is_current"),
         }
     }
@@ -106,11 +106,12 @@ impl PostgresMapper {
 impl NodeMapper for PostgresMapper {
     async fn insert_node_simple(&self, node: &Node) -> anyhow::Result<()> {
         let stmt = self.pool.get().await?;
-        stmt.execute("update nodes set is_current = 0 where id = $1", &[&node.id])
-            .await;
+        stmt.execute("update nodes set is_current = false where id = $1", &[&node.id])
+            .await
+            .unwrap();
 
-        stmt.execute("insert into nodes(id, version, name, content, username, parent_id, todo_status,
-             prev_sliding_id, create_date, first_version_date, is_current, delete_date) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+        stmt.execute("insert into nodes(id, version, name, content, username, parent_id,
+             prev_sliding_id, create_time, first_version_time, is_current, delete_time) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)",
         &[
             &node.id,
             &node.version,
@@ -118,12 +119,11 @@ impl NodeMapper for PostgresMapper {
             &node.content,
             &node.user,
             &node.parent_id,
-            &node.todo_status,
             &node.prev_sliding_id,
-            &node.create_date,
-            &node.first_version_date,
+            &node.create_time,
+            &node.first_version_time,
             &node.is_current,
-            &node.delete_date
+            &node.delete_time
         ])
         .await
         .map_err(|e| {anyhow::Error::new(e)})
@@ -167,7 +167,7 @@ impl NodeMapper for PostgresMapper {
 
         let rows = stmt
             .query(
-                "select * from nodes where id in $1 or prev_sliding_id == $2 or (parent_id = $3 and prev_node = $4)",
+                "select * from nodes where id == $1 or prev_sliding_id == $2 or (parent_id = $3 and prev_node = $4)",
                 &[&node_id, &node_id, &parent_id, &prev_slibing],
             )
             .await?;
@@ -226,12 +226,12 @@ impl Mapper for PostgresMapper {
     name VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
     username TEXT NOT NULL,
-    is_current boolean NOT NULL,
-    detele_flag TIMESTAMP DEFAULT NULL,
+    is_current BOOL NOT NULL,
+    delete_time TIMESTAMP DEFAULT NULL,
     parent_id VARCHAR(255) NOT NULL,
     prev_sliding_id VARCHAR(255),
-    create_date TIMESTAMP NOT NULL,
-    first_version_date TIMESTAMP NOT NULL,
+    create_time TIMESTAMP NOT NULL,
+    first_version_time TIMESTAMP NOT NULL,
     primary key (id, version)
 );",
         )

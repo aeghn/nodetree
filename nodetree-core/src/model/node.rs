@@ -1,17 +1,18 @@
 use async_trait::async_trait;
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::constants::MAGIC_PREV_NODE_ID_EMPTY;
 
 use super::{nodefilter::NodeFilter, tag::Tag};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Node {
     pub id: NodeId,
     pub version: i16,
 
     pub is_current: bool,
-    pub delete_date: chrono::DateTime<chrono::offset::Utc>,
+    pub delete_time: NaiveDateTime,
 
     pub name: String,
     pub content: String,
@@ -23,8 +24,8 @@ pub struct Node {
     pub parent_id: NodeId,
     pub prev_sliding_id: NodeId,
 
-    pub create_date: chrono::DateTime<chrono::offset::Utc>,
-    pub first_version_date: chrono::DateTime<chrono::offset::Utc>,
+    pub create_time: NaiveDateTime,
+    pub first_version_time: NaiveDateTime,
 }
 
 #[async_trait]
@@ -148,5 +149,12 @@ mod test {
         let json_string = "{\"id\": null}";
         let n: TestNodeId = serde_json::from_str(&json_string).unwrap();
         println!("{:?}", n)
+    }
+
+    #[test]
+    fn time() {
+        let now_utc = chrono::NaiveDateTime::from_timestamp(1, 1);
+        let v = serde_json::to_string(&now_utc).unwrap();
+        println!("{}", v);
     }
 }
