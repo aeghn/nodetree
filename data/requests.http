@@ -1,5 +1,7 @@
+@server = http://chinslt.com:3011
+
 ### Create Node
-POST http://localhost:3011/insertNode
+POST {{server}}/insertNode
 Content-Type: application/json
 
 {
@@ -11,16 +13,18 @@ Content-Type: application/json
     "todo_status": "Todo",
     "parent_id": "root",
     "prev_sliding_id": "prev",
-    "create_date": "2023-12-03 12:00:00",
-    "first_version_date": "2023-12-03 12:00:00",
+    "create_time": "2024-03-18T05:28:58.000000000",
+    "first_version_time": "2024-03-18T05:28:58.000000000",
     "tags": [{
         "name": "taga",
-        "create_time": "2023-12-03 12:00:00"
-    }]
+        "create_time": "2024-03-18T05:28:58.000000000"
+    }],
+    "is_current": true,
+    "delete_time": "2024-03-18T05:28:58.000000000"
 }
 
 ### Query Nodes
-POST http://localhost:3011/getNodes
+POST {{server}}/getNodes
 Content-Type: application/json
 
 {
@@ -32,8 +36,8 @@ Content-Type: application/json
     "todo_status": "Todo",
     "parent_id": "root",
     "prev_sliding_id": "prev",
-    "create_date": "2023-12-03 12:00:00",
-    "first_version_date": "2023-12-03 12:00:00",
+    "create_time": "2023-12-03 12:00:00",
+    "first_version_time": "2023-12-03 12:00:00",
     "tags": [{
         "name": "taga",
         "create_time": "2023-12-03 12:00:00"
