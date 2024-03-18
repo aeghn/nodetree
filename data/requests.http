@@ -5,14 +5,14 @@ POST {{server}}/insertNode
 Content-Type: application/json
 
 {
-    "id": "asdasd",
+    "id": "2",
     "version": 0,
     "name": "test1",
     "content": "",
     "user": "foo",
     "todo_status": "Todo",
-    "parent_id": "root",
-    "prev_sliding_id": "prev",
+    "parent_id": "asdasdasd",
+    "prev_sliding_id": "asdasdasdasdasd",
     "create_time": "2024-03-18T05:28:58.000000000",
     "first_version_time": "2024-03-18T05:28:58.000000000",
     "tags": [{
@@ -28,18 +28,5 @@ POST {{server}}/getNodes
 Content-Type: application/json
 
 {
-    "id": "asdasd",
-    "version": 0,
-    "name": "test1",
-    "content": "",
-    "user": "foo",
-    "todo_status": "Todo",
-    "parent_id": "root",
-    "prev_sliding_id": "prev",
-    "create_time": "2023-12-03 12:00:00",
-    "first_version_time": "2023-12-03 12:00:00",
-    "tags": [{
-        "name": "taga",
-        "create_time": "2023-12-03 12:00:00"
-    }]
+    "filter": "all"
 }

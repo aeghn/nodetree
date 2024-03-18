@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{cell::Ref, ops::Deref, sync::Arc};
 
 use axum::{
     extract::State,
@@ -11,7 +11,10 @@ use axum::{
 
 use ntcore::{
     mapper::Mapper,
-    model::{node::Node, nodefilter::NodeFilter},
+    model::{
+        node::{Node, NodeMoveResult},
+        nodefilter::NodeFilter,
+    },
 };
 use serde::Serialize;
 use tracing::{error, info};
@@ -50,12 +53,30 @@ impl IntoResponse for VecNodeWrapper {
     }
 }
 
+#[derive(Serialize)]
+struct NodeMoveResultW(NodeMoveResult);
+
+impl IntoResponse for NodeMoveResultW {
+    fn into_response(self) -> axum::response::Response {
+        Json(self).into_response()
+    }
+}
+
+impl Deref for NodeMoveResultW {
+    type Target = NodeMoveResult;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 async fn insert_node(state: State<WebAppState>, Json(node): Json<Node>) -> impl IntoResponse {
     info!("begin to insert node: {:?}", node);
     state
         .mapper
         .insert_and_move(&node)
         .await
+        .map(|e| NodeMoveResultW(e))
         .map_err(|e| ferr(e))
 }
 

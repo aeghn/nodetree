@@ -26,7 +26,9 @@ impl Into<anyhow::Result<Arc<dyn Mapper>>> for DbConfig {
     fn into(self) -> anyhow::Result<Arc<(dyn Mapper + 'static)>> {
         let mapper = match self {
             DbConfig::Postgres(pg) => Arc::new(PostgresMapper::new(pg)?) as Arc<dyn Mapper>,
-            DbConfig::Sqlite(cfg) => Arc::new(SqliteMapper::new(cfg)?) as Arc<dyn Mapper>,
+            /*             DbConfig::Sqlite(cfg) => Arc::new(SqliteMapper::new(cfg)?) as Arc<dyn Mapper>,
+             */
+            _ => todo!(),
         };
 
         Ok(mapper)

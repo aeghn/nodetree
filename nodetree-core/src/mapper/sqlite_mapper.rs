@@ -3,7 +3,7 @@ use deadpool_sqlite::Pool;
 use serde::Deserialize;
 
 use crate::model::{
-    node::{Node, NodeId, NodeMapper},
+    node::{Node, NodeId, NodeMapper, NodeMoveResult},
     nodefilter::NodeFilter,
 };
 
@@ -30,48 +30,5 @@ impl SqliteMapper {
 
         let pool = config.builder(deadpool_sqlite::Runtime::Tokio1)?.build()?;
         Ok(SqliteMapper { pool })
-    }
-}
-
-#[async_trait]
-impl Mapper for SqliteMapper {
-    async fn ensure_table_nodes(&self) -> anyhow::Result<()> {
-        todo!()
-    }
-
-    async fn ensure_table_tags(&self) -> anyhow::Result<()> {
-        todo!()
-    }
-
-    async fn ensure_table_alarm_instances(&self) -> anyhow::Result<()> {
-        todo!()
-    }
-
-    async fn ensure_table_alarm_definations(&self) -> anyhow::Result<()> {
-        todo!()
-    }
-}
-
-#[async_trait]
-impl NodeMapper for SqliteMapper {
-    async fn insert_node_simple(&self, node: &Node) -> anyhow::Result<()> {
-        todo!()
-    }
-
-    async fn delete_node_by_id(&self, id: &NodeId) -> anyhow::Result<()> {
-        todo!()
-    }
-
-    async fn query_nodes(&self, node_filter: &NodeFilter) -> anyhow::Result<Vec<Node>> {
-        todo!()
-    }
-
-    async fn move_nodes(
-        &self,
-        node_id: &NodeId,
-        parent_id: &NodeId,
-        prev_slibing: &NodeId,
-    ) -> anyhow::Result<()> {
-        todo!()
     }
 }

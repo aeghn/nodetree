@@ -10,7 +10,7 @@ use tracing::info;
 use crate::{
     constants,
     model::{
-        node::{Node, NodeId, NodeMapper},
+        node::{Node, NodeId, NodeMapper, NodeMoveResult},
         nodefilter::NodeFilter,
     },
 };
@@ -106,12 +106,16 @@ impl PostgresMapper {
 impl NodeMapper for PostgresMapper {
     async fn insert_node_simple(&self, node: &Node) -> anyhow::Result<()> {
         let stmt = self.pool.get().await?;
-        stmt.execute("update nodes set is_current = false where id = $1", &[&node.id])
-            .await
-            .unwrap();
+        stmt.execute(
+            "update nodes set is_current = false where id = $1",
+            &[&node.id],
+        )
+        .await
+        .unwrap();
 
-        stmt.execute("insert into nodes(id, version, name, content, username, parent_id,
-             prev_sliding_id, create_time, first_version_time, is_current, delete_time) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)",
+        info!("begin to really insert");
+
+        stmt.execute("insert into nodes(id, version, name, content, username, parent_id, create_time, first_version_time, is_current, delete_time) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
         &[
             &node.id,
             &node.version,
@@ -119,7 +123,6 @@ impl NodeMapper for PostgresMapper {
             &node.content,
             &node.user,
             &node.parent_id,
-            &node.prev_sliding_id,
             &node.create_time,
             &node.first_version_time,
             &node.is_current,
@@ -161,13 +164,14 @@ impl NodeMapper for PostgresMapper {
         &self,
         node_id: &NodeId,
         parent_id: &NodeId,
-        prev_slibing: &NodeId,
-    ) -> anyhow::Result<()> {
+        prev_slibing: Option<&NodeId>,
+    ) -> anyhow::Result<NodeMoveResult> {
+        info!("move {:?} to {:?}|^|{:?}", node_id, parent_id, prev_slibing);
         let stmt = self.pool.get().await?;
 
         let rows = stmt
             .query(
-                "select * from nodes where id == $1 or prev_sliding_id == $2 or (parent_id = $3 and prev_node = $4)",
+                "select * from nodes where id = $1 or prev_sliding_id = $2 or (parent_id = $3 and prev_sliding_id = $4)",
                 &[&node_id, &node_id, &parent_id, &prev_slibing],
             )
             .await?;
@@ -180,38 +184,49 @@ impl NodeMapper for PostgresMapper {
             let n = Self::map_nodes_row(&row);
             if &n.id == node_id {
                 node.replace(n);
-            } else if &n.prev_sliding_id == prev_slibing && &n.parent_id == parent_id {
+            } else if n.prev_sliding_id.as_ref() == prev_slibing && &n.parent_id == parent_id {
                 new_next.replace(n);
-            } else if &n.prev_sliding_id == node_id {
+            } else if n.prev_sliding_id.as_ref() == Some(node_id) {
                 old_next.replace(n);
             }
         }
 
-        let old_prev_id = &node.unwrap().prev_sliding_id;
+        let old_prev_id = &node.as_ref().map(|e| e.prev_sliding_id.clone()).unwrap();
+        let old_parent_id = &node.map(|e| e.parent_id.clone()).unwrap();
 
-        if let Some(old_next) = old_next {
+        if let Some(ref old_next) = old_next {
+            info!("move old next");
             stmt.execute(
-                "update prev_sliding_id = $1 where id = $2 and version = $3",
-                &[old_prev_id, &old_next.id, &old_next.version],
+                "update nodes set prev_sliding_id = $1 where id = $2",
+                &[old_prev_id, &old_next.id],
             )
             .await?;
         }
 
+        info!("move current");
         stmt.execute(
-            "update prev_sliding_id = ? and parent_id = ? where id = ?",
+            "update nodes set prev_sliding_id = $1, parent_id = $2 where id = $3",
             &[&prev_slibing, &parent_id, &node_id],
         )
         .await?;
 
-        if let Some(new_next) = new_next {
+        if let Some(ref new_next) = new_next {
+            info!("move new next");
             stmt.execute(
-                "update prev_sliding_id = $1 where id = $2 and version = $3",
-                &[node_id, &new_next.id, &new_next.version],
+                "update nodes set prev_sliding_id = $1 where id = $2",
+                &[node_id, &new_next.id],
             )
             .await?;
         }
 
-        Ok(())
+        Ok(NodeMoveResult {
+            new_parent: parent_id.clone(),
+            new_prev: prev_slibing.clone().map(|e| e.clone()),
+            new_next: new_next.map(|e| e.id.clone()),
+            old_parent: old_parent_id.clone(),
+            old_prev: old_prev_id.clone(),
+            old_next: old_next.map(|o| o.id.clone()),
+        })
     }
 }
 

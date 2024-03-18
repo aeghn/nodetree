@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 
-use crate::model::node::NodeMapper;
+use crate::model::node::{NodeId, NodeMapper};
 
 #[cfg(feature = "postgres")]
 pub mod postgres_mapper;
@@ -24,3 +24,4 @@ pub trait Mapper: Sync + Send + NodeMapper {
         Ok(())
     }
 }
+
