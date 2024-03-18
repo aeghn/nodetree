@@ -1,7 +1,7 @@
 use anyhow::Ok;
 use async_trait::async_trait;
 use bytes::BytesMut;
-use deadpool_postgres::{Client, Pool};
+use deadpool_postgres::{Client, GenericClient, Pool};
 use postgres_types::{to_sql_checked, ToSql};
 use serde::Deserialize;
 use tokio_postgres::Row;
@@ -94,8 +94,10 @@ impl PostgresMapper {
             tags: vec![],
             parent_id: row.get("parent_id"),
             prev_sliding_id: row.get("prev_sliding_id"),
+            delete_date: row.get("delete_date"),
             create_date: row.get("create_date"),
             first_version_date: row.get("first_version_date"),
+            is_current: row.get("is_current"),
         }
     }
 }
@@ -104,8 +106,11 @@ impl PostgresMapper {
 impl NodeMapper for PostgresMapper {
     async fn insert_node_simple(&self, node: &Node) -> anyhow::Result<()> {
         let stmt = self.pool.get().await?;
+        stmt.execute("update nodes set is_current = 0 where id = $1", &[&node.id])
+            .await;
+
         stmt.execute("insert into nodes(id, version, name, content, username, parent_id, todo_status,
-             prev_sliding_id, create_date, first_version_date) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+             prev_sliding_id, create_date, first_version_date, is_current, delete_date) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
         &[
             &node.id,
             &node.version,
@@ -116,7 +121,9 @@ impl NodeMapper for PostgresMapper {
             &node.todo_status,
             &node.prev_sliding_id,
             &node.create_date,
-            &node.first_version_date
+            &node.first_version_date,
+            &node.is_current,
+            &node.delete_date
         ])
         .await
         .map_err(|e| {anyhow::Error::new(e)})
@@ -126,36 +133,28 @@ impl NodeMapper for PostgresMapper {
     async fn delete_node_by_id(&self, id: &NodeId) -> anyhow::Result<()> {
         let stmt = self.pool.get().await?;
 
-        stmt.execute("delete from nodes where id = ?", &[&id])
-            .await
-            .map(|_| ())
-            .map_err(|e| anyhow::Error::new(e))
+        stmt.execute(
+            "update nodes set delete_flag = CURRENT_TIMESTAMP where id = ?",
+            &[&id],
+        )
+        .await
+        .map(|_| ())
+        .map_err(|e| anyhow::Error::new(e))
     }
 
     async fn query_nodes(&self, node_filter: &NodeFilter) -> anyhow::Result<Vec<Node>> {
-        match node_filter {
-            NodeFilter::Descendants(id) => {
-                let stmt = self.pool.get().await?;
+        let stmt = self.pool.get().await?;
 
-                let nodes: Vec<Node> = stmt
-                    .query("select * from nodes where id = ?", &[&id])
-                    .await
-                    .map(|rows| rows.iter().map(|row| Self::map_nodes_row(&row)).collect())?;
+        let (sql, args) = node_filter_to_sql(node_filter);
+        let new_slice_ref: Vec<&(dyn ToSql + Sync)> =
+            args.iter().map(|x| &**x as &(dyn ToSql + Sync)).collect();
+        let my_slice_ref: &[&(dyn ToSql + Sync)] = new_slice_ref.as_slice();
+        let nodes = stmt
+            .query(&sql, my_slice_ref)
+            .await
+            .map(|rows| rows.iter().map(|row| Self::map_nodes_row(&row)).collect())?;
 
-                Ok(nodes)
-            }
-            NodeFilter::All => {
-                let stmt = self.pool.get().await?;
-
-                let nodes: Vec<Node> = stmt
-                    .query("select * from nodes", &[])
-                    .await
-                    .map(|rows| rows.iter().map(|row| Self::map_nodes_row(&row)).collect())?;
-
-                Ok(nodes)
-            }
-            ot => Err(anyhow::anyhow!("unhandled node filter `{:?}'", ot)),
-        }
+        Ok(nodes)
     }
 
     async fn move_nodes(
@@ -169,7 +168,7 @@ impl NodeMapper for PostgresMapper {
         let rows = stmt
             .query(
                 "select * from nodes where id in $1 or prev_sliding_id == $2 or (parent_id = $3 and prev_node = $4)",
-                &[&node_id, &node_id],
+                &[&node_id, &node_id, &parent_id, &prev_slibing],
             )
             .await?;
 
@@ -227,11 +226,12 @@ impl Mapper for PostgresMapper {
     name VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
     username TEXT NOT NULL,
-    todo_status VARCHAR(50) DEFAULT NULL,
+    is_current boolean NOT NULL,
+    detele_flag TIMESTAMP DEFAULT NULL,
     parent_id VARCHAR(255) NOT NULL,
     prev_sliding_id VARCHAR(255),
-    create_date VARCHAR(19) NOT NULL,
-    first_version_date VARCHAR(19) NOT NULL,
+    create_date TIMESTAMP NOT NULL,
+    first_version_date TIMESTAMP NOT NULL,
     primary key (id, version)
 );",
         )
@@ -290,25 +290,6 @@ impl tokio_postgres::types::ToSql for NodeId {
     to_sql_checked!();
 }
 
-/* impl tokio_postgres::types::ToSql for NodeFilter {
-    fn to_sql(
-        &self,
-        ty: &postgres_types::Type,
-        out: &mut BytesMut,
-    ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>>
-    where
-        Self: Sized,
-    {
-        let inner = self.as_str();
-        <&str as ToSql>::to_sql(&inner, ty, out)
-    }
-
-    fn accepts(ty: &postgres_types::Type) -> bool
-    where
-        Self: Sized,
-    {
-        <&str as ToSql>::accepts(ty)
-    }
-
-    to_sql_checked!();
-} */
+fn node_filter_to_sql(_: &NodeFilter) -> (String, Vec<Box<dyn ToSql + Sync + Send>>) {
+    return ("select * from nodes".into(), vec![]);
+}

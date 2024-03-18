@@ -3,19 +3,21 @@ use std::any::Any;
 use serde::{de, Deserialize, Serialize};
 use serde_json::Value;
 
-use super::node::{Node, NodeId};
+use super::node::NodeId;
 
 #[derive(Clone, Debug, Serialize)]
 pub enum NodeFilter {
     All,
-    Descendants(NodeId),
-    Acendant(NodeId),
+    Children(NodeId),
+    Parent(NodeId),
     Id(NodeId),
     Tag(String),
     And(Box<Vec<NodeFilter>>),
     Not(Box<NodeFilter>),
     Or(Box<Vec<NodeFilter>>),
     WithContent(Box<NodeFilter>),
+    WithHistory(Box<NodeFilter>),
+    WithDeleted(Box<NodeFilter>),
 }
 
 fn from_json(jn: &Value) -> Result<NodeFilter, String> {
@@ -38,13 +40,13 @@ fn from_json(jn: &Value) -> Result<NodeFilter, String> {
 
     match filter {
         "all" => Ok(NodeFilter::All),
-        "descendants" => {
+        "children" => {
             let value = value.as_str().unwrap().into();
-            Ok(NodeFilter::Descendants(value))
+            Ok(NodeFilter::Children(value))
         }
-        "acendant" => {
+        "parent" => {
             let value = value.as_str().unwrap().into();
-            Ok(NodeFilter::Acendant(value))
+            Ok(NodeFilter::Parent(value))
         }
         "id" => {
             let value = value.as_str().unwrap().into();
@@ -85,7 +87,7 @@ impl<'de> Deserialize<'de> for NodeFilter {
 
 #[cfg(test)]
 mod test {
-    use crate::model::{node::Node, nodefilter::NodeFilter};
+    use crate::model::nodefilter::NodeFilter;
 
     #[test]
     fn test() {
@@ -94,7 +96,7 @@ mod test {
             "filter": "and",
             "value": [
                 {"filter": "all"},
-                {"filter": "acendant",
+                {"filter": "parent",
                 "value": "asdasd"}
             ]
         }

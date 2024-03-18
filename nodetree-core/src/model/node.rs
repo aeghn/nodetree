@@ -10,6 +10,9 @@ pub struct Node {
     pub id: NodeId,
     pub version: i16,
 
+    pub is_current: bool,
+    pub delete_date: chrono::DateTime<chrono::offset::Utc>,
+
     pub name: String,
     pub content: String,
 
@@ -20,8 +23,8 @@ pub struct Node {
     pub parent_id: NodeId,
     pub prev_sliding_id: NodeId,
 
-    pub create_date: String,
-    pub first_version_date: String,
+    pub create_date: chrono::DateTime<chrono::offset::Utc>,
+    pub first_version_date: chrono::DateTime<chrono::offset::Utc>,
 }
 
 #[async_trait]
