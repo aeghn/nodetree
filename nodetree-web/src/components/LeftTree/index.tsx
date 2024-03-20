@@ -7,13 +7,14 @@ import {
   TreeApi,
 } from "react-arborist";
 import * as icons from "react-icons/md";
-import styles from "../../tree.module.css";
+import styles from "./tree.module.css";
 import { FillFlexParent } from "../fill-flex-parent";
 import { BsTree } from "react-icons/bs";
-import { useEffect, useState } from "react";
-import { NTNode } from "../../model";
+import { ComponentType, useEffect, useState } from "react";
 import { fetchAllNodes } from "../../helpers/dataAgent";
 import { arrangeNodes } from "../../helpers/nodeHelper";
+import { NTNode } from "../../model";
+
 
 export default function NTTree() {
   const [term] = useState("");
@@ -22,39 +23,15 @@ export default function NTTree() {
 
   const [isLoading, setIsLoading] = useState(true);
 
-  //const [allNodesData, setAllNodesData] = useState<NTNode[]>([]);
-  const allNodesData: NTNode[] = [
-    {
-      id: "1",
-      version: 0,
+  const [allNodesData, setAllNodesData] = useState<NTNode[]>([]);
 
-      is_current: true,
-      delete_time: undefined,
-
-      name: "1",
-      content: "",
-
-      user: "",
-      todo_status: undefined,
-
-      tags: undefined,
-
-      parent_id: "",
-      prev_sliding_id: undefined,
-
-      create_time: new Date(),
-      first_version_time: new Date(),
-
-      children: undefined,
-    },
-  ];
   useEffect(() => {
     const fetchData = async () => {
       try {
         console.info("begin to get all nodes");
         const nodes = await fetchAllNodes();
         const arrangedNodes = arrangeNodes(nodes);
-        //setAllNodesData(arrangedNodes);
+        setAllNodesData(arrangedNodes);
         setIsLoading(false);
         console.log("finished load all nodes");
       } catch (error) {
@@ -66,26 +43,48 @@ export default function NTTree() {
   }, []);
 
   return (
-    <div className={styles.sidebar}>
-      {isLoading ? (
-        <div>Loading </div>
-      ) : (
+
+    isLoading ? (
+      <div> Loading </div >
+    ) : (
+      <div className={styles.treeContainer}>
         <FillFlexParent>
           {({ width, height }) => {
-            return <Tree initialData={allNodesData}>{Node}</Tree>;
+            return (
+              <Tree
+                ref={setTree}
+                initialData={allNodesData}
+                width={width}
+                height={height}
+                rowHeight={32}
+                renderCursor={Cursor}
+                searchTerm={term}
+                paddingBottom={32}
+              >
+                {Node}
+              </Tree>
+            );
           }}
         </FillFlexParent>
-      )}
-    </div>
+      </div>
+    )
   );
 }
 
 function Node({ node, style, dragHandle }: NodeRendererProps<NTNode>) {
-  console.info(`render nodes: ${node}`);
+  const Icon = BsTree;
   return (
-    <div style={style} ref={dragHandle}>
-      {node.isLeaf ? "🍁" : "🗀"}
-      {node.data.name}
+    <div
+      ref={dragHandle}
+      style={style}
+      className={clsx(styles.node, node.state)}
+      onClick={() => node.isInternal && node.toggle()}
+    >
+      <FolderArrow node={node} />
+      <span>
+        <Icon />
+      </span>
+      <span>{node.isEditing ? <Input node={node} /> : node.data.name}</span>
     </div>
   );
 }
