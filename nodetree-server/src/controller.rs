@@ -176,8 +176,15 @@ mod test {
     }
 
     #[tokio::test]
-    async fn insert_nodes() {
+    async fn test_insert() {
+        for i in 1..=100000 {
+            insert_nodes(i).await;
+        }
+    }
+
+    async fn insert_nodes(prefix: i32) {
         let mut vec = vec![];
+        vec.push(prefix);
         let mut nodes = vec![];
         for i in 1..=4 {
             vec.push(i);
