@@ -1,52 +1,16 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
+import axios, { AxiosResponse } from "axios";
 
-axios.defaults.baseURL =
-  window.location.protocol + "//" + window.location.host + "/api";
+axios.defaults.baseURL = "http://chinslt.com:3011/";
 console.log("base url: " + axios.defaults.baseURL);
 
-export const createInstance = (config: AxiosRequestConfig): AxiosInstance => {
-  return axios.create(config);
+const responseBody = <T>(response: AxiosResponse<T>) => response.data;
+
+const requests = {
+  get: <T>(url: string) => axios.get<T>(url).then(responseBody),
+  post: <T>(url: string, body: {}) =>
+    axios.post<T>(url, body).then(responseBody),
+  put: <T>(url: string, body: {}) => axios.put<T>(url, body).then(responseBody),
+  del: <T>(url: string) => axios.delete<T>(url).then(responseBody),
 };
 
-export const get = async (url: string, config?: AxiosRequestConfig) => {
-  const _instance = createInstance(config || {});
-
-  const res = await _instance.get(url, config);
-  return res;
-};
-
-export const post = async (
-  url: string,
-  data: any,
-  config?: AxiosRequestConfig
-) => {
-  const _instance = createInstance(config || {});
-
-  const res = await _instance.post(url, data, config);
-  return res;
-};
-
-export const put = async (
-  url: string,
-  data: any,
-  config?: AxiosRequestConfig
-) => {
-  const _instance = createInstance(config || {});
-
-  const res = await _instance.put(url, data, config);
-  return res;
-};
-
-export const _delete = async (url: string, config?: AxiosRequestConfig) => {
-  const _instance = createInstance(config || {});
-
-  const res = await _instance.delete(url, config);
-  return res;
-};
-
-export const request = {
-  get,
-  post,
-  put,
-  delete: _delete,
-};
+export default requests;
