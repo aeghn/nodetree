@@ -12,7 +12,7 @@ pub struct Node {
     pub version: i16,
 
     pub is_current: bool,
-    pub delete_time: NaiveDateTime,
+    pub delete_time: Option<NaiveDateTime>,
 
     pub name: String,
     pub content: String,
