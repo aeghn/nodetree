@@ -1,4 +1,4 @@
-use std::{ops::Deref, sync::Arc};
+use std::{fmt::Debug, ops::Deref, sync::Arc};
 
 use axum::{
     extract::{DefaultBodyLimit, State},
@@ -7,30 +7,39 @@ use axum::{
             ACCEPT, ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS,
             ACCESS_CONTROL_ALLOW_ORIGIN, AUTHORIZATION, CONTENT_TYPE,
         },
-        HeaderValue, Response, StatusCode,
+        HeaderValue, StatusCode,
     },
-    response::IntoResponse,
+    response::{IntoResponse, Response},
     routing::{get, post},
     Json, Router,
 };
 use ntcore::{
-    mapper::Mapper,
-    model::{
-        node::{Node, NodeMoveResult},
+    mapper::{
+        node::{NodeMoveReq, NodeMoveRsp},
         nodefilter::NodeFilter,
+        Mapper,
     },
+    model::node::Node,
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tower_http::{
-    cors::{Any, CorsLayer},
+    cors::{any, Any, CorsLayer},
     set_header::SetResponseHeaderLayer,
     trace::{self, TraceLayer},
 };
-use tracing::{error, info, Level};
+use tracing::{debug, error, info, Level};
 
 #[derive(Clone)]
 pub struct WebAppState {
     mapper: Arc<dyn Mapper>,
+}
+
+fn routes() -> Router<WebAppState> {
+    Router::new()
+        .route("/api/insert-node", post(insert_node))
+        .route("/api/fetch-nodes", post(fetch_nodes))
+        .route("/api/fetch-all-nodes", get(fetch_all_nodes))
+        .route("/api/move-node", post(move_node))
 }
 
 pub async fn serve(mapper: Arc<dyn Mapper>, ip: &str, port: &u16) {
@@ -49,11 +58,7 @@ pub async fn serve(mapper: Arc<dyn Mapper>, ip: &str, port: &u16) {
         });
 
     let app = Router::new()
-        .layer(trace_layer)
-        .layer(cors_layer)
-        .route("/api/insert-node", post(insert_node))
-        .route("/api/fetch-nodes", post(fetch_nodes))
-        .route("/api/fetch-all-nodes", get(fetch_all_nodes))
+        .merge(routes())
         .with_state(state)
         .layer(SetResponseHeaderLayer::<_>::overriding(
             ACCESS_CONTROL_ALLOW_ORIGIN,
@@ -67,7 +72,10 @@ pub async fn serve(mapper: Arc<dyn Mapper>, ip: &str, port: &u16) {
             ACCESS_CONTROL_ALLOW_HEADERS,
             HeaderValue::from_static("*"),
         ))
-        .layer(DefaultBodyLimit::disable());
+        .layer(DefaultBodyLimit::disable())
+        // https://stackoverflow.com/questions/73498537/axum-router-rejecting-cors-options-preflight-with-405-even-with-corslayer/
+        .layer(cors_layer)
+        .layer(trace_layer);
 
     let listener = tokio::net::TcpListener::bind(format!("{}:{}", ip, port))
         .await
