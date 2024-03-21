@@ -85,63 +85,51 @@ pub async fn serve(mapper: Arc<dyn Mapper>, ip: &str, port: &u16) {
     axum::serve(listener, app).await.unwrap();
 }
 
-fn ferr(s: impl ToString) -> Response<String> {
-    error!("{}", s.to_string());
-    Response::builder().status(500).body(s.to_string()).unwrap()
-}
-
-#[derive(Serialize)]
-struct VecNodeWrapper(Vec<Node>);
-
-impl IntoResponse for VecNodeWrapper {
-    fn into_response(self) -> axum::response::Response {
-        Json(self).into_response()
-    }
-}
-
-#[derive(Serialize)]
-struct NodeMoveResultW(NodeMoveResult);
-
-impl IntoResponse for NodeMoveResultW {
-    fn into_response(self) -> axum::response::Response {
-        Json(self).into_response()
-    }
-}
-
-impl Deref for NodeMoveResultW {
-    type Target = NodeMoveResult;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
+fn print_and_trans_to_response<T>(result: anyhow::Result<T>) -> (StatusCode, Response)
+where
+    T: Serialize + Debug,
+{
+    match result {
+        Ok(r) => {
+            let j = Json(r);
+            debug!("return result: {:?}", j);
+            (StatusCode::OK, j.into_response())
+        }
+        Err(err) => {
+            let err_str = err.to_string();
+            error!("{}", err_str);
+            (StatusCode::INTERNAL_SERVER_ERROR, err_str.into_response())
+        }
     }
 }
 
 async fn insert_node(state: State<WebAppState>, Json(node): Json<Node>) -> impl IntoResponse {
-    info!("begin to insert node: {:?}", node);
-    state
-        .mapper
-        .insert_and_move(&node)
-        .await
-        .map(|e| NodeMoveResultW(e))
-        .map_err(|e| ferr(e))
+    info!("insert_node: {:?}", node);
+    let rest = state.mapper.insert_and_move(&node).await;
+    print_and_trans_to_response(rest)
 }
 
 async fn fetch_nodes(
     state: State<WebAppState>,
-    Json(node_filter): Json<NodeFilter>,
+    Json(req): Json<NodeFilter>,
 ) -> impl IntoResponse {
-    info!("begin to query node: {:?}", node_filter);
-    let rest = state.mapper.query_nodes(&node_filter).await.unwrap();
-    (StatusCode::OK, VecNodeWrapper(rest))
+    info!("fetch_nodes: {:?}", req);
+    let rest = state.mapper.query_nodes(&req).await;
+    print_and_trans_to_response(rest)
 }
 
 async fn fetch_all_nodes(state: State<WebAppState>) -> impl IntoResponse {
     fetch_nodes(state, Json(NodeFilter::All)).await
 }
 
+async fn move_node(state: State<WebAppState>, Json(req): Json<NodeMoveReq>) -> impl IntoResponse {
+    info!("move_node: {:?}", req);
+    let rest = state.mapper.move_nodes(&req).await;
+    print_and_trans_to_response(rest)
+}
+
 #[cfg(test)]
 mod test {
-    use axum::http::request;
     use clap::builder::Str;
     use ntcore::model::node::Node;
     use regex::Regex;
