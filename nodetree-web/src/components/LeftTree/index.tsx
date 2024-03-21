@@ -1,8 +1,13 @@
 import clsx from "clsx";
 import {
+  CreateHandler,
   CursorProps,
+  DeleteHandler,
+  MoveHandler,
   NodeApi,
   NodeRendererProps,
+  RenameHandler,
+  SimpleTree,
   Tree,
   TreeApi,
 } from "react-arborist";
@@ -10,64 +15,99 @@ import * as icons from "react-icons/md";
 import styles from "./tree.module.css";
 import { FillFlexParent } from "../fill-flex-parent";
 import { BsTree } from "react-icons/bs";
-import { ComponentType, useEffect, useState } from "react";
-import { fetchAllNodes } from "../../helpers/dataAgent";
+import { useEffect, useMemo, useState } from "react";
+import { fetchAllNodes, moveNode } from "../../helpers/dataAgent";
 import { arrangeNodes } from "../../helpers/nodeHelper";
 import { NTNode } from "../../model";
 
+let nextId = 0;
 
 export default function NTTree() {
   const [term] = useState("");
 
-  const [tree, setTree] = useState<TreeApi<NTNode> | null | undefined>(null);
+  const [data, setData] = useState<NTNode[]>([]);
+  const tree = useMemo(() => new SimpleTree<NTNode>(data), [data]);
 
   const [isLoading, setIsLoading] = useState(true);
-
-  const [allNodesData, setAllNodesData] = useState<NTNode[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.info("begin to get all nodes");
         const nodes = await fetchAllNodes();
         const arrangedNodes = arrangeNodes(nodes);
-        setAllNodesData(arrangedNodes);
+        setData(arrangedNodes);
         setIsLoading(false);
-        console.log("finished load all nodes");
+        console.log("Loaded all nodes");
       } catch (error) {
-        console.error(`unable get all nodes ${error}`);
+        console.error(`Unable get all nodes ${error}`);
       }
     };
 
     fetchData();
   }, []);
 
-  return (
+  const onMove: MoveHandler<NTNode> = (args: {
+    dragIds: string[];
+    parentId: null | string;
+    parentNode: NodeApi<NTNode> | null;
+    index: number;
+  }) => {
+    for (const id of args.dragIds) {
+      tree.move({ id, parentId: args.parentId, index: args.index });
+      let prev = args.parentNode?.children?.at(args.index - 1)?.id;
+      try {
+        moveNode(id, args.parentId, prev);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    setData(tree.data);
+  };
 
-    isLoading ? (
-      <div> Loading </div >
-    ) : (
-      <div className={styles.treeContainer}>
-        <FillFlexParent>
-          {({ width, height }) => {
-            return (
-              <Tree
-                ref={setTree}
-                initialData={allNodesData}
-                width={width}
-                height={height}
-                rowHeight={32}
-                renderCursor={Cursor}
-                searchTerm={term}
-                paddingBottom={32}
-              >
-                {Node}
-              </Tree>
-            );
-          }}
-        </FillFlexParent>
-      </div>
-    )
+  const onRename: RenameHandler<NTNode> = ({ name, id }) => {
+    tree.update({ id, changes: { name } as any });
+    setData(tree.data);
+  };
+
+  const onCreate: CreateHandler<NTNode> = ({ parentId, index, type }) => {
+    const data = { id: `simple-tree-id-${nextId++}`, name: "" } as any;
+    if (type === "internal") data.children = [];
+    tree.create({ parentId, index, data });
+    setData(tree.data);
+    return data;
+  };
+
+  const onDelete: DeleteHandler<NTNode> = (args: { ids: string[] }) => {
+    args.ids.forEach((id) => tree.drop({ id }));
+    setData(tree.data);
+  };
+
+  return isLoading ? (
+    <div> Loading </div>
+  ) : (
+    <div className={styles.treeContainer}>
+      <FillFlexParent>
+        {({ width, height }) => {
+          return (
+            <Tree
+              data={data}
+              width={width}
+              height={height}
+              rowHeight={32}
+              renderCursor={Cursor}
+              searchTerm={term}
+              paddingBottom={32}
+              onMove={onMove}
+              onRename={onRename}
+              onCreate={onCreate}
+              onDelete={onDelete}
+            >
+              {Node}
+            </Tree>
+          );
+        }}
+      </FillFlexParent>
+    </div>
   );
 }
 
