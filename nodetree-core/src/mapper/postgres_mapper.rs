@@ -9,13 +9,14 @@ use tracing::info;
 
 use crate::{
     constants,
-    model::{
-        node::{Node, NodeId, NodeMapper, NodeMoveResult},
-        nodefilter::NodeFilter,
-    },
+    model::node::{Node, NodeId},
 };
 
-use super::Mapper;
+use super::{
+    node::{NodeMapper, NodeMoveReq, NodeMoveRsp},
+    nodefilter::NodeFilter,
+    Mapper,
+};
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct PostgresConfig {
@@ -160,13 +161,12 @@ impl NodeMapper for PostgresMapper {
         Ok(nodes)
     }
 
-    async fn move_nodes(
-        &self,
-        node_id: &NodeId,
-        parent_id: &NodeId,
-        prev_slibing: Option<&NodeId>,
-    ) -> anyhow::Result<NodeMoveResult> {
-        info!("move {:?} to {:?}|^|{:?}", node_id, parent_id, prev_slibing);
+    async fn move_nodes(&self, node_move_req: &NodeMoveReq) -> anyhow::Result<NodeMoveRsp> {
+        let node_id = &node_move_req.id;
+        let parent_id = &node_move_req.parent_id;
+        let prev_slibing = node_move_req.prev_sliding_id.as_ref();
+
+        info!("move {:?} to {:?}.{:?}|^", node_id, parent_id, prev_slibing);
         let stmt = self.pool.get().await?;
 
         let rows = stmt
@@ -195,7 +195,6 @@ impl NodeMapper for PostgresMapper {
         let old_parent_id = &node.map(|e| e.parent_id.clone()).unwrap();
 
         if let Some(ref old_next) = old_next {
-            info!("move old next");
             stmt.execute(
                 "update nodes set prev_sliding_id = $1 where id = $2",
                 &[old_prev_id, &old_next.id],
@@ -203,7 +202,6 @@ impl NodeMapper for PostgresMapper {
             .await?;
         }
 
-        info!("move current");
         stmt.execute(
             "update nodes set prev_sliding_id = $1, parent_id = $2 where id = $3",
             &[&prev_slibing, &parent_id, &node_id],
@@ -219,7 +217,7 @@ impl NodeMapper for PostgresMapper {
             .await?;
         }
 
-        Ok(NodeMoveResult {
+        Ok(NodeMoveRsp {
             new_parent: parent_id.clone(),
             new_prev: prev_slibing.clone().map(|e| e.clone()),
             new_next: new_next.map(|e| e.id.clone()),

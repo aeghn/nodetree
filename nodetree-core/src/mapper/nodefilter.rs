@@ -3,7 +3,8 @@ use std::any::Any;
 use serde::{de, Deserialize, Serialize};
 use serde_json::Value;
 
-use super::node::NodeId;
+use crate::model::node::NodeId;
+
 
 #[derive(Clone, Debug, Serialize)]
 pub enum NodeFilter {
@@ -87,7 +88,8 @@ impl<'de> Deserialize<'de> for NodeFilter {
 
 #[cfg(test)]
 mod test {
-    use crate::model::nodefilter::NodeFilter;
+    use crate::mapper::nodefilter::NodeFilter;
+
 
     #[test]
     fn test() {

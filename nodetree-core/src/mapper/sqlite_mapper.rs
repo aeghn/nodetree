@@ -2,13 +2,6 @@ use async_trait::async_trait;
 use deadpool_sqlite::Pool;
 use serde::Deserialize;
 
-use crate::model::{
-    node::{Node, NodeId, NodeMapper, NodeMoveResult},
-    nodefilter::NodeFilter,
-};
-
-use super::Mapper;
-
 pub struct SqliteMapper {
     pool: Pool,
 }
