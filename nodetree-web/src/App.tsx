@@ -6,13 +6,9 @@ function App() {
   return (
     <div>
       <h1>NTTree</h1>
-      <div>
-        <div>
-          <div>
-            <NTTree />
-          </div>
-        </div>
-      </div>
+
+      <NTTree />
+
     </div>
   );
 }
