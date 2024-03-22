@@ -6,7 +6,7 @@
 }
 
 [role="treeitem"]:has(.node) {
-    color: white;
+    color: #999;
     border-radius: 0 16px 16px 0;
     cursor: pointer;
     font-weight: 400;
@@ -16,31 +16,31 @@
 }
 
 [role="treeitem"]:has(.node):focus-visible {
-    background-color: rgba(255, 255, 255, .2);
+    background-color: rgba(100, 48, 48, 0.2);
     outline: none;
 }
 
 [role="treeitem"][aria-selected="true"]:has(.node):focus-visible {
-    background-color: rgba(255, 255, 255, .4);
+    background-color: rgba(0, 0, 250, 0.4);
     outline: none;
 }
 
 [role="treeitem"]:has(.node):hover {
-    background-color: rgba(255, 255, 255, .2);
+    background-color: rgba(0, 30, 200, 0.2);
 }
 
 [role="treeitem"][aria-selected="true"]:has(.node) {
-    background-color: rgba(255, 255, 255, .3);
+    background-color: rgba(0, 200, 0, .3);
     font-weight: 700;
 }
 
 [role="treeitem"]:has(.node:global(.willReceiveDrop)) {
-    background-color: rgba(255, 255, 255, .4);
-    border: 1px dashed white;
+    background-color: rgba(255, 1, 1, 0.4);
+    border: 1px dashed #a00;
 }
 
 [role="treeitem"][aria-selected="true"] .node {
-    color: white;
+    color: black;
 }
 
 .node {
@@ -80,6 +80,6 @@
 .dropCursor {
     width: 100%;
     height: 0px;
-    border-top: 2px dotted white;
+    border-top: 2px dotted #888;
     position: absolute;
 }

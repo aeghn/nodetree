@@ -101,6 +101,7 @@ export default function NTTree() {
               onRename={onRename}
               onCreate={onCreate}
               onDelete={onDelete}
+              openByDefault={true}
             >
               {Node}
             </Tree>
@@ -112,7 +113,6 @@ export default function NTTree() {
 }
 
 function Node({ node, style, dragHandle }: NodeRendererProps<NTNode>) {
-  const Icon = BsTree;
   return (
     <div
       ref={dragHandle}
@@ -121,9 +121,7 @@ function Node({ node, style, dragHandle }: NodeRendererProps<NTNode>) {
       onClick={() => node.isInternal && node.toggle()}
     >
       <FolderArrow node={node} />
-      <span>
-        <Icon />
-      </span>
+      <span>|</span>
       <span>{node.isEditing ? <Input node={node} /> : node.data.name}</span>
     </div>
   );

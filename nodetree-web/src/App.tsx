@@ -1,6 +1,6 @@
 import React from "react";
 import "./App.css";
-import NTTree from "./components/LeftTree";
+import NTTree from "./components/NTTree";
 
 function App() {
   return (
