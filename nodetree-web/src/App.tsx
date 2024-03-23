@@ -1,4 +1,3 @@
-import React from "react";
 import "./App.css";
 import NTTree from "./components/NTTree";
 
@@ -8,7 +7,6 @@ function App() {
       <h1>NTTree</h1>
 
       <NTTree />
-
     </div>
   );
 }

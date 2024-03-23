@@ -9,12 +9,10 @@ import {
   RenameHandler,
   SimpleTree,
   Tree,
-  TreeApi,
 } from "react-arborist";
 import * as icons from "react-icons/md";
 import styles from "./tree.module.css";
 import { FillFlexParent } from "../fill-flex-parent";
-import { BsTree } from "react-icons/bs";
 import { useEffect, useMemo, useState } from "react";
 import { fetchAllNodes, moveNode } from "../../helpers/dataAgent";
 import { arrangeNodes } from "../../helpers/nodeHelper";
@@ -54,7 +52,8 @@ export default function NTTree() {
   }) => {
     for (const id of args.dragIds) {
       tree.move({ id, parentId: args.parentId, index: args.index });
-      let prev = args.parentNode?.children?.at(args.index - 1)?.id;
+      const index = args.index - 1;
+      const prev = args.parentNode?.children?.[index]?.id;
       try {
         moveNode(id, args.parentId, prev);
       } catch (error) {
