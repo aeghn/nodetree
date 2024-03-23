@@ -1,6 +1,0 @@
-{
-    "rust-analyzer.linkedProjects": [
-        "./nodetree-core/Cargo.toml",
-        "./nodetree-core/Cargo.toml"
-    ]
-}
