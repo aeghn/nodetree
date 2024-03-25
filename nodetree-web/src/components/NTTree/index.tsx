@@ -12,7 +12,6 @@ import {
 } from "react-arborist";
 import * as icons from "react-icons/md";
 import styles from "./tree.module.css";
-import { FillFlexParent } from "../fill-flex-parent";
 import { useEffect, useMemo, useState } from "react";
 import { fetchAllNodes, moveNode } from "../../helpers/dataAgent";
 import { arrangeNodes } from "../../helpers/nodeHelper";
@@ -20,7 +19,9 @@ import { NTNode } from "../../model";
 
 let nextId = 0;
 
-export default function NTTree() {
+export const NTTree: React.FC<{
+  height: number | undefined;
+}> = ({ height }) => {
   const [term] = useState("");
 
   const [data, setData] = useState<NTNode[]>([]);
@@ -64,12 +65,12 @@ export default function NTTree() {
   };
 
   const onRename: RenameHandler<NTNode> = ({ name, id }) => {
-    tree.update({ id, changes: { name } as any });
+    tree.update({ id, changes: { name } as NTNode });
     setData(tree.data);
   };
 
   const onCreate: CreateHandler<NTNode> = ({ parentId, index, type }) => {
-    const data = { id: `simple-tree-id-${nextId++}`, name: "" } as any;
+    const data = { id: `simple-tree-id-${nextId++}`, name: "" } as NTNode;
     if (type === "internal") data.children = [];
     tree.create({ parentId, index, data });
     setData(tree.data);
@@ -85,31 +86,25 @@ export default function NTTree() {
     <div> Loading </div>
   ) : (
     <div className={styles.treeContainer}>
-      <FillFlexParent>
-        {({ width, height }) => {
-          return (
-            <Tree
-              data={data}
-              width={width}
-              height={height}
-              rowHeight={32}
-              renderCursor={Cursor}
-              searchTerm={term}
-              paddingBottom={32}
-              onMove={onMove}
-              onRename={onRename}
-              onCreate={onCreate}
-              onDelete={onDelete}
-              openByDefault={true}
-            >
-              {Node}
-            </Tree>
-          );
-        }}
-      </FillFlexParent>
+      <Tree
+        data={data}
+        width="100%"
+        height={height}
+        rowHeight={32}
+        renderCursor={Cursor}
+        searchTerm={term}
+        paddingBottom={32}
+        onMove={onMove}
+        onRename={onRename}
+        onCreate={onCreate}
+        onDelete={onDelete}
+        openByDefault={true}
+      >
+        {Node}
+      </Tree>
     </div>
   );
-}
+};
 
 function Node({ node, style, dragHandle }: NodeRendererProps<NTNode>) {
   return (
@@ -143,7 +138,7 @@ function Input({ node }: { node: NodeApi<NTNode> }) {
 }
 
 function FolderArrow({ node }: { node: NodeApi<NTNode> }) {
-  if (node.isLeaf) return <span></span>;
+  if (node.isLeaf || node.children?.length == 0) return <span></span>;
   return (
     <span>
       {node.isOpen ? <icons.MdArrowDropDown /> : <icons.MdArrowRight />}

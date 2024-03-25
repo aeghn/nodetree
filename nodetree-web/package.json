@@ -1,16 +1,15 @@
 {
   "name": "nodetree-web",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --host",
     "build": "tsc && vite build",
+    "dev": "vite --host",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@tailwindcss/typography": "^0.5.10",
     "@tiptap/extension-color": "^2.2.4",
     "@tiptap/extension-image": "^2.2.4",
     "@tiptap/extension-list-item": "^2.2.4",
@@ -20,6 +19,7 @@
     "@tiptap/starter-kit": "^2.2.4",
     "axios": "^1.6.8",
     "clsx": "^2.1.0",
+    "mac-scrollbar": "^0.13.6",
     "react": "^18.2.0",
     "react-arborist": "^3.4.0",
     "react-dom": "^18.2.0",
@@ -28,6 +28,7 @@
     "web-vitals": "^3.5.2"
   },
   "devDependencies": {
+    "@tailwindcss/typography": "^0.5.10",
     "@tiptap/pm": "^2.2.4",
     "@tiptap/react": "^2.2.4",
     "@tiptap/starter-kit": "^2.2.4",

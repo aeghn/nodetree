@@ -5,9 +5,11 @@ import Image from "@tiptap/extension-image";
 import TextAlign from "@tiptap/extension-text-align";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import React from "react";
 
-
-export default function NTEditor() {
+export const NTEditor: React.FC<{
+  height: number | undefined;
+}> = ({ height }) => {
   const editor = useEditor({
     extensions: [
       Image.configure({
@@ -17,7 +19,7 @@ export default function NTEditor() {
       }),
       TextAlign.configure({
         types: ["heading", "paragraph"],
-        defaultAlignment: "right",
+        defaultAlignment: "left",
       }),
       Color.configure({ types: [TextStyle.name, ListItem.name] }),
       //@ts-ignore
@@ -35,11 +37,11 @@ export default function NTEditor() {
     ],
   });
 
-  return (
+  const style = {
+    flex: 1,
+    width: "100%",
+    height: "100%",
+  };
 
-    <div className="rounded-xl h-full">
-      <EditorContent editor={editor} />
-    </div>
-
-  );
+  return <EditorContent editor={editor} height={height} style={style} />;
 };

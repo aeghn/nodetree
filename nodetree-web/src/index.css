@@ -1,18 +1,18 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@tailwind variants;
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@layer base {
+  * {
+    @apply box-border;
+  }
+
+  body {
+    direction: ltr;
+    @apply font-sans mx-auto;
+  }
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+.ProseMirror {
+  @apply p-2 max-w-full max-h-full h-full rounded-lg prose-ol:px-4 prose-sm prose prose-p:text-black prose-strong:text-black prose-ul:px-4 prose-headings:text-black prose-headings:my-2 prose-p:my-2 sm:prose-base lg:prose-lg xl:prose-2xl focus:outline-none overflow-auto;
 }
