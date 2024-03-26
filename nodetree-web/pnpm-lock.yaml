@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  react-arborist@3.4.0:
+    hash: dpzs3tqizbnreqpsz5hrww2dne
+    path: patches/react-arborist@3.4.0.patch
+
 dependencies:
   '@tiptap/extension-color':
     specifier: ^2.2.4
@@ -40,7 +45,7 @@ dependencies:
     version: 18.2.0
   react-arborist:
     specifier: ^3.4.0
-    version: 3.4.0(@types/node@20.11.30)(@types/react@18.2.67)(react-dom@18.2.0)(react@18.2.0)
+    version: 3.4.0(patch_hash=dpzs3tqizbnreqpsz5hrww2dne)(@types/node@20.11.30)(@types/react@18.2.67)(react-dom@18.2.0)(react@18.2.0)
   react-dom:
     specifier: ^18.2.0
     version: 18.2.0(react@18.2.0)
@@ -2433,7 +2438,7 @@ packages:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
     dev: true
 
-  /react-arborist@3.4.0(@types/node@20.11.30)(@types/react@18.2.67)(react-dom@18.2.0)(react@18.2.0):
+  /react-arborist@3.4.0(patch_hash=dpzs3tqizbnreqpsz5hrww2dne)(@types/node@20.11.30)(@types/react@18.2.67)(react-dom@18.2.0)(react@18.2.0):
     resolution: {integrity: sha512-QI46oRGXJr0oaQfqqVobIiIoqPp5Y5gM69D2A2P7uHVif+X75XWnScR5drC7YDKgJ4CXVaDeFwnYKOWRRfncMg==}
     peerDependencies:
       react: '>= 16.14'
@@ -2451,6 +2456,7 @@ packages:
       - '@types/node'
       - '@types/react'
     dev: false
+    patched: true
 
   /react-dnd-html5-backend@14.1.0:
     resolution: {integrity: sha512-6ONeqEC3XKVf4eVmMTe0oPds+c5B9Foyj8p/ZKLb7kL2qh9COYxiBHv3szd6gztqi/efkmriywLUVlPotqoJyw==}
