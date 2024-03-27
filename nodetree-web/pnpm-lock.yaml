@@ -4,11 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-patchedDependencies:
-  react-arborist@3.4.0:
-    hash: s4psnkul6xmz5e4oxfufnvq4qe
-    path: patches/react-arborist@3.4.0.patch
-
 dependencies:
   '@tiptap/extension-color':
     specifier: ^2.2.4
@@ -44,8 +39,8 @@ dependencies:
     specifier: ^18.2.0
     version: 18.2.0
   react-arborist:
-    specifier: ^3.4.0
-    version: 3.4.0(patch_hash=s4psnkul6xmz5e4oxfufnvq4qe)(@types/node@20.11.30)(@types/react@18.2.72)(react-dom@18.2.0)(react@18.2.0)
+    specifier: file:/home/chin/Projects/react-arborist/packages/react-arborist
+    version: file:../../react-arborist/packages/react-arborist(@types/node@20.11.30)(@types/react@18.2.72)(react-dom@18.2.0)(react@18.2.0)
   react-dom:
     specifier: ^18.2.0
     version: 18.2.0(react@18.2.0)
@@ -2434,26 +2429,6 @@ packages:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
     dev: true
 
-  /react-arborist@3.4.0(patch_hash=s4psnkul6xmz5e4oxfufnvq4qe)(@types/node@20.11.30)(@types/react@18.2.72)(react-dom@18.2.0)(react@18.2.0):
-    resolution: {integrity: sha512-QI46oRGXJr0oaQfqqVobIiIoqPp5Y5gM69D2A2P7uHVif+X75XWnScR5drC7YDKgJ4CXVaDeFwnYKOWRRfncMg==}
-    peerDependencies:
-      react: '>= 16.14'
-      react-dom: '>= 16.14'
-    dependencies:
-      react: 18.2.0
-      react-dnd: 14.0.5(@types/node@20.11.30)(@types/react@18.2.72)(react@18.2.0)
-      react-dnd-html5-backend: 14.1.0
-      react-dom: 18.2.0(react@18.2.0)
-      react-window: 1.8.10(react-dom@18.2.0)(react@18.2.0)
-      redux: 5.0.1
-      use-sync-external-store: 1.2.0(react@18.2.0)
-    transitivePeerDependencies:
-      - '@types/hoist-non-react-statics'
-      - '@types/node'
-      - '@types/react'
-    dev: false
-    patched: true
-
   /react-dnd-html5-backend@14.1.0:
     resolution: {integrity: sha512-6ONeqEC3XKVf4eVmMTe0oPds+c5B9Foyj8p/ZKLb7kL2qh9COYxiBHv3szd6gztqi/efkmriywLUVlPotqoJyw==}
     dependencies:
@@ -2941,3 +2916,24 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
     dev: true
+
+  file:../../react-arborist/packages/react-arborist(@types/node@20.11.30)(@types/react@18.2.72)(react-dom@18.2.0)(react@18.2.0):
+    resolution: {directory: ../../react-arborist/packages/react-arborist, type: directory}
+    id: file:../../react-arborist/packages/react-arborist
+    name: react-arborist
+    peerDependencies:
+      react: '>= 16.14'
+      react-dom: '>= 16.14'
+    dependencies:
+      react: 18.2.0
+      react-dnd: 14.0.5(@types/node@20.11.30)(@types/react@18.2.72)(react@18.2.0)
+      react-dnd-html5-backend: 14.1.0
+      react-dom: 18.2.0(react@18.2.0)
+      react-window: 1.8.10(react-dom@18.2.0)(react@18.2.0)
+      redux: 5.0.1
+      use-sync-external-store: 1.2.0(react@18.2.0)
+    transitivePeerDependencies:
+      - '@types/hoist-non-react-statics'
+      - '@types/node'
+      - '@types/react'
+    dev: false

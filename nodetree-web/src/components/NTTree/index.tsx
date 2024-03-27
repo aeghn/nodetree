@@ -95,8 +95,13 @@ export const NTTree: React.FC<{
         onRename={onRename}
         onCreate={onCreate}
         onDelete={onDelete}
-          openByDefault={true}
-
+        openByDefault={true}
+        keybinding={{
+          ArrowDown: "ActivateNext",
+          ArrowUp: "ActivatePrev",
+          ArrowRight: "Right",
+          ArrowLeft: "Left",
+        }}
       >
         {Node}
       </Tree>
