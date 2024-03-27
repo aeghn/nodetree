@@ -22,8 +22,6 @@ let nextId = 0;
 export const NTTree: React.FC<{
   height: number | undefined;
 }> = ({ height }) => {
-  const [term] = useState("");
-
   const [data, setData] = useState<NTNode[]>([]);
   const tree = useMemo(() => new SimpleTree<NTNode>(data), [data]);
 
@@ -92,13 +90,13 @@ export const NTTree: React.FC<{
         height={height}
         rowHeight={32}
         renderCursor={Cursor}
-        searchTerm={term}
         paddingBottom={32}
         onMove={onMove}
         onRename={onRename}
         onCreate={onCreate}
         onDelete={onDelete}
-        openByDefault={true}
+          openByDefault={true}
+
       >
         {Node}
       </Tree>

@@ -1,6 +1,5 @@
 [role="treeitem"]:has(.node) {
     color: #999;
-    border-radius: 0 16px 16px 0;
     cursor: pointer;
     font-weight: 400;
     font-size: 14px;
