@@ -101,6 +101,10 @@ export const NTTree: React.FC<{
           ArrowUp: "ActivatePrev",
           ArrowRight: "Right",
           ArrowLeft: "Left",
+          Tab: "Toggle",
+          c: "CreateChild",
+          s: "CreateSlibing",
+          R: "Rename",
         }}
       >
         {Node}
