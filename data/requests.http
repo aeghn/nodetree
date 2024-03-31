@@ -48,5 +48,5 @@ Content-Type: image/png
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
 ### Download File
-GET {{server}}/api/download/4360332228bc4070abcd3ce5f88b8064
+GET {{server}}/api/download/f9c3f33086b54f5fa5dd9330e6ec3d4c
 
