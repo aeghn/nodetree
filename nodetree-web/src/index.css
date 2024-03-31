@@ -8,7 +8,6 @@
   }
 
   body {
-    direction: ltr;
     @apply font-sans mx-auto;
   }
 }

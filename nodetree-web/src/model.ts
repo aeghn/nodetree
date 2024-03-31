@@ -34,3 +34,14 @@ export interface NTNode {
 
   children?: NTNode[];
 }
+
+export interface Asset {
+  id: string,
+
+  username: string | undefined,
+  ori_file_name: string,
+
+  content_type: string,
+
+  create_time: Date,
+}

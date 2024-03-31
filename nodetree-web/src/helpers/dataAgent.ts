@@ -1,4 +1,4 @@
-import { NTNode } from "../model";
+import { Asset, NTNode } from "../model";
 import requests from "./request";
 
 export const fetchAllNodes = async (): Promise<NTNode[]> => {
@@ -17,4 +17,15 @@ export const moveNode = async (
     parent_id: parentId,
     prev_sliding_id: prevSlidingId,
   });
+};
+
+
+export const uploadImage = async (
+  file: File
+): Promise<Asset> => {
+  const data = new FormData();
+  data.append('file', file);
+
+  const assets: Asset[] = await requests.post("api/upload", data);
+  return assets[0]
 };
