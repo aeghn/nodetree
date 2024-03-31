@@ -1,4 +1,6 @@
-use std::{fmt::Debug, ops::Deref, sync::Arc};
+pub mod asset;
+
+use std::{fmt::Debug, sync::Arc};
 
 use axum::{
     extract::{DefaultBodyLimit, State},
@@ -14,24 +16,23 @@ use axum::{
     Json, Router,
 };
 use ntcore::{
-    mapper::{
-        node::{NodeMoveReq, NodeMoveRsp},
-        nodefilter::NodeFilter,
-        Mapper,
-    },
+    mapper::{node::NodeMoveReq, nodefilter::NodeFilter, Mapper},
     model::node::Node,
 };
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use tower_http::{
-    cors::{any, Any, CorsLayer},
+    cors::{Any, CorsLayer},
     set_header::SetResponseHeaderLayer,
     trace::{self, TraceLayer},
 };
 use tracing::{debug, error, info, Level};
 
+use crate::config::Config;
+
 #[derive(Clone)]
 pub struct WebAppState {
     mapper: Arc<dyn Mapper>,
+    config: Arc<Config>,
 }
 
 fn routes() -> Router<WebAppState> {
@@ -40,10 +41,14 @@ fn routes() -> Router<WebAppState> {
         .route("/api/fetch-nodes", post(fetch_nodes))
         .route("/api/fetch-all-nodes", get(fetch_all_nodes))
         .route("/api/move-node", post(move_node))
+        .merge(asset::routes())
 }
 
-pub async fn serve(mapper: Arc<dyn Mapper>, ip: &str, port: &u16) {
-    let state = WebAppState { mapper };
+pub async fn serve(mapper: Arc<dyn Mapper>, config: Config) {
+    let state = WebAppState {
+        mapper,
+        config: Arc::new(config.clone()),
+    };
 
     let cors_layer = CorsLayer::new()
         .allow_headers([AUTHORIZATION, ACCEPT, CONTENT_TYPE])
@@ -77,10 +82,10 @@ pub async fn serve(mapper: Arc<dyn Mapper>, ip: &str, port: &u16) {
         .layer(cors_layer)
         .layer(trace_layer);
 
-    let listener = tokio::net::TcpListener::bind(format!("{}:{}", ip, port))
-        .await
-        .unwrap();
-    info!("server: {}:{}", ip, port);
+    let server_url = format!("{}:{}", "0.0.0.0", &config.server.port);
+
+    let listener = tokio::net::TcpListener::bind(&server_url).await.unwrap();
+    info!("server: {}", server_url);
 
     axum::serve(listener, app).await.unwrap();
 }
@@ -109,10 +114,7 @@ async fn insert_node(state: State<WebAppState>, Json(node): Json<Node>) -> impl 
     print_and_trans_to_response(rest)
 }
 
-async fn fetch_nodes(
-    state: State<WebAppState>,
-    Json(req): Json<NodeFilter>,
-) -> impl IntoResponse {
+async fn fetch_nodes(state: State<WebAppState>, Json(req): Json<NodeFilter>) -> impl IntoResponse {
     info!("fetch_nodes: {:?}", req);
     let rest = state.mapper.query_nodes(&req).await;
     print_and_trans_to_response(rest)
@@ -130,7 +132,6 @@ async fn move_node(state: State<WebAppState>, Json(req): Json<NodeMoveReq>) -> i
 
 #[cfg(test)]
 mod test {
-    use clap::builder::Str;
     use ntcore::model::node::Node;
     use regex::Regex;
     use reqwest::header::HeaderMap;

@@ -22,6 +22,11 @@ pub struct Server {
     pub port: u16,
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct Common {
+    pub asset_base_dir: String,
+}
+
 impl Into<anyhow::Result<Arc<dyn Mapper>>> for DbConfig {
     fn into(self) -> anyhow::Result<Arc<(dyn Mapper + 'static)>> {
         let mapper = match self {
@@ -35,11 +40,12 @@ impl Into<anyhow::Result<Arc<dyn Mapper>>> for DbConfig {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Config {
     #[serde(rename = "mapper")]
     pub db_config: DbConfig,
     pub server: Server,
+    pub common: Common,
 }
 
 pub mod tests {

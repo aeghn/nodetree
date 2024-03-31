@@ -1,18 +1,24 @@
 use anyhow::Ok;
 use async_trait::async_trait;
 use bytes::BytesMut;
+use chrono::{NaiveDateTime, Utc};
 use deadpool_postgres::{Client, GenericClient, Pool};
 use postgres_types::{to_sql_checked, ToSql};
 use serde::Deserialize;
 use tokio_postgres::Row;
 use tracing::info;
+use uuid::Uuid;
 
 use crate::{
     constants,
-    model::node::{Node, NodeId},
+    model::{
+        assert::Asset,
+        node::{Node, NodeId},
+    },
 };
 
 use super::{
+    asset::AssetMapper,
     node::{NodeMapper, NodeMoveReq, NodeMoveRsp},
     nodefilter::NodeFilter,
     Mapper,
@@ -100,6 +106,50 @@ impl PostgresMapper {
             first_version_time: row.get("first_version_time"),
             is_current: row.get("is_current"),
         }
+    }
+}
+
+#[async_trait]
+impl AssetMapper for PostgresMapper {
+    async fn insert_asset(
+        &self,
+        ori_file_name: &str,
+        id: String,
+        content_type: String,
+        username: Option<String>,
+    ) -> anyhow::Result<Asset> {
+        let stmt = self.pool.get().await?;
+
+        let create_time = Utc::now().naive_utc();
+
+        stmt.execute(
+            "insert into assets(id, username, ori_file_name, content_type, create_time) values ($1,$2,$3,$4, $5)",
+            &[&id, &username, &ori_file_name, &content_type, &create_time],
+        )
+        .await
+        .map_err(|e| anyhow::Error::new(e))
+        .map(|_| Asset {
+            id,
+            username,
+            ori_file_name: ori_file_name.to_string(),
+            content_type,
+            create_time,
+        })
+    }
+
+    async fn query_asset_by_id(&self, id: &str) -> anyhow::Result<Asset> {
+        let stmt = self.pool.get().await?;
+        let row = stmt
+            .query_one("select * from assets where id = $1", &[&id])
+            .await?;
+
+        Ok(Asset {
+            id: row.get("id"),
+            username: row.get("username"),
+            ori_file_name: row.get("ori_file_name"),
+            content_type: row.get("content_type"),
+            create_time: row.get("create_time"),
+        })
     }
 }
 
@@ -243,7 +293,7 @@ impl Mapper for PostgresMapper {
     delete_time TIMESTAMP DEFAULT NULL,
     parent_id VARCHAR(255) NOT NULL,
     prev_sliding_id VARCHAR(255),
-    create_time TIMESTAMP NOT NULL,
+    create_time TIMESTAMP NOT NULL default CURRENT_TIMESTAMP,
     first_version_time TIMESTAMP NOT NULL,
     primary key (id, version)
 );",
@@ -261,6 +311,21 @@ impl Mapper for PostgresMapper {
 
     async fn ensure_table_alarm_definations(&self) -> anyhow::Result<()> {
         Ok(())
+    }
+
+    async fn ensure_table_assets(&self) -> anyhow::Result<()> {
+        self.create_table(
+            constants::TABLE_NAME_ASSETS,
+            "CREATE TABLE assets (
+    id VARCHAR(40) NOT NULL,
+    ori_file_name TEXT NOT NULL,
+    username TEXT NOT NULL,
+    create_time TIMESTAMP NOT NULL default CURRENT_TIMESTAMP,
+    content_type TEXT,
+    primary key (id)
+);",
+        )
+        .await
     }
 }
 

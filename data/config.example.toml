@@ -8,3 +8,6 @@ port = 5432
 
 [server]
 port = 3011
+
+[common]
+asset_base_dir = "/home/chin/files/nodetree/assets"

@@ -26,6 +26,8 @@ serde = { workspace = true, features = ["derive"] }
 async-trait = { workspace = true }
 serde_json = { workspace = true }
 
+uuid = { workspace = true }
+
 [features]
 default = ["postgres", "sqlite"]
 postgres = ["tokio-postgres", "postgres-types", "deadpool-postgres", "bytes"]
