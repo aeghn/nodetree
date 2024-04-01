@@ -1,19 +1,17 @@
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import "tiptap-extension-resizable-image/styles.css";
 import { Highlight } from "@tiptap/extension-highlight";
 import { Typography } from "@tiptap/extension-typography";
 import { ResizableImage } from "./extensions/ResizableImage/ResizableImage";
-import { saveNode, uploadImage } from "../../helpers/dataAgent";
-import { NTNode } from "../../model";
+import { uploadImage } from "../../helpers/dataAgent";
 
 export const NTEditor: React.FC<{
   height: number | undefined;
-  node: NTNode;
-}> = ({ height, node }) => {
-  const [id, setId] = useState<string>("");
-
+  content: string;
+  setOutContent: Function;
+}> = ({ height, content, setOutContent }) => {
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -60,25 +58,20 @@ export const NTEditor: React.FC<{
       const json = editor.getJSON();
       if (json) {
         const content = JSON.stringify(json);
-        const n = { ...node, content: content };
-        saveNode(n);
+        setOutContent(content)
       }
     },
   });
 
-  if (node.id !== id) {
-    setId(node.id);
-  }
-
   useEffect(() => {
-    let text = node.content;
+    let text = content;
     const trimedStart = text.trimStart();
     if (
       text.length > 0 &&
       (trimedStart.startsWith("{") || trimedStart.startsWith("["))
     ) {
       try {
-        text = JSON.parse(node.content);
+        text = JSON.parse(text);
       } catch (err) {
         console.error("unable to parse node content: ", err);
       }
@@ -87,7 +80,7 @@ export const NTEditor: React.FC<{
     setTimeout(() => {
       editor?.commands.setContent(text);
     });
-  }, [id, node.content, editor?.commands]);
+  }, [content]);
 
   const style = {
     flex: 1,

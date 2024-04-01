@@ -21,7 +21,7 @@ let nextId = 0;
 
 export const NTTree: React.FC<{
   height: number | undefined;
-  setActivate: React.Dispatch<React.SetStateAction<NTNode | undefined>>;
+  setActivate: Function;
 }> = ({ height, setActivate }) => {
   const [data, setData] = useState<NTNode[]>([]);
   const tree = useMemo(() => new SimpleTree<NTNode>(data), [data]);
