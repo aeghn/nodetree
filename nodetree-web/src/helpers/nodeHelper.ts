@@ -5,6 +5,9 @@ export const arrangeNodes = (nodes: NTNode[]): NTNode[] => {
   const nodeIdSet = new Set<NodeId>(nodes.map((node) => node.id));
   for (const n of nodes) {
     n.children = [];
+  }
+
+  for (const n of nodes) {
     const p = nodeMap.get(n.parent_id);
     if (p != null) {
       p.children?.push(n);

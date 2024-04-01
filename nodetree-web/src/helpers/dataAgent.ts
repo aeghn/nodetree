@@ -19,13 +19,15 @@ export const moveNode = async (
   });
 };
 
-
-export const uploadImage = async (
-  file: File
-): Promise<Asset> => {
+export const uploadImage = async (file: File): Promise<Asset> => {
   const data = new FormData();
-  data.append('file', file);
+  data.append("file", file);
 
   const assets: Asset[] = await requests.post("api/upload", data);
-  return assets[0]
+  return assets[0];
+};
+
+export const saveNode = async (node: NTNode): Promise<NTNode> => {
+  const parsedNode: NTNode = await requests.post("api/insert-node", node);
+  return parsedNode;
 };

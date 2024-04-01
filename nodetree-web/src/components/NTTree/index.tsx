@@ -21,7 +21,8 @@ let nextId = 0;
 
 export const NTTree: React.FC<{
   height: number | undefined;
-}> = ({ height }) => {
+  setActivate: React.Dispatch<React.SetStateAction<NTNode | undefined>>;
+}> = ({ height, setActivate }) => {
   const [data, setData] = useState<NTNode[]>([]);
   const tree = useMemo(() => new SimpleTree<NTNode>(data), [data]);
 
@@ -96,6 +97,7 @@ export const NTTree: React.FC<{
         onCreate={onCreate}
         onDelete={onDelete}
         openByDefault={true}
+        onActivate={(node) => setActivate(node.data)}
         keybinding={{
           ArrowDown: "ActivateNext",
           ArrowUp: "ActivatePrev",
