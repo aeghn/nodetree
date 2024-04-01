@@ -13,9 +13,7 @@ export interface NTTag {
 
 export interface NTNode {
   id: NodeId;
-  version: number;
 
-  is_current: boolean;
   delete_time?: Date;
 
   name: string;

@@ -157,8 +157,6 @@ mod test {
 
         Node {
             id: id.clone().into(),
-            version: 0,
-            is_current: true,
             delete_time: None,
             name: id.clone(),
             content: String::new(),

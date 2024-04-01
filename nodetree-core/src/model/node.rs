@@ -9,9 +9,7 @@ use super::tag::Tag;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Node {
     pub id: NodeId,
-    pub version: i16,
 
-    pub is_current: bool,
     pub delete_time: Option<NaiveDateTime>,
 
     pub name: String,

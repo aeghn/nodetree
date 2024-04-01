@@ -93,7 +93,6 @@ impl PostgresMapper {
         let id = row.get("id");
         Node {
             id,
-            version: row.get("version"),
             name: row.get("name"),
             content: row.get("content"),
             user: row.get("username"),
@@ -104,7 +103,6 @@ impl PostgresMapper {
             delete_time: row.get("delete_time"),
             create_time: row.get("create_time"),
             first_version_time: row.get("first_version_time"),
-            is_current: row.get("is_current"),
         }
     }
 }
@@ -158,7 +156,13 @@ impl NodeMapper for PostgresMapper {
     async fn insert_node_simple(&self, node: &Node) -> anyhow::Result<()> {
         let stmt = self.pool.get().await?;
         stmt.execute(
-            "update nodes set is_current = false where id = $1",
+            "WITH moved_rows AS (
+    DELETE FROM nodes a
+    where id = $1
+    RETURNING a.*
+)
+INSERT INTO nodes_history 
+SELECT * FROM moved_rows;",
             &[&node.id],
         )
         .await
@@ -166,17 +170,15 @@ impl NodeMapper for PostgresMapper {
 
         info!("begin to really insert");
 
-        stmt.execute("insert into nodes(id, version, name, content, username, parent_id, create_time, first_version_time, is_current, delete_time) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+        stmt.execute("insert into nodes(id, name, content, username, parent_id, create_time, first_version_time, delete_time) values ($1,$2,$3,$4,$5,$6,$7,$8)",
         &[
             &node.id,
-            &node.version,
             &node.name,
             &node.content,
             &node.user,
             &node.parent_id,
             &node.create_time,
             &node.first_version_time,
-            &node.is_current,
             &node.delete_time
         ])
         .await
@@ -285,20 +287,44 @@ impl Mapper for PostgresMapper {
             constants::TABLE_NAME_NODES,
             "CREATE TABLE nodes (
     id VARCHAR(40) NOT NULL,
-    version SMALLINT NOT NULL,
     name VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
     username TEXT NOT NULL,
-    is_current BOOL NOT NULL,
     delete_time TIMESTAMP DEFAULT NULL,
-    parent_id VARCHAR(255) NOT NULL,
-    prev_sliding_id VARCHAR(255),
+    parent_id VARCHAR(40) DEFAULT NULL,
+    prev_sliding_id VARCHAR(40),
     create_time TIMESTAMP NOT NULL default CURRENT_TIMESTAMP,
     first_version_time TIMESTAMP NOT NULL,
-    primary key (id, version)
+    primary key (id)
 );",
         )
-        .await
+        .await?;
+
+        self.create_table(
+            constants::TABLE_NAME_NODES_HISTORY,
+            "CREATE TABLE nodes_history (
+    id VARCHAR(40) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    username TEXT NOT NULL,
+    delete_time TIMESTAMP DEFAULT NULL,
+    parent_id VARCHAR(40) DEFAULT NULL,
+    prev_sliding_id VARCHAR(40),
+    create_time TIMESTAMP NOT NULL default CURRENT_TIMESTAMP,
+    first_version_time TIMESTAMP NOT NULL
+);",
+        )
+        .await?;
+
+        let client = self.get_client().await?;
+        client
+            .execute(
+                "CREATE INDEX if not exists idx_nodes_history_id ON nodes_history (id);",
+                &[],
+            )
+            .await
+            .map(|_| ())
+            .map_err(anyhow::Error::new)
     }
 
     async fn ensure_table_tags(&self) -> anyhow::Result<()> {
