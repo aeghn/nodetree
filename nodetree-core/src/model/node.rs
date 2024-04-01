@@ -26,7 +26,7 @@ pub struct Node {
     pub first_version_time: NaiveDateTime,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct NodeId(String);
 
 impl NodeId {
@@ -65,16 +65,6 @@ impl From<&str> for NodeId {
         Self {
             0: value.to_string(),
         }
-    }
-}
-
-impl From<Option<String>> for NodeId {
-    fn from(value: Option<String>) -> Self {
-        let inner = match value {
-            Some(s) => s,
-            None => MAGIC_PREV_NODE_ID_EMPTY.to_string(),
-        };
-        Self { 0: inner }
     }
 }
 

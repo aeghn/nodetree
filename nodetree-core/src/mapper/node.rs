@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
@@ -62,4 +64,14 @@ pub trait NodeMapper {
     /// 3. set F's prev as P  
     /// 4. set X's parent as A and X' prev as D and E's prev as X  
     async fn move_nodes(&self, node_move_req: &NodeMoveReq) -> anyhow::Result<NodeMoveRsp>;
+
+    /// Find descendants recursively.  
+    ///
+    /// Return a HashMap which child_id points to its parent.
+    async fn find_descendant_ids(&self, id: &NodeId) -> anyhow::Result<HashMap<NodeId, NodeId>>;
+
+    /// Like `find_descendant_ids`, but find ancestors recursively.  
+    ///
+    /// Return a HashMap which child_id points to its parent.
+    async fn find_ancestor_ids(&self, id: &NodeId) -> anyhow::Result<HashMap<NodeId, NodeId>>;
 }

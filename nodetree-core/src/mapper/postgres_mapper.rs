@@ -1,13 +1,14 @@
+use std::collections::HashMap;
+
 use anyhow::Ok;
 use async_trait::async_trait;
 use bytes::BytesMut;
-use chrono::{NaiveDateTime, Utc};
+use chrono::{Utc};
 use deadpool_postgres::{Client, GenericClient, Pool};
 use postgres_types::{to_sql_checked, ToSql};
 use serde::Deserialize;
 use tokio_postgres::Row;
 use tracing::info;
-use uuid::Uuid;
 
 use crate::{
     constants,
@@ -277,6 +278,46 @@ SELECT * FROM moved_rows;",
             old_prev: old_prev_id.clone(),
             old_next: old_next.map(|o| o.id.clone()),
         })
+    }
+
+    async fn find_descendant_ids(&self, id: &NodeId) -> anyhow::Result<HashMap<NodeId, NodeId>> {
+        let stmt = self.pool.get().await?;
+
+        let map = stmt
+            .query(
+                "with recursive children(id, parent_id) as (
+select n.id, n.parent_id from nodes n where n.id = $1
+union 
+select n.id, n.parent_id from nodes n, children c where n.parent_id = c.id
+)
+select * from children;",
+                &[&id],
+            )
+            .await?
+            .iter()
+            .map(|row| (row.get("id"), row.get("parent_id")))
+            .collect();
+        Ok(map)
+    }
+
+    async fn find_ancestor_ids(&self, id: &NodeId) -> anyhow::Result<HashMap<NodeId, NodeId>> {
+        let stmt = self.pool.get().await?;
+
+        let map = stmt
+            .query(
+                "with recursive children(id, parent_id) as (
+select n.id, n.parent_id from nodes n where n.id = $1
+union 
+select n.id, n.parent_id from nodes n, children c where n.id = c.parent_id
+)
+select * from children;",
+                &[&id],
+            )
+            .await?
+            .iter()
+            .map(|row| (row.get("id"), row.get("parent_id")))
+            .collect();
+        Ok(map)
     }
 }
 
