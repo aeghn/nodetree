@@ -6,12 +6,13 @@ import { Highlight } from "@tiptap/extension-highlight";
 import { Typography } from "@tiptap/extension-typography";
 import { ResizableImage } from "./extensions/ResizableImage/ResizableImage";
 import { uploadImage } from "../../helpers/dataAgent";
+import { NTNode } from "../../model";
 
 export const NTEditor: React.FC<{
   height: number | undefined;
-  content: string;
-  setOutContent: Function;
-}> = ({ height, content, setOutContent }) => {
+  inNode: NTNode;
+  setOutNode: Function;
+}> = ({ height, inNode, setOutNode }) => {
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -57,14 +58,14 @@ export const NTEditor: React.FC<{
     onUpdate: ({ editor }) => {
       const json = editor.getJSON();
       if (json) {
-        const content = JSON.stringify(json);
-        setOutContent(content)
+        const node = { ...inNode, content: JSON.stringify(json) };
+        setOutNode(node)
       }
     },
   });
 
   useEffect(() => {
-    let text = content;
+    let text = inNode.content;
     const trimedStart = text.trimStart();
     if (
       text.length > 0 &&
@@ -80,7 +81,7 @@ export const NTEditor: React.FC<{
     setTimeout(() => {
       editor?.commands.setContent(text);
     });
-  }, [content]);
+  }, [inNode]);
 
   const style = {
     flex: 1,

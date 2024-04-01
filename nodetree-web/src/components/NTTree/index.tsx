@@ -22,7 +22,8 @@ let nextId = 0;
 export const NTTree: React.FC<{
   height: number | undefined;
   setActivate: Function;
-}> = ({ height, setActivate }) => {
+  treeRef: React.MutableRefObject<SimpleTree<NTNode> | null>;
+}> = ({ height, setActivate, treeRef }) => {
   const [data, setData] = useState<NTNode[]>([]);
   const tree = useMemo(() => new SimpleTree<NTNode>(data), [data]);
 
@@ -43,6 +44,13 @@ export const NTTree: React.FC<{
 
     fetchData();
   }, []);
+
+  useEffect(() => {
+    treeRef.current = tree;
+    return () => {
+      treeRef.current = null;
+    };
+  }, [tree, treeRef]);
 
   const onMove: MoveHandler<NTNode> = (args: {
     dragIds: string[];
@@ -124,7 +132,6 @@ function Node({ node, style, dragHandle }: NodeRendererProps<NTNode>) {
       onClick={() => node.isInternal && node.toggle()}
     >
       <FolderArrow node={node} />
-      <span>|</span>
       <span>{node.isEditing ? <Input node={node} /> : node.data.name}</span>
     </div>
   );

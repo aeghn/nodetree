@@ -1,25 +1,30 @@
 import useResizeObserver from "use-resize-observer";
 import { NTTree } from "./components/NTTree";
 import { NTEditor } from "./components/NTEditor";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NTNode } from "./model";
 import { saveNode } from "./helpers/dataAgent";
+import { SimpleTree } from "react-arborist";
 
 function App() {
   const { ref, height } = useResizeObserver<HTMLDivElement>({});
-  const [inContent, setInContent] = useState<string | undefined>();
-  const [outContent, setOutContent] = useState<string | undefined>();
-  const [currentNode, setCurrentNode] = useState<NTNode | undefined>(undefined);
-
-  const setCurrent = (node: NTNode) => {
-    setInContent(node.content);
-    setCurrentNode(node)
-  };
+  const [inNode, setInNode] = useState<NTNode>();
+  const [outNode, setOutNode] = useState<NTNode>();
+  const treeRef = useRef<SimpleTree<NTNode> | null>(null);
 
   useEffect(() => {
-    if (currentNode && outContent)
-      saveNode({ ...currentNode, content: outContent })
-  }, [outContent])
+    if (outNode) {
+      saveNode(outNode);
+      if (treeRef.current) {
+        treeRef.current.update({
+          id: outNode.id,
+          changes: {
+            ...outNode
+          }
+        })
+      }
+    }
+  }, [outNode])
 
   return (
     <div className="h-screen p-2 shadow">
@@ -28,15 +33,16 @@ function App() {
         ref={ref}
       >
         <div className="w-5/12 h-full bg-[#f0f0f0]">
-          <NTTree height={height} setActivate={setCurrent} />
+          <NTTree height={height} setActivate={setInNode} treeRef={treeRef} />
         </div>
 
         <div className="w-7/12 h-full">
-          {inContent != undefined ? (
-            <NTEditor height={height} content={inContent} setOutContent={setOutContent} />
-          ) : (
-            <div> No node is selected!</div>
-          )}
+          {
+            inNode ?
+              (<NTEditor height={height} inNode={inNode} setOutNode={setOutNode} />)
+              : (<div>No node is selected</div>)
+          }
+
         </div>
       </div>
     </div>

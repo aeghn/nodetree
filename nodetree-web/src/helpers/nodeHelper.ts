@@ -23,7 +23,5 @@ export const arrangeNodes = (nodes: NTNode[]): NTNode[] => {
     }
   }
 
-  console.info(ra);
-
   return ra;
 };
