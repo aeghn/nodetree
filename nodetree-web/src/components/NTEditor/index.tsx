@@ -1,6 +1,6 @@
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "tiptap-extension-resizable-image/styles.css";
 import { Highlight } from "@tiptap/extension-highlight";
 import { Typography } from "@tiptap/extension-typography";
@@ -67,6 +67,10 @@ export const NTEditor: React.FC<{
   });
 
   if (node.id !== id) {
+    setId(node.id);
+  }
+
+  useEffect(() => {
     let text = node.content;
     const trimedStart = text.trimStart();
     if (
@@ -79,9 +83,11 @@ export const NTEditor: React.FC<{
         console.error("unable to parse node content: ", err);
       }
     }
-    editor?.commands.setContent(text);
-    setId(node.id);
-  }
+    // WAIT Dirty, wait Tiptap to fix this. https://github.com/ueberdosis/tiptap/issues/3764#issuecomment-1546629928
+    setTimeout(() => {
+      editor?.commands.setContent(text);
+    });
+  }, [id, node.content, editor?.commands]);
 
   const style = {
     flex: 1,
