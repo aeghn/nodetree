@@ -27,7 +27,12 @@ export const uploadImage = async (file: File): Promise<Asset> => {
   return assets[0];
 };
 
-export const saveNode = async (node: NTNode): Promise<NTNode> => {
-  const parsedNode: NTNode = await requests.post("api/insert-node", node);
-  return parsedNode;
+export const saveNode = async (node: NTNode, move: boolean = false): Promise<NTNode> => {
+  if (move) {
+    const parsedNode: NTNode = await requests.post("api/insert-node", node);
+    return parsedNode;
+  } else {
+    const parsedNode: NTNode = await requests.post("api/insert-node-only", node);
+    return parsedNode;
+  }
 };

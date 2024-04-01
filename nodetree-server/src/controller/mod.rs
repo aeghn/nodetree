@@ -38,6 +38,7 @@ pub struct WebAppState {
 fn routes() -> Router<WebAppState> {
     Router::new()
         .route("/api/insert-node", post(insert_node))
+        .route("/api/insert-node-only", post(insert_node_only))
         .route("/api/fetch-nodes", post(fetch_nodes))
         .route("/api/fetch-all-nodes", get(fetch_all_nodes))
         .route("/api/move-node", post(move_node))
@@ -111,6 +112,12 @@ where
 async fn insert_node(state: State<WebAppState>, Json(node): Json<Node>) -> impl IntoResponse {
     info!("insert_node: {:?}", node);
     let rest = state.mapper.insert_and_move(&node).await;
+    print_and_trans_to_response(rest)
+}
+
+async fn insert_node_only(state: State<WebAppState>, Json(node): Json<Node>) -> impl IntoResponse {
+    info!("insert_node: {:?}", node);
+    let rest = state.mapper.insert_node_only(&node).await;
     print_and_trans_to_response(rest)
 }
 

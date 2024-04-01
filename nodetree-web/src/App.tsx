@@ -21,11 +21,6 @@ function App() {
       saveNode({ ...currentNode, content: outContent })
   }, [outContent])
 
-  useEffect(() => {
-    if (currentNode)
-      saveNode(currentNode)
-  }, [currentNode]);
-
   return (
     <div className="h-screen p-2 shadow">
       <div

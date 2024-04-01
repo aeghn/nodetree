@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use anyhow::Ok;
 use async_trait::async_trait;
 use bytes::BytesMut;
-use chrono::{Utc};
+use chrono::Utc;
 use deadpool_postgres::{Client, GenericClient, Pool};
 use postgres_types::{to_sql_checked, ToSql};
 use serde::Deserialize;
@@ -154,7 +154,7 @@ impl AssetMapper for PostgresMapper {
 
 #[async_trait]
 impl NodeMapper for PostgresMapper {
-    async fn insert_node_simple(&self, node: &Node) -> anyhow::Result<()> {
+    async fn insert_node_only(&self, node: &Node) -> anyhow::Result<()> {
         let stmt = self.pool.get().await?;
         stmt.execute(
             "WITH moved_rows AS (

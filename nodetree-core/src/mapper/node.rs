@@ -27,7 +27,7 @@ pub struct NodeMoveReq {
 #[async_trait]
 pub trait NodeMapper {
     async fn insert_and_move(&self, node: &Node) -> anyhow::Result<NodeMoveRsp> {
-        self.insert_node_simple(node).await?;
+        self.insert_node_only(node).await?;
         let move_req = NodeMoveReq {
             id: node.id.clone(),
             parent_id: node.parent_id.clone(),
@@ -39,7 +39,7 @@ pub trait NodeMapper {
 
     /// Just insert a node into nodes table, do not care about nodes relations.  
     /// So do not use this method directly.
-    async fn insert_node_simple(&self, node: &Node) -> anyhow::Result<()>;
+    async fn insert_node_only(&self, node: &Node) -> anyhow::Result<()>;
 
     async fn delete_node_by_id(&self, id: &NodeId) -> anyhow::Result<()>;
     async fn query_nodes(&self, node_filter: &NodeFilter) -> anyhow::Result<Vec<Node>>;
