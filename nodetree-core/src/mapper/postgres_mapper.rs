@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use anyhow::Ok;
 use async_trait::async_trait;
 use bytes::BytesMut;
 use chrono::Utc;
@@ -12,9 +11,10 @@ use tracing::info;
 
 use crate::{
     constants,
+    mapper::node::NodeInsertResult,
     model::{
         assert::Asset,
-        node::{Node, NodeId},
+        node::{ContentParsedInfo, Node, NodeId},
     },
 };
 
@@ -97,8 +97,7 @@ impl PostgresMapper {
             name: row.get("name"),
             content: row.get("content"),
             user: row.get("username"),
-            todo_status: None,
-            tags: vec![],
+            parsed_info: ContentParsedInfo::default(),
             parent_id: row.get("parent_id"),
             prev_sliding_id: row.get("prev_sliding_id"),
             delete_time: row.get("delete_time"),
@@ -154,8 +153,23 @@ impl AssetMapper for PostgresMapper {
 
 #[async_trait]
 impl NodeMapper for PostgresMapper {
-    async fn insert_node_only(&self, node: &Node) -> anyhow::Result<()> {
+    async fn insert_node_only(&self, node: &Node) -> anyhow::Result<NodeInsertResult> {
         let stmt = self.pool.get().await?;
+
+        let content: Result<String, tokio_postgres::Error> = stmt
+            .query_one("select content from nodes where id = $1", &[&node.id])
+            .await
+            .map(|row| row.get("content"));
+
+        let should_insert = match content {
+            Ok(content) => distance::levenshtein(&content, &node.content) > 8,
+            Err(_) => true,
+        };
+
+        if !should_insert {
+            return Ok(NodeInsertResult::TooLittleChange);
+        }
+
         stmt.execute(
             "WITH moved_rows AS (
     DELETE FROM nodes a
@@ -184,7 +198,8 @@ SELECT * FROM moved_rows;",
         ])
         .await
         .map_err(|e| {anyhow::Error::new(e)})
-        .map(|_| ())
+        .map(|_| ())?;
+        Ok(NodeInsertResult::ParsedInfo(ContentParsedInfo::default()))
     }
 
     async fn delete_node_by_id(&self, id: &NodeId) -> anyhow::Result<()> {

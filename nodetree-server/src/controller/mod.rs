@@ -139,7 +139,7 @@ async fn move_node(state: State<WebAppState>, Json(req): Json<NodeMoveReq>) -> i
 
 #[cfg(test)]
 mod test {
-    use ntcore::model::node::Node;
+    use ntcore::model::node::{ContentParsedInfo, Node};
     use regex::Regex;
     use reqwest::header::HeaderMap;
 
@@ -168,12 +168,11 @@ mod test {
             name: id.clone(),
             content: String::new(),
             user: String::new(),
-            todo_status: None,
-            tags: vec![],
             parent_id: pid.into(),
             prev_sliding_id: prev.map(|e| e.into()),
             create_time: cur.clone(),
             first_version_time: cur.clone(),
+            parsed_info: ContentParsedInfo::default(),
         }
     }
 

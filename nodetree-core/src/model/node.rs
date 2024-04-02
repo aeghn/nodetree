@@ -16,14 +16,19 @@ pub struct Node {
     pub content: String,
 
     pub user: String,
-    pub todo_status: Option<String>,
-    pub tags: Vec<Tag>,
+    pub parsed_info: ContentParsedInfo,
 
     pub parent_id: NodeId,
     pub prev_sliding_id: Option<NodeId>,
 
     pub create_time: NaiveDateTime,
     pub first_version_time: NaiveDateTime,
+}
+
+#[derive(Default, Serialize, Deserialize, Debug, Clone)]
+pub struct ContentParsedInfo {
+    pub todo_status: Option<String>,
+    pub tags: Option<Vec<Tag>>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

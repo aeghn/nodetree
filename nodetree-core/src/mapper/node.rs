@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
-use crate::model::node::{self, Node, NodeId};
+use crate::model::node::{self, ContentParsedInfo, Node, NodeId};
 
 use super::nodefilter::NodeFilter;
 
@@ -24,22 +24,30 @@ pub struct NodeMoveReq {
     pub prev_sliding_id: Option<NodeId>,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum NodeInsertResult {
+    TooLittleChange,
+    ParsedInfo(ContentParsedInfo),
+}
+
 #[async_trait]
 pub trait NodeMapper {
-    async fn insert_and_move(&self, node: &Node) -> anyhow::Result<NodeMoveRsp> {
-        self.insert_node_only(node).await?;
+    async fn insert_and_move(&self, node: &Node) -> anyhow::Result<NodeInsertResult> {
+        let insert_result = self.insert_node_only(node).await;
         let move_req = NodeMoveReq {
             id: node.id.clone(),
             parent_id: node.parent_id.clone(),
             prev_sliding_id: node.prev_sliding_id.clone(),
         };
 
-        self.move_nodes(&move_req).await
+        self.move_nodes(&move_req).await?;
+
+        insert_result
     }
 
     /// Just insert a node into nodes table, do not care about nodes relations.  
     /// So do not use this method directly.
-    async fn insert_node_only(&self, node: &Node) -> anyhow::Result<()>;
+    async fn insert_node_only(&self, node: &Node) -> anyhow::Result<NodeInsertResult>;
 
     async fn delete_node_by_id(&self, id: &NodeId) -> anyhow::Result<()>;
     async fn query_nodes(&self, node_filter: &NodeFilter) -> anyhow::Result<Vec<Node>>;
