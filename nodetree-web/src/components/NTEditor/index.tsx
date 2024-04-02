@@ -66,15 +66,17 @@ export const NTEditor: React.FC<{
 
   useEffect(() => {
     let text = inNode.content;
-    const trimedStart = text.trimStart();
     if (
-      text.length > 0 &&
-      (trimedStart.startsWith("{") || trimedStart.startsWith("["))
+      text &&
+      text.length > 0
     ) {
-      try {
-        text = JSON.parse(text);
-      } catch (err) {
-        console.error("unable to parse node content: ", err);
+      const trimedStart = text.trimStart();
+      if (trimedStart.startsWith("{") || trimedStart.startsWith("[")) {
+        try {
+          text = JSON.parse(text);
+        } catch (err) {
+          console.error("unable to parse node content: ", err);
+        }
       }
     }
     // WAIT Dirty, wait Tiptap to fix this. https://github.com/ueberdosis/tiptap/issues/3764#issuecomment-1546629928

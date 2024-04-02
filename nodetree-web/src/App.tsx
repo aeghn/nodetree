@@ -1,10 +1,11 @@
 import useResizeObserver from "use-resize-observer";
 import { NTTree } from "./components/NTTree";
 import { NTEditor } from "./components/NTEditor";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { NTNode } from "./model";
 import { saveNode } from "./helpers/dataAgent";
 import { SimpleTree } from "react-arborist";
+import { useThrottleEffect } from "./hooks/useThrottleEffect";
 
 function App() {
   const { ref, height } = useResizeObserver<HTMLDivElement>({});
@@ -12,19 +13,24 @@ function App() {
   const [outNode, setOutNode] = useState<NTNode>();
   const treeRef = useRef<SimpleTree<NTNode> | null>(null);
 
-  useEffect(() => {
-    if (outNode) {
-      saveNode(outNode);
-      if (treeRef.current) {
-        treeRef.current.update({
-          id: outNode.id,
-          changes: {
-            ...outNode
-          }
-        })
+  useThrottleEffect(
+    (outNode) => {
+      console.log("begin to save node");
+      if (outNode) {
+        saveNode(outNode);
+        if (treeRef.current) {
+          treeRef.current.update({
+            id: outNode.id,
+            changes: {
+              ...outNode,
+            },
+          });
+        }
       }
-    }
-  }, [outNode])
+    },
+    [outNode],
+    3000
+  );
 
   return (
     <div className="h-screen p-2 shadow">
@@ -37,12 +43,11 @@ function App() {
         </div>
 
         <div className="w-7/12 h-full">
-          {
-            inNode ?
-              (<NTEditor height={height} inNode={inNode} setOutNode={setOutNode} />)
-              : (<div>No node is selected</div>)
-          }
-
+          {inNode ? (
+            <NTEditor height={height} inNode={inNode} setOutNode={setOutNode} />
+          ) : (
+            <div>No node is selected</div>
+          )}
         </div>
       </div>
     </div>
