@@ -16,7 +16,7 @@ use axum::{
     Json, Router,
 };
 use ntcore::{
-    mapper::{node::NodeMoveReq, nodefilter::NodeFilter, Mapper},
+    mapper::{node::{NodeDeleteReq, NodeMoveReq, NodeRenameReq}, nodefilter::NodeFilter, Mapper},
     model::node::Node,
 };
 use serde::Serialize;
@@ -42,6 +42,9 @@ fn routes() -> Router<WebAppState> {
         .route("/api/fetch-nodes", post(fetch_nodes))
         .route("/api/fetch-all-nodes", get(fetch_all_nodes))
         .route("/api/move-node", post(move_node))
+        .route("/api/delete-node", post(delete_node))
+        .route("/api/update-node-name", post(update_node_name))
+
         .merge(asset::routes())
 }
 
@@ -137,9 +140,15 @@ async fn move_node(state: State<WebAppState>, Json(req): Json<NodeMoveReq>) -> i
     print_and_trans_to_response(rest)
 }
 
-async fn delete_node(state: State<WebAppState>, Json(req): Json<NodeMoveReq>) -> impl IntoResponse {
-    info!("move_node: {:?}", req);
-    let rest = state.mapper.move_nodes(&req).await;
+async fn delete_node(state: State<WebAppState>, Json(req): Json<NodeDeleteReq>) -> impl IntoResponse {
+    info!("delete_node: {:?}", req);
+    let rest = state.mapper.delete_node(&req).await;
+    print_and_trans_to_response(rest)
+}
+
+async fn update_node_name(state: State<WebAppState>, Json(req): Json<NodeRenameReq>) -> impl IntoResponse {
+    info!("rename_node: {:?}", req);
+    let rest = state.mapper.update_node_name(&req).await;
     print_and_trans_to_response(rest)
 }
 

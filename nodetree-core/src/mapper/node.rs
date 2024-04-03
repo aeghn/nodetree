@@ -9,10 +9,10 @@ use super::nodefilter::NodeFilter;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct NodeMoveRsp {
-    pub new_parent: NodeId,
+    pub new_parent: Option<NodeId>,
     pub new_prev: Option<NodeId>,
     pub new_next: Option<NodeId>,
-    pub old_parent: NodeId,
+    pub old_parent: Option<NodeId>,
     pub old_prev: Option<NodeId>,
     pub old_next: Option<NodeId>,
 }
@@ -20,7 +20,7 @@ pub struct NodeMoveRsp {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct NodeMoveReq {
     pub id: NodeId,
-    pub parent_id: NodeId,
+    pub parent_id: Option<NodeId>,
     pub prev_sliding_id: Option<NodeId>,
 }
 
@@ -33,6 +33,12 @@ pub enum NodeInsertResult {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct NodeDeleteReq {
     pub id: NodeId,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct NodeRenameReq {
+    pub id: NodeId,
+    pub name: String,
 }
 
 #[async_trait]
@@ -60,6 +66,8 @@ pub trait NodeMapper {
     ///    b. make its next slibing connect to its prev slibing.
     /// 2. Delete node but level its descentants(TODO).
     async fn delete_node(&self, req: &NodeDeleteReq) -> anyhow::Result<()>;
+    async fn update_node_name(&self, req: &NodeRenameReq) -> anyhow::Result<u64>;
+
     async fn query_nodes(&self, node_filter: &NodeFilter) -> anyhow::Result<Vec<Node>>;
 
     /// Move Node.
@@ -86,10 +94,10 @@ pub trait NodeMapper {
     /// Find descendants recursively.  
     ///
     /// Return a HashMap which child_id points to its parent.
-    async fn find_descendant_ids(&self, id: &NodeId) -> anyhow::Result<HashMap<NodeId, NodeId>>;
+    async fn find_descendant_ids(&self, id: &NodeId) -> anyhow::Result<HashMap<NodeId, Option<NodeId>>>;
 
     /// Like `find_descendant_ids`, but find ancestors recursively.  
     ///
     /// Return a HashMap which child_id points to its parent.
-    async fn find_ancestor_ids(&self, id: &NodeId) -> anyhow::Result<HashMap<NodeId, NodeId>>;
+    async fn find_ancestor_ids(&self, id: &NodeId) -> anyhow::Result<HashMap<NodeId, Option<NodeId>>>;
 }

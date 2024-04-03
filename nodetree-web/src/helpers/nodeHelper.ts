@@ -8,6 +8,8 @@ export const arrangeNodes = (nodes: NTNode[]): NTNode[] => {
   }
 
   for (const n of nodes) {
+    if (!n.parent_id) continue;
+    
     const p = nodeMap.get(n.parent_id);
     if (p != null) {
       p.children?.push(n);

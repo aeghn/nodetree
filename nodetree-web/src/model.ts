@@ -20,11 +20,9 @@ export interface NTNode {
   content: string;
 
   user: string;
-  todo_status?: TodoStatus;
+  parsed_info: ContentParsedInfo;
 
-  tags?: NTTag[];
-
-  parent_id: NodeId;
+  parent_id?: NodeId;
   prev_sliding_id?: NodeId;
 
   create_time: Date;
@@ -33,13 +31,18 @@ export interface NTNode {
   children?: NTNode[];
 }
 
+export interface ContentParsedInfo {
+  todo_status?: string;
+  tags?: NTTag[];
+}
+
 export interface Asset {
-  id: string,
+  id: string;
 
-  username: string | undefined,
-  ori_file_name: string,
+  username: string | undefined;
+  ori_file_name: string;
 
-  content_type: string,
+  content_type: string;
 
-  create_time: Date,
+  create_time: Date;
 }

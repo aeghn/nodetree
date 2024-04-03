@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::constants::MAGIC_PREV_NODE_ID_EMPTY;
@@ -10,7 +10,8 @@ use super::tag::Tag;
 pub struct Node {
     pub id: NodeId,
 
-    pub delete_time: Option<NaiveDateTime>,
+    #[serde(default)]
+    pub delete_time: Option<DateTime<Utc>>,
 
     pub name: String,
     pub content: String,
@@ -18,16 +19,22 @@ pub struct Node {
     pub user: String,
     pub parsed_info: ContentParsedInfo,
 
-    pub parent_id: NodeId,
+    #[serde(default)]
+    pub parent_id: Option<NodeId>,
+
+    #[serde(default)]
     pub prev_sliding_id: Option<NodeId>,
 
-    pub create_time: NaiveDateTime,
-    pub first_version_time: NaiveDateTime,
+    pub create_time: DateTime<Utc>,
+    pub first_version_time: DateTime<Utc>,
 }
 
 #[derive(Default, Serialize, Deserialize, Debug, Clone)]
+
 pub struct ContentParsedInfo {
+    #[serde(default)]
     pub todo_status: Option<String>,
+    #[serde(default)]
     pub tags: Option<Vec<Tag>>,
 }
 
@@ -75,6 +82,7 @@ impl From<&str> for NodeId {
 
 #[cfg(test)]
 mod test {
+    use chrono::{DateTime, Utc};
     use serde::{Deserialize, Serialize};
 
     use super::NodeId;
@@ -99,8 +107,13 @@ mod test {
 
     #[test]
     fn time() {
-        let now_utc = chrono::NaiveDateTime::from_timestamp(1, 1);
+        let now_utc: DateTime<Utc> = Utc::now().to_owned();
         let v = serde_json::to_string(&now_utc).unwrap();
-        println!("{}", v);
+
+        let s = "\"2024-04-03T05:04:38.675Z\"".to_owned();
+        let t = &v;
+        println!("{}, {}", s, t);
+        let v: DateTime<Utc> = serde_json::from_str(&s).unwrap();
+        println!("{}", v)
     }
 }

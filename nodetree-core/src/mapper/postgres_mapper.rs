@@ -20,7 +20,7 @@ use crate::{
 
 use super::{
     asset::AssetMapper,
-    node::{NodeDeleteReq, NodeMapper, NodeMoveReq, NodeMoveRsp},
+    node::{NodeDeleteReq, NodeMapper, NodeMoveReq, NodeMoveRsp, NodeRenameReq},
     nodefilter::NodeFilter,
     Mapper,
 };
@@ -118,7 +118,7 @@ impl AssetMapper for PostgresMapper {
     ) -> anyhow::Result<Asset> {
         let stmt = self.pool.get().await?;
 
-        let create_time = Utc::now().naive_utc();
+        let create_time = Utc::now().to_owned();
 
         stmt.execute(
             "insert into assets(id, username, ori_file_name, content_type, create_time) values ($1,$2,$3,$4, $5)",
@@ -240,12 +240,13 @@ SELECT * FROM moved_rows;",
                 .await?;
             }
         }
-
         let descendants = self.find_descendant_ids(&req.id).await?;
 
         let mut all_ids: HashSet<&NodeId> = descendants.keys().collect();
         descendants.iter().for_each(|(_, v)| {
-            all_ids.insert(v);
+            if let Some(key) = v.as_ref() {
+                all_ids.insert(key);
+            }
         });
 
         all_ids.insert(&req.id);
@@ -253,7 +254,7 @@ SELECT * FROM moved_rows;",
         let phs: String = all_ids
             .iter()
             .enumerate()
-            .map(|(i, _)| format!("${}", i))
+            .map(|(i, _)| format!("${}", i + 1))
             .collect::<Vec<String>>()
             .join(",");
 
@@ -263,9 +264,11 @@ SELECT * FROM moved_rows;",
             .collect::<Vec<&(dyn ToSql + Sync)>>();
         let params_slice = params.as_slice();
 
+        info!("delete flags: {:?}, {}", params_slice, phs);
+
         stmt.execute(
             &format!(
-                "update nodes set delete_flag = CURRENT_TIMESTAMP where id in ({})",
+                "update nodes set delete_time = CURRENT_TIMESTAMP where id in ({})",
                 phs
             ),
             params_slice,
@@ -276,7 +279,7 @@ SELECT * FROM moved_rows;",
 
         stmt.execute(
             &format!(
-                "update nodes_history set delete_flag = CURRENT_TIMESTAMP where id in ({})",
+                "update nodes_history set delete_time = CURRENT_TIMESTAMP where id in ({})",
                 phs
             ),
             params_slice,
@@ -299,6 +302,16 @@ SELECT * FROM moved_rows;",
             .map(|rows| rows.iter().map(|row| Self::map_nodes_row(&row)).collect())?;
 
         Ok(nodes)
+    }
+
+    async fn update_node_name(&self, req: &NodeRenameReq) -> anyhow::Result<u64> {
+        let stmt = self.pool.get().await?;
+        stmt.execute(
+            "update nodes set name = $1 where id = $2",
+            &[&req.name, &req.id],
+        )
+        .await
+        .map_err(|e| anyhow::Error::new(e))
     }
 
     async fn move_nodes(&self, node_move_req: &NodeMoveReq) -> anyhow::Result<NodeMoveRsp> {
@@ -331,13 +344,20 @@ SELECT * FROM moved_rows;",
             }
         }
 
-        let old_prev_id = &node.as_ref().map(|e| e.prev_sliding_id.clone()).unwrap();
-        let old_parent_id = &node.map(|e| e.parent_id.clone()).unwrap();
+        let unwrap = |e: Option<Option<NodeId>>| {
+            if let Some(t) = e {
+                t
+            } else {
+                None
+            }
+        };
+        let old_prev_id = unwrap(node.as_ref().map(|e| e.prev_sliding_id.clone()));
+        let old_parent_id = unwrap(node.map(|e| e.parent_id.clone()));
 
         if let Some(ref old_next) = old_next {
             stmt.execute(
                 "update nodes set prev_sliding_id = $1 where id = $2",
-                &[old_prev_id, &old_next.id],
+                &[&old_prev_id, &old_next.id],
             )
             .await?;
         }
@@ -361,13 +381,16 @@ SELECT * FROM moved_rows;",
             new_parent: parent_id.clone(),
             new_prev: prev_slibing.clone().map(|e| e.clone()),
             new_next: new_next.map(|e| e.id.clone()),
-            old_parent: old_parent_id.clone(),
-            old_prev: old_prev_id.clone(),
+            old_parent: old_parent_id,
+            old_prev: old_prev_id,
             old_next: old_next.map(|o| o.id.clone()),
         })
     }
 
-    async fn find_descendant_ids(&self, id: &NodeId) -> anyhow::Result<HashMap<NodeId, NodeId>> {
+    async fn find_descendant_ids(
+        &self,
+        id: &NodeId,
+    ) -> anyhow::Result<HashMap<NodeId, Option<NodeId>>> {
         let stmt = self.pool.get().await?;
 
         let map = stmt
@@ -387,7 +410,10 @@ select * from children;",
         Ok(map)
     }
 
-    async fn find_ancestor_ids(&self, id: &NodeId) -> anyhow::Result<HashMap<NodeId, NodeId>> {
+    async fn find_ancestor_ids(
+        &self,
+        id: &NodeId,
+    ) -> anyhow::Result<HashMap<NodeId, Option<NodeId>>> {
         let stmt = self.pool.get().await?;
 
         let map = stmt
@@ -418,11 +444,11 @@ impl Mapper for PostgresMapper {
     name VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
     username TEXT NOT NULL,
-    delete_time TIMESTAMP DEFAULT NULL,
+    delete_time timestamptz DEFAULT NULL,
     parent_id VARCHAR(40) DEFAULT NULL,
     prev_sliding_id VARCHAR(40),
-    create_time TIMESTAMP NOT NULL default CURRENT_TIMESTAMP,
-    first_version_time TIMESTAMP NOT NULL,
+    create_time timestamptz NOT NULL default CURRENT_TIMESTAMP,
+    first_version_time timestamptz NOT NULL,
     primary key (id)
 );",
         )
@@ -435,11 +461,11 @@ impl Mapper for PostgresMapper {
     name VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
     username TEXT NOT NULL,
-    delete_time TIMESTAMP DEFAULT NULL,
+    delete_time timestamptz DEFAULT NULL,
     parent_id VARCHAR(40) DEFAULT NULL,
     prev_sliding_id VARCHAR(40),
-    create_time TIMESTAMP NOT NULL default CURRENT_TIMESTAMP,
-    first_version_time TIMESTAMP NOT NULL
+    create_time timestamptz NOT NULL default CURRENT_TIMESTAMP,
+    first_version_time timestamptz NOT NULL
 );",
         )
         .await?;
@@ -474,7 +500,7 @@ impl Mapper for PostgresMapper {
     id VARCHAR(40) NOT NULL,
     ori_file_name TEXT NOT NULL,
     username TEXT NOT NULL,
-    create_time TIMESTAMP NOT NULL default CURRENT_TIMESTAMP,
+    create_time timestamptz NOT NULL default CURRENT_TIMESTAMP,
     content_type TEXT,
     primary key (id)
 );",

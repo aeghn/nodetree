@@ -13,11 +13,16 @@ import {
 import * as icons from "react-icons/md";
 import styles from "./tree.module.css";
 import { useEffect, useMemo, useState } from "react";
-import { fetchAllNodes, moveNode } from "../../helpers/dataAgent";
+import {
+  fetchAllNodes,
+  moveNode,
+  saveNode,
+  updateNodeName,
+  deteleNode as deleteNode,
+} from "../../helpers/dataAgent";
 import { arrangeNodes } from "../../helpers/nodeHelper";
-import { NTNode } from "../../model";
-
-let nextId = 0;
+import { NTNode, ContentParsedInfo } from "../../model";
+import { generateId } from "../../helpers/tools";
 
 export const NTTree: React.FC<{
   height: number | undefined;
@@ -73,19 +78,49 @@ export const NTTree: React.FC<{
 
   const onRename: RenameHandler<NTNode> = ({ name, id }) => {
     tree.update({ id, changes: { name } as NTNode });
+    try {
+      updateNodeName(id, name);
+    } catch (error) {
+      console.log(error);
+    }
     setData(tree.data);
   };
 
   const onCreate: CreateHandler<NTNode> = ({ parentId, index, type }) => {
-    const data = { id: `simple-tree-id-${nextId++}`, name: "" } as NTNode;
+    const parsed_info: ContentParsedInfo = {};
+    const data: NTNode = {
+      id: generateId(),
+      name: "untitled",
+      content: "",
+      user: "",
+      parent_id: parentId ? parentId : undefined,
+      create_time: new Date(),
+      first_version_time: new Date(),
+      parsed_info: parsed_info,
+    };
+
     if (type === "internal") data.children = [];
+    try {
+      saveNode(data, true);
+    } catch (error) {
+      console.log(error);
+    }
+
     tree.create({ parentId, index, data });
     setData(tree.data);
     return data;
   };
 
   const onDelete: DeleteHandler<NTNode> = (args: { ids: string[] }) => {
-    args.ids.forEach((id) => tree.drop({ id }));
+    args.ids.forEach((id) => {
+      tree.drop({ id });
+      try {
+        deleteNode(id);
+      } catch (error) {
+        console.log(error);
+      }
+    });
+
     setData(tree.data);
   };
 
@@ -115,6 +150,7 @@ export const NTTree: React.FC<{
           c: "CreateChild",
           s: "CreateSlibing",
           R: "Rename",
+          D: "Delete"
         }}
       >
         {Node}
