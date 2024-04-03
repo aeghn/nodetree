@@ -32,6 +32,9 @@ dependencies:
   '@tiptap/starter-kit':
     specifier: ^2.2.4
     version: 2.2.4(@tiptap/pm@2.2.4)
+  '@tiptap/suggestion':
+    specifier: ^2.2.4
+    version: 2.2.4(@tiptap/core@2.2.4)(@tiptap/pm@2.2.4)
   axios:
     specifier: ^1.6.8
     version: 1.6.8
@@ -68,6 +71,9 @@ dependencies:
   react-icons:
     specifier: ^5.0.1
     version: 5.0.1(react@18.2.0)
+  tippy.js:
+    specifier: ^6.3.7
+    version: 6.3.7
   tiptap-extension-resizable-image:
     specifier: ^1.0.3
     version: 1.0.3(@tiptap/core@2.2.4)(@tiptap/pm@2.2.4)(@tiptap/react@2.2.4)(react@18.2.0)
@@ -1050,6 +1056,16 @@ packages:
       '@tiptap/extension-text': 2.2.4(@tiptap/core@2.2.4)
     transitivePeerDependencies:
       - '@tiptap/pm'
+    dev: false
+
+  /@tiptap/suggestion@2.2.4(@tiptap/core@2.2.4)(@tiptap/pm@2.2.4):
+    resolution: {integrity: sha512-g6HHsKM6K3asW+ZlwMYyLCRqCRaswoliZOQofY4iZt5ru5HNTSzm3YW4XSyW5RGXJIuc319yyrOFgtJ3Fyu5rQ==}
+    peerDependencies:
+      '@tiptap/core': ^2.0.0
+      '@tiptap/pm': ^2.0.0
+    dependencies:
+      '@tiptap/core': 2.2.4(@tiptap/pm@2.2.4)
+      '@tiptap/pm': 2.2.4
     dev: false
 
   /@types/estree@1.0.5:
