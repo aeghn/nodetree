@@ -177,7 +177,7 @@ impl NodeMapper for PostgresMapper {
     RETURNING a.*
 )
 INSERT INTO nodes_history 
-SELECT * FROM moved_rows;",
+SELECT id, name, content, username, delete_time, create_time, first_version_time FROM moved_rows;",
             &[&node.id],
         )
         .await
@@ -462,8 +462,6 @@ impl Mapper for PostgresMapper {
     content TEXT NOT NULL,
     username TEXT NOT NULL,
     delete_time timestamptz DEFAULT NULL,
-    parent_id VARCHAR(40) DEFAULT NULL,
-    prev_sliding_id VARCHAR(40),
     create_time timestamptz NOT NULL default CURRENT_TIMESTAMP,
     first_version_time timestamptz NOT NULL
 );",
