@@ -1,5 +1,5 @@
 import useResizeObserver from "use-resize-observer";
-import { NTTree } from "./components/NTTree";
+import { NTTree } from "./components/tree";
 import { NTEditor } from "./components/editor";
 import { useRef, useState } from "react";
 import { NTNode } from "./model";
