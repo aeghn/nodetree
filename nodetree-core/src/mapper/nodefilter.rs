@@ -18,7 +18,6 @@ pub enum NodeFilter {
     Or(Box<Vec<NodeFilter>>),
     WithContent(Box<NodeFilter>),
     WithHistory(Box<NodeFilter>),
-    WithDeleted(Box<NodeFilter>),
 }
 
 fn from_json(jn: &Value) -> Result<NodeFilter, String> {

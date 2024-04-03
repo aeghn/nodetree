@@ -180,8 +180,7 @@ INSERT INTO nodes_history
 SELECT id, name, content, username, delete_time, create_time, first_version_time FROM moved_rows;",
             &[&node.id],
         )
-        .await
-        .unwrap();
+        .await?;
 
         info!("begin to really insert");
 
