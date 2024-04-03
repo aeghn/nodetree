@@ -13,6 +13,7 @@ pub mod node;
 pub mod nodefilter;
 #[cfg(feature = "sqlite")]
 pub mod sqlite_mapper;
+pub mod operation;
 
 #[async_trait]
 pub trait Mapper: Sync + Send + NodeMapper + AssetMapper {
