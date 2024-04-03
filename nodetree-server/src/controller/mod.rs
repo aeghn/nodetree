@@ -137,6 +137,12 @@ async fn move_node(state: State<WebAppState>, Json(req): Json<NodeMoveReq>) -> i
     print_and_trans_to_response(rest)
 }
 
+async fn delete_node(state: State<WebAppState>, Json(req): Json<NodeMoveReq>) -> impl IntoResponse {
+    info!("move_node: {:?}", req);
+    let rest = state.mapper.move_nodes(&req).await;
+    print_and_trans_to_response(rest)
+}
+
 #[cfg(test)]
 mod test {
     use ntcore::model::node::{ContentParsedInfo, Node};

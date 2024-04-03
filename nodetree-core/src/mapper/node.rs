@@ -30,6 +30,11 @@ pub enum NodeInsertResult {
     ParsedInfo(ContentParsedInfo),
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct NodeDeleteReq {
+    pub id: NodeId,
+}
+
 #[async_trait]
 pub trait NodeMapper {
     async fn insert_and_move(&self, node: &Node) -> anyhow::Result<NodeInsertResult> {
@@ -49,7 +54,12 @@ pub trait NodeMapper {
     /// So do not use this method directly.
     async fn insert_node_only(&self, node: &Node) -> anyhow::Result<NodeInsertResult>;
 
-    async fn delete_node_by_id(&self, id: &NodeId) -> anyhow::Result<()>;
+    /// Delete node (logical or physical).
+    /// 1. Delete node and its descentants.  
+    ///    a. find all its descentants and mark them(both in nodes and node_history table)  
+    ///    b. make its next slibing connect to its prev slibing.
+    /// 2. Delete node but level its descentants(TODO).
+    async fn delete_node(&self, req: &NodeDeleteReq) -> anyhow::Result<()>;
     async fn query_nodes(&self, node_filter: &NodeFilter) -> anyhow::Result<Vec<Node>>;
 
     /// Move Node.

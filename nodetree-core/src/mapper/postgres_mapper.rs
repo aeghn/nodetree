@@ -1,11 +1,11 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use async_trait::async_trait;
 use bytes::BytesMut;
 use chrono::Utc;
 use deadpool_postgres::{Client, GenericClient, Pool};
 use postgres_types::{to_sql_checked, ToSql};
-use serde::Deserialize;
+use serde::{de, Deserialize};
 use tokio_postgres::Row;
 use tracing::info;
 
@@ -20,7 +20,7 @@ use crate::{
 
 use super::{
     asset::AssetMapper,
-    node::{NodeMapper, NodeMoveReq, NodeMoveRsp},
+    node::{NodeDeleteReq, NodeMapper, NodeMoveReq, NodeMoveRsp},
     nodefilter::NodeFilter,
     Mapper,
 };
@@ -202,12 +202,84 @@ SELECT * FROM moved_rows;",
         Ok(NodeInsertResult::ParsedInfo(ContentParsedInfo::default()))
     }
 
-    async fn delete_node_by_id(&self, id: &NodeId) -> anyhow::Result<()> {
+    async fn delete_node(&self, req: &NodeDeleteReq) -> anyhow::Result<()> {
         let stmt = self.pool.get().await?;
 
+        let mut next_id = None;
+        let mut prev_id = None;
+        stmt.query(
+            "select * from nodes where id = $1 or prev_slibing_id = $2",
+            &[&req.id, &req.id],
+        )
+        .await
+        .iter()
+        .for_each(|rows| {
+            rows.iter().for_each(|row| {
+                let node = Self::map_nodes_row(row);
+                if node.id == req.id {
+                    prev_id = prev_id.replace(node.prev_sliding_id);
+                } else {
+                    match node.prev_sliding_id {
+                        Some(id) => {
+                            if id == req.id {
+                                next_id.replace(node.id);
+                            }
+                        }
+                        None => {}
+                    }
+                }
+            })
+        });
+
+        if let Some(nid) = next_id {
+            if let Some(pid) = prev_id {
+                stmt.execute(
+                    "update nodes set prev_slibing_id = $1 where id = $2",
+                    &[&pid, &nid],
+                )
+                .await?;
+            }
+        }
+
+        let descendants = self.find_descendant_ids(&req.id).await?;
+
+        let mut all_ids: HashSet<&NodeId> = descendants.keys().collect();
+        descendants.iter().for_each(|(_, v)| {
+            all_ids.insert(v);
+        });
+
+        all_ids.insert(&req.id);
+
+        let phs: String = all_ids
+            .iter()
+            .enumerate()
+            .map(|(i, _)| format!("${}", i))
+            .collect::<Vec<String>>()
+            .join(",");
+
+        let params = all_ids
+            .into_iter()
+            .map(|x| &*x as &(dyn ToSql + Sync))
+            .collect::<Vec<&(dyn ToSql + Sync)>>();
+        let params_slice = params.as_slice();
+
         stmt.execute(
-            "update nodes set delete_flag = CURRENT_TIMESTAMP where id = ?",
-            &[&id],
+            &format!(
+                "update nodes set delete_flag = CURRENT_TIMESTAMP where id in ({})",
+                phs
+            ),
+            params_slice,
+        )
+        .await
+        .map(|_| ())
+        .map_err(|e| anyhow::Error::new(e))?;
+
+        stmt.execute(
+            &format!(
+                "update nodes_history set delete_flag = CURRENT_TIMESTAMP where id in ({})",
+                phs
+            ),
+            params_slice,
         )
         .await
         .map(|_| ())
