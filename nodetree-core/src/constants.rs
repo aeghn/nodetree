@@ -7,5 +7,4 @@ pub const TABLE_NAME_TODOS: &str = "todos";
 pub const TABLE_NAME_ASSETS: &str = "assets";
 
 
-pub const MAGIC_ROOT_NODE_ID: &str = "##ROOT##";
-pub const MAGIC_PREV_NODE_ID_EMPTY: &str = "##NONE##";
+pub const MAGIC_RECYCLE_BIN: &str = "##Recycle_Bin##";

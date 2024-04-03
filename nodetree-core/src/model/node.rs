@@ -2,7 +2,6 @@ use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::constants::MAGIC_PREV_NODE_ID_EMPTY;
 
 use super::tag::Tag;
 
