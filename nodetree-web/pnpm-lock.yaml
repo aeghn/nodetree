@@ -38,9 +38,21 @@ dependencies:
   clsx:
     specifier: ^2.1.0
     version: 2.1.0
+  katex:
+    specifier: ^0.16.10
+    version: 0.16.10
   mac-scrollbar:
     specifier: ^0.13.6
     version: 0.13.6
+  prosemirror-commands:
+    specifier: ^1.5.2
+    version: 1.5.2
+  prosemirror-keymap:
+    specifier: ^1.2.2
+    version: 1.2.2
+  prosemirror-transform:
+    specifier: ^1.8.0
+    version: 1.8.0
   prosemirror-view:
     specifier: 1.33.2
     version: 1.33.2
@@ -1427,6 +1439,11 @@ packages:
     engines: {node: '>= 6'}
     dev: true
 
+  /commander@8.3.0:
+    resolution: {integrity: sha512-OkTL9umf+He2DZkUq8f8J9of7yL6RJKI24dVITBmNfZBmri9zYZQrKkuXiKhyfPSu8tUhnVBB1iKXevvnlR4Ww==}
+    engines: {node: '>= 12'}
+    dev: false
+
   /concat-map@0.0.1:
     resolution: {integrity: sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=}
     dev: true
@@ -1974,6 +1991,13 @@ packages:
   /json-stable-stringify-without-jsonify@1.0.1:
     resolution: {integrity: sha1-nbe1lJatPzz+8wp1FC0tkwrXJlE=}
     dev: true
+
+  /katex@0.16.10:
+    resolution: {integrity: sha512-ZiqaC04tp2O5utMsl2TEZTXxa6WSC4yo0fv5ML++D3QZv/vx2Mct0mTlRx3O+uUkjfuAgOkzsCmq5MiUEsDDdA==}
+    hasBin: true
+    dependencies:
+      commander: 8.3.0
+    dev: false
 
   /keyv@4.5.4:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}

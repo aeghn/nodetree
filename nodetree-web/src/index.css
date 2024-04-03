@@ -19,3 +19,134 @@
 html {
   background-color: #fff;
 }
+
+
+/*******************************************/
+/* MATH STYLES */
+/*******************************************/
+
+/*---------------------------------------------------------
+ *  Author: Benjamin R. Bray
+ *  License: MIT (see LICENSE in project root for details)
+ *--------------------------------------------------------*/
+
+/* == Math Nodes ======================================== */
+
+.math-node {
+  min-width: 1em;
+  min-height: 1em;
+  font-size: 0.95em;
+  font-family: "Consolas", "Ubuntu Mono", monospace;
+  cursor: auto;
+}
+
+.math-node.empty-math .math-render::before {
+  content: "(empty)";
+  color: var(--paragraph-error);
+}
+
+.math-node .math-render.parse-error::before {
+  content: "(math error)";
+  color: var(--paragraph-error);
+  cursor: help;
+}
+
+.math-node.ProseMirror-selectednode {
+  outline: none;
+}
+
+.math-node .math-src {
+  display: none;
+  color: var(--paragraph);
+  tab-size: 4;
+}
+
+.math-node.ProseMirror-selectednode .math-src {
+  display: inline;
+}
+
+.math-node.ProseMirror-selectednode .math-render {
+  display: none;
+}
+
+/* -- Inline Math --------------------------------------- */
+
+.math-inline {
+  display: inline;
+  white-space: nowrap;
+}
+
+.math-inline .math-render {
+  display: inline-block;
+  /* font-size: 0.85em; */
+  cursor: pointer;
+}
+
+.math-inline .math-src .ProseMirror {
+  display: inline;
+  /* Necessary to fix FireFox bug with contenteditable, https://bugzilla.mozilla.org/show_bug.cgi?id=1252108 */
+  border-right: 1px solid transparent;
+  border-left: 1px solid transparent;
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas,
+    Liberation Mono, monospace !important;
+}
+
+.math-inline.ProseMirror-selectednode {
+  background-color: var(--background-secondary);
+  padding: 3px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+}
+
+.math-inline .math-src::after,
+.math-inline .math-src::before {
+  content: "$$";
+  color: var(--paragraph-secondary);
+}
+
+/* -- Block Math ---------------------------------------- */
+
+.math-block {
+  display: block;
+}
+
+.math-block .math-render {
+  display: block;
+}
+
+.math-block.ProseMirror-selectednode {
+  background-color: var(--background-secondary);
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+}
+
+.math-block .math-src .ProseMirror {
+  width: 100%;
+  display: block;
+  margin-top: 10px;
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas,
+    Liberation Mono, monospace !important;
+}
+
+/* .math-block .math-src::after, */
+.math-block .math-src::before {
+  content: "Math";
+  text-align: left;
+  color: var(--paragraph-secondary);
+  margin-bottom: 10px;
+}
+
+.math-block .katex-display {
+  margin: 0;
+}
+
+.math-block .katex {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.math-block .katex-html {
+  padding-top: 10px;
+}

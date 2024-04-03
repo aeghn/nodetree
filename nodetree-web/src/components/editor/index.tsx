@@ -4,9 +4,11 @@ import React, { useEffect } from "react";
 import "tiptap-extension-resizable-image/styles.css";
 import { Highlight } from "@tiptap/extension-highlight";
 import { Typography } from "@tiptap/extension-typography";
-import { ResizableImage } from "./extensions/ResizableImage/ResizableImage";
+import { ResizableImage } from "./extensions/resizable-image/ResizableImage";
 import { uploadImage } from "../../helpers/dataAgent";
 import { NTNode } from "../../model";
+import { MathBlock, MathInline } from "./extensions/math";
+import "katex/dist/katex.min.css";
 
 export const NTEditor: React.FC<{
   height: number | undefined;
@@ -21,6 +23,8 @@ export const NTEditor: React.FC<{
       }),
       Highlight,
       Typography,
+      MathInline,
+      MathBlock,
     ],
     editorProps: {
       attributes: {
@@ -59,17 +63,14 @@ export const NTEditor: React.FC<{
       const json = editor.getJSON();
       if (json) {
         const node = { ...inNode, content: JSON.stringify(json) };
-        setOutNode(node)
+        setOutNode(node);
       }
     },
   });
 
   useEffect(() => {
     let text = inNode.content;
-    if (
-      text &&
-      text.length > 0
-    ) {
+    if (text && text.length > 0) {
       const trimedStart = text.trimStart();
       if (trimedStart.startsWith("{") || trimedStart.startsWith("[")) {
         try {
