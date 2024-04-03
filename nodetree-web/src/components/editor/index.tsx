@@ -5,7 +5,7 @@ import "tiptap-extension-resizable-image/styles.css";
 import { Highlight } from "@tiptap/extension-highlight";
 import { Typography } from "@tiptap/extension-typography";
 import { ResizableImage } from "./extensions/resizable-image/ResizableImage";
-import { uploadImage } from "../../helpers/dataAgent";
+import { uploadImage } from "../../helpers/data-agent";
 import { NTNode } from "../../model";
 import { MathBlock, MathInline } from "./extensions/math";
 import "katex/dist/katex.min.css";

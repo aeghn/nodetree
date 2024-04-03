@@ -19,8 +19,8 @@ import {
   saveNode,
   updateNodeName,
   deteleNode as deleteNode,
-} from "../../helpers/dataAgent";
-import { arrangeNodes } from "../../helpers/nodeHelper";
+} from "../../helpers/data-agent";
+import { arrangeNodes } from "../../helpers/node-helper";
 import { NTNode, ContentParsedInfo } from "../../model";
 import { generateId } from "../../helpers/tools";
 

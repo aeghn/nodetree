@@ -3,9 +3,9 @@ import { NTTree } from "./components/tree";
 import { NTEditor } from "./components/editor";
 import { useRef, useState } from "react";
 import { NTNode } from "./model";
-import { saveNode } from "./helpers/dataAgent";
+import { saveNode } from "./helpers/data-agent";
 import { SimpleTree } from "react-arborist";
-import { useThrottleEffect } from "./hooks/useThrottleEffect";
+import { useThrottleEffect } from "./hooks/use-throttle-effect";
 
 function App() {
   const { ref, height } = useResizeObserver<HTMLDivElement>({});
