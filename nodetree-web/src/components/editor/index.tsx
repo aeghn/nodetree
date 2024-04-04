@@ -4,11 +4,14 @@ import React, { useEffect } from "react";
 import "tiptap-extension-resizable-image/styles.css";
 import { Highlight } from "@tiptap/extension-highlight";
 import { Typography } from "@tiptap/extension-typography";
+import { Mention } from "@tiptap/extension-mention";
+
 import { ResizableImage } from "./extensions/resizable-image/ResizableImage";
 import { uploadImage } from "../../helpers/data-agent";
 import { NTNode } from "../../model";
 import { MathBlock, MathInline } from "./extensions/math";
 import "katex/dist/katex.min.css";
+import suggestion from "./extensions/mention/mention-suggestion";
 
 export const NTEditor: React.FC<{
   height: number | undefined;
@@ -25,6 +28,12 @@ export const NTEditor: React.FC<{
       Typography,
       MathInline,
       MathBlock,
+      Mention.configure({
+        HTMLAttributes: {
+          class: 'mention',
+        },
+        suggestion,
+      }),
     ],
     editorProps: {
       attributes: {

@@ -17,6 +17,9 @@ dependencies:
   '@tiptap/extension-list-item':
     specifier: ^2.2.4
     version: 2.2.4(@tiptap/core@2.2.4)
+  '@tiptap/extension-mention':
+    specifier: ^2.2.4
+    version: 2.2.4(@tiptap/core@2.2.4)(@tiptap/pm@2.2.4)(@tiptap/suggestion@2.2.4)
   '@tiptap/extension-text-align':
     specifier: ^2.2.4
     version: 2.2.4(@tiptap/core@2.2.4)
@@ -936,6 +939,18 @@ packages:
       '@tiptap/core': ^2.0.0
     dependencies:
       '@tiptap/core': 2.2.4(@tiptap/pm@2.2.4)
+    dev: false
+
+  /@tiptap/extension-mention@2.2.4(@tiptap/core@2.2.4)(@tiptap/pm@2.2.4)(@tiptap/suggestion@2.2.4):
+    resolution: {integrity: sha512-myUlwpbrQgWfRJwG4UHM2PbiSp+squJv6LPKfKINs5yDxIproaZ0/4TAJt3heeSXZJnboPAQxSP7eLd5pY8lBw==}
+    peerDependencies:
+      '@tiptap/core': ^2.0.0
+      '@tiptap/pm': ^2.0.0
+      '@tiptap/suggestion': ^2.0.0
+    dependencies:
+      '@tiptap/core': 2.2.4(@tiptap/pm@2.2.4)
+      '@tiptap/pm': 2.2.4
+      '@tiptap/suggestion': 2.2.4(@tiptap/core@2.2.4)(@tiptap/pm@2.2.4)
     dev: false
 
   /@tiptap/extension-ordered-list@2.2.4(@tiptap/core@2.2.4):
