@@ -11,7 +11,7 @@ import { uploadImage } from "../../helpers/data-agent";
 import { NTNode } from "../../model";
 import { MathBlock, MathInline } from "./extensions/math";
 import "katex/dist/katex.min.css";
-import suggestion from "./extensions/mention/mention-suggestion";
+import suggestion from "./extensions/candidate/candidate-suggestion";
 
 export const NTEditor: React.FC<{
   height: number | undefined;
@@ -32,6 +32,7 @@ export const NTEditor: React.FC<{
         HTMLAttributes: {
           class: 'mention',
         },
+        // @ts-ignore
         suggestion,
       }),
     ],

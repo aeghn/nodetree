@@ -2,36 +2,13 @@ import { ReactRenderer } from "@tiptap/react";
 import tippy, { Instance, Props, GetReferenceClientRect } from "tippy.js";
 import { Editor } from "@tiptap/react";
 
-import { MentionList } from "./mention-list";
+import { MentionList } from "./candidate-list";
 
 export default {
     items: ({ query }: { query: string }) => {
         return [
             "Lea Thompson",
-            "Cyndi Lauper",
-            "Tom Cruise",
-            "Madonna",
-            "Jerry Hall",
-            "Joan Collins",
-            "Winona Ryder",
-            "Christina Applegate",
-            "Alyssa Milano",
-            "Molly Ringwald",
-            "Ally Sheedy",
-            "Debbie Harry",
-            "Olivia Newton-John",
-            "Elton John",
-            "Michael J. Fox",
-            "Axl Rose",
-            "Emilio Estevez",
-            "Ralph Macchio",
-            "Rob Lowe",
-            "Jennifer Grey",
-            "Mickey Rourke",
-            "John Cusack",
-            "Matthew Broderick",
-            "Justine Bateman",
-            "Lisa Bonet"
+            "Cyndi Lauper"
         ]
             .filter((item) => item.toLowerCase().startsWith(query.toLowerCase()))
             .slice(0, 5);
@@ -85,6 +62,7 @@ export default {
                     return true;
                 }
 
+                // @ts-ignore
                 return reactRenderer.ref?.onKeyDown(props);
             },
 

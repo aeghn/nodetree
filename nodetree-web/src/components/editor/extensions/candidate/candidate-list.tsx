@@ -5,6 +5,8 @@ import {
     useState
 } from "react";
 
+import { SuggestionKeyDownProps } from "@tiptap/suggestion";
+
 export const MentionList = forwardRef<any, any>((props, ref) => {
     const [selectedIndex, setSelectedIndex] = useState(0);
 
@@ -33,7 +35,7 @@ export const MentionList = forwardRef<any, any>((props, ref) => {
     useEffect(() => setSelectedIndex(0), [props.items]);
 
     useImperativeHandle(ref, () => ({
-        onKeyDown: ({ event }) => {
+        onKeyDown: ({ event }: SuggestionKeyDownProps) => {
             if (event.key === "ArrowUp") {
                 upHandler();
                 return true;
