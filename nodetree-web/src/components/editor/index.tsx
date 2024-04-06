@@ -1,23 +1,25 @@
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import "tiptap-extension-resizable-image/styles.css";
 import { Highlight } from "@tiptap/extension-highlight";
 import { Typography } from "@tiptap/extension-typography";
-import { Mention } from "@tiptap/extension-mention";
 
 import { ResizableImage } from "./extensions/resizable-image/ResizableImage";
 import { uploadImage } from "../../helpers/data-agent";
 import { NTNode } from "../../model";
 import { MathBlock, MathInline } from "./extensions/math";
 import "katex/dist/katex.min.css";
-import suggestion from "./extensions/candidate/candidate-suggestion";
+import { Candidate } from "./extensions/candidate/candidate";
 
 export const NTEditor: React.FC<{
   height: number | undefined;
   inNode: NTNode;
   setOutNode: Function;
 }> = ({ height, inNode, setOutNode }) => {
+
+  const [allTags, setAllTags] = useState<string[]>(["a", "b", "c"]);
+
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -28,13 +30,16 @@ export const NTEditor: React.FC<{
       Typography,
       MathInline,
       MathBlock,
-      Mention.configure({
-        HTMLAttributes: {
-          class: 'mention',
+      Candidate({
+        items: (query: { query: string }) => {
+          return allTags
+            .filter((item) => item.toLowerCase().startsWith(query.query.toLowerCase()))
+            .slice(0, 5);
         },
-        // @ts-ignore
-        suggestion,
+        name: "hashtag",
+        prefix: '#'
       }),
+
     ],
     editorProps: {
       attributes: {
