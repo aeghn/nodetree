@@ -20,7 +20,9 @@ use crate::{
 
 use super::{
     asset::AssetMapper,
-    node::{NodeDeleteReq, NodeMapper, NodeMoveReq, NodeMoveRsp, NodeRenameReq},
+    node::{
+        NodeDeleteReq, NodeFetchContentLikeReq, NodeMapper, NodeMoveReq, NodeMoveRsp, NodeRenameReq,
+    },
     nodefilter::NodeFilter,
     Mapper,
 };
@@ -250,6 +252,16 @@ SELECT id, name, content, username, delete_time, create_time, first_version_time
         .map(|_| ())
     }
 
+    async fn update_node_name(&self, req: &NodeRenameReq) -> anyhow::Result<u64> {
+        let stmt = self.pool.get().await?;
+        stmt.execute(
+            "update nodes set name = $1 where id = $2",
+            &[&req.name, &req.id],
+        )
+        .await
+        .map_err(|e| anyhow::Error::new(e))
+    }
+
     async fn query_nodes(&self, node_filter: &NodeFilter) -> anyhow::Result<Vec<Node>> {
         let stmt = self.pool.get().await?;
 
@@ -265,14 +277,22 @@ SELECT id, name, content, username, delete_time, create_time, first_version_time
         Ok(nodes)
     }
 
-    async fn update_node_name(&self, req: &NodeRenameReq) -> anyhow::Result<u64> {
+    async fn query_nodes_by_content(
+        &self,
+        query: &NodeFetchContentLikeReq,
+    ) -> anyhow::Result<Vec<Node>> {
         let stmt = self.pool.get().await?;
-        stmt.execute(
-            "update nodes set name = $1 where id = $2",
-            &[&req.name, &req.id],
-        )
-        .await
-        .map_err(|e| anyhow::Error::new(e))
+        let query: &str = query.query.as_ref();
+
+        let nodes = stmt
+            .query(
+                "select * from nodes where name like $1 or content like $2",
+                &[&format!("%{}%", query), &format!("%{}%", query)],
+            )
+            .await
+            .map(|rows| rows.iter().map(|row| Self::map_nodes_row(&row)).collect())?;
+
+        Ok(nodes)
     }
 
     async fn move_nodes(&self, node_move_req: &NodeMoveReq) -> anyhow::Result<NodeMoveRsp> {

@@ -3,7 +3,7 @@ pub mod asset;
 use std::{fmt::Debug, sync::Arc};
 
 use axum::{
-    extract::{DefaultBodyLimit, State},
+    extract::{DefaultBodyLimit, Query, State},
     http::{
         header::{
             ACCEPT, ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS,
@@ -16,7 +16,11 @@ use axum::{
     Json, Router,
 };
 use ntcore::{
-    mapper::{node::{NodeDeleteReq, NodeMoveReq, NodeRenameReq}, nodefilter::NodeFilter, Mapper},
+    mapper::{
+        node::{NodeDeleteReq, NodeFetchContentLikeReq, NodeMoveReq, NodeRenameReq},
+        nodefilter::NodeFilter,
+        Mapper,
+    },
     model::node::Node,
 };
 use serde::Serialize;
@@ -44,7 +48,7 @@ fn routes() -> Router<WebAppState> {
         .route("/api/move-node", post(move_node))
         .route("/api/delete-node", post(delete_node))
         .route("/api/update-node-name", post(update_node_name))
-
+        .route("/api/fetch-nodes-by-content", get(fetch_nodes_by_content))
         .merge(asset::routes())
 }
 
@@ -134,19 +138,34 @@ async fn fetch_all_nodes(state: State<WebAppState>) -> impl IntoResponse {
     fetch_nodes(state, Json(NodeFilter::All)).await
 }
 
+async fn fetch_nodes_by_content(
+    state: State<WebAppState>,
+    Query(req): Query<NodeFetchContentLikeReq>,
+) -> impl IntoResponse {
+    info!("fetch_nodes: {:?}", req);
+    let rest = state.mapper.query_nodes_by_content(&req).await;
+    print_and_trans_to_response(rest)
+}
+
 async fn move_node(state: State<WebAppState>, Json(req): Json<NodeMoveReq>) -> impl IntoResponse {
     info!("move_node: {:?}", req);
     let rest = state.mapper.move_nodes(&req).await;
     print_and_trans_to_response(rest)
 }
 
-async fn delete_node(state: State<WebAppState>, Json(req): Json<NodeDeleteReq>) -> impl IntoResponse {
+async fn delete_node(
+    state: State<WebAppState>,
+    Json(req): Json<NodeDeleteReq>,
+) -> impl IntoResponse {
     info!("delete_node: {:?}", req);
     let rest = state.mapper.delete_node(&req).await;
     print_and_trans_to_response(rest)
 }
 
-async fn update_node_name(state: State<WebAppState>, Json(req): Json<NodeRenameReq>) -> impl IntoResponse {
+async fn update_node_name(
+    state: State<WebAppState>,
+    Json(req): Json<NodeRenameReq>,
+) -> impl IntoResponse {
     info!("rename_node: {:?}", req);
     let rest = state.mapper.update_node_name(&req).await;
     print_and_trans_to_response(rest)

@@ -41,6 +41,11 @@ pub struct NodeRenameReq {
     pub name: String,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct NodeFetchContentLikeReq {
+    pub query: String,
+}
+
 #[async_trait]
 pub trait NodeMapper {
     async fn insert_and_move(&self, node: &Node) -> anyhow::Result<NodeInsertResult> {
@@ -69,6 +74,7 @@ pub trait NodeMapper {
     async fn update_node_name(&self, req: &NodeRenameReq) -> anyhow::Result<u64>;
 
     async fn query_nodes(&self, node_filter: &NodeFilter) -> anyhow::Result<Vec<Node>>;
+    async fn query_nodes_by_content(&self, query: &NodeFetchContentLikeReq) -> anyhow::Result<Vec<Node>>;
 
     /// Move Node.
     ///   
@@ -94,10 +100,16 @@ pub trait NodeMapper {
     /// Find descendants recursively.  
     ///
     /// Return a HashMap which child_id points to its parent.
-    async fn find_descendant_ids(&self, id: &NodeId) -> anyhow::Result<HashMap<NodeId, Option<NodeId>>>;
+    async fn find_descendant_ids(
+        &self,
+        id: &NodeId,
+    ) -> anyhow::Result<HashMap<NodeId, Option<NodeId>>>;
 
     /// Like `find_descendant_ids`, but find ancestors recursively.  
     ///
     /// Return a HashMap which child_id points to its parent.
-    async fn find_ancestor_ids(&self, id: &NodeId) -> anyhow::Result<HashMap<NodeId, Option<NodeId>>>;
+    async fn find_ancestor_ids(
+        &self,
+        id: &NodeId,
+    ) -> anyhow::Result<HashMap<NodeId, Option<NodeId>>>;
 }

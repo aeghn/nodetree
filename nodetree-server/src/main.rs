@@ -4,7 +4,6 @@ use arguments::Arguments;
 use clap::Parser;
 use config::Config;
 use ntcore::mapper::Mapper;
-use once_cell::sync::Lazy;
 use tracing::Level;
 
 mod arguments;
