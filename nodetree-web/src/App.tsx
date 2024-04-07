@@ -44,7 +44,12 @@ function App() {
 
         <div className="w-7/12 h-full">
           {inNode ? (
-            <NTEditor height={height} inNode={inNode} setOutNode={setOutNode} />
+            <NTEditor
+              height={height}
+              inNode={inNode}
+              setOutNode={setOutNode}
+              treeRef={treeRef}
+            />
           ) : (
             <div>No node is selected</div>
           )}

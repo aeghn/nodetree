@@ -1,6 +1,6 @@
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import React, { useEffect, useState } from "react";
+import React, { MutableRefObject, useEffect } from "react";
 import "tiptap-extension-resizable-image/styles.css";
 import { Highlight } from "@tiptap/extension-highlight";
 import { Typography } from "@tiptap/extension-typography";
@@ -10,16 +10,16 @@ import { uploadImage } from "../../helpers/data-agent";
 import { NTNode } from "../../model";
 import { MathBlock, MathInline } from "./extensions/math";
 import "katex/dist/katex.min.css";
-import { Candidate } from "./extensions/candidate/candidate";
+import { Candidate } from "./extensions/candidate/common-candidate";
+import { BackLink } from "./extensions/candidate/backlink";
+import { SimpleTree } from "react-arborist";
 
 export const NTEditor: React.FC<{
   height: number | undefined;
   inNode: NTNode;
   setOutNode: Function;
-}> = ({ height, inNode, setOutNode }) => {
-
-  const [allTags, setAllTags] = useState<string[]>(["a", "b", "c"]);
-
+  treeRef: MutableRefObject<SimpleTree<NTNode> | null>;
+}> = ({ height, inNode, setOutNode, treeRef }) => {
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -30,20 +30,17 @@ export const NTEditor: React.FC<{
       Typography,
       MathInline,
       MathBlock,
-      Candidate({
-        items: (query: { query: string }) => {
-          return allTags
-            .filter((item) => item.toLowerCase().startsWith(query.query.toLowerCase()))
-            .slice(0, 5);
-        },
-        name: "hashtag",
-        prefix: '#'
-      }),
 
+      BackLink(),
     ],
     editorProps: {
       attributes: {
         spellcheck: "false",
+      },
+      handleClickOn: (view, pos, node) => {
+        if (node.type.name === "backlink") {
+          treeRef?.current?.find(node.attrs.id);
+        }
       },
       handlePaste: (view, event) => {
         const items = event.clipboardData?.files;

@@ -3,69 +3,90 @@ import tippy, { Instance, Props, GetReferenceClientRect } from "tippy.js";
 import { Editor } from "@tiptap/react";
 
 import { MentionList } from "./candidate-list";
+import { PluginKey } from "@tiptap/pm/state";
 
-export const suggestions = (items: ((qurty: string) => any[] | Promise<any[]>), prefix: string) => {
-    return {
-        char: prefix,
-        items: items,
+export interface CandidateConfig {
+  items: (query: { query: string }) => any[] | Promise<any[]>;
+  name: string;
+  prefix: string;
+  selectItem: (props: any, index: number) => void | undefined;
+  candidateRenderer: (item: any) => any | undefined;
+}
 
-        render: () => {
-            let reactRenderer: ReactRenderer;
-            let popup: Instance<Props>[];
+export const suggestion = (candidate_config: CandidateConfig) => {
+  const { items, name, prefix, selectItem, candidateRenderer } =
+    candidate_config;
+  return {
+    char: prefix,
+    items: items,
+    // https://blog.projectan.cn/vue/tiptap-multiple-mention-instances/
+    pluginKey: new PluginKey(name),
 
-            return {
-                onStart: (props: {
-                    editor: Editor;
-                    clientRect: GetReferenceClientRect;
-                }) => {
-                    reactRenderer = new ReactRenderer(MentionList, {
-                        props,
-                        editor: props.editor
-                    });
+    // https://github.com/ueberdosis/tiptap/issues/823
+    allowSpaces: true,
 
-                    if (!props.clientRect) {
-                        return;
-                    }
+    render: () => {
+      let reactRenderer: ReactRenderer;
+      let popup: Instance<Props>[];
 
-                    popup = tippy("body", {
-                        getReferenceClientRect: props.clientRect,
-                        appendTo: () => document.body,
-                        content: reactRenderer.element,
-                        showOnCreate: true,
-                        interactive: true,
-                        trigger: "manual",
-                        placement: "bottom-start"
-                    });
-                },
+      return {
+        onStart: (props: {
+          editor: Editor;
+          clientRect: GetReferenceClientRect;
+        }) => {
+          const propsExtend = {
+            ...props,
+            selectItem,
+            candidateRenderer,
+          };
+          reactRenderer = new ReactRenderer(MentionList, {
+            props: propsExtend,
+            editor: props.editor,
+          });
 
-                onUpdate(props: Record<string, any>) {
-                    reactRenderer.updateProps(props);
+          if (!props.clientRect) {
+            return;
+          }
 
-                    if (!props.clientRect) {
-                        return;
-                    }
+          popup = tippy("body", {
+            getReferenceClientRect: props.clientRect,
+            appendTo: () => document.body,
+            content: reactRenderer.element,
+            showOnCreate: true,
+            interactive: true,
+            trigger: "manual",
+            placement: "bottom-start",
+          });
+        },
 
-                    popup[0].setProps({
-                        getReferenceClientRect: props.clientRect
-                    });
-                },
+        onUpdate(props: Record<string, any>) {
+          reactRenderer.updateProps(props);
 
-                onKeyDown(props: any) {
-                    if (props.event.key === "Escape") {
-                        popup[0].hide();
+          if (!props.clientRect) {
+            return;
+          }
 
-                        return true;
-                    }
+          popup[0].setProps({
+            getReferenceClientRect: props.clientRect,
+          });
+        },
 
-                    // @ts-ignore
-                    return reactRenderer.ref?.onKeyDown(props);
-                },
+        onKeyDown(props: any) {
+          if (props.event.key === "Escape") {
+            popup[0].hide();
 
-                onExit() {
-                    popup[0].destroy();
-                    reactRenderer.destroy();
-                }
-            };
-        }
-    }
+            return true;
+          }
+
+          // @ts-ignore
+          return reactRenderer.ref?.onKeyDown(props);
+        },
+
+        onExit() {
+          popup[0].destroy();
+          reactRenderer.destroy();
+        },
+      };
+    },
+  };
 };

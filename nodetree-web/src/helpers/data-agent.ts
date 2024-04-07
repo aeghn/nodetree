@@ -6,6 +6,12 @@ export const fetchAllNodes = async (): Promise<NTNode[]> => {
   return requests.get("api/fetch-all-nodes");
 };
 
+export const fetchNodesLike = async (query: string): Promise<NTNode[]> => {
+  console.info("begin to fetch all nodes");
+  return requests.getParams("api/fetch-nodes-by-content", {
+    query: query,
+  });
+};
 export const moveNode = async (
   id: string,
   parentId: string | null,
