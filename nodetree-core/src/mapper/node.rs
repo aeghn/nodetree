@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::model::node::{self, ContentParsedInfo, Node, NodeId};
 
-use super::nodefilter::NodeFilter;
+use super::nodefilter::{NodeFetchReq, NodeFilter};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct NodeMoveRsp {
@@ -41,11 +41,6 @@ pub struct NodeRenameReq {
     pub name: String,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct NodeFetchContentLikeReq {
-    pub query: String,
-}
-
 #[async_trait]
 pub trait NodeMapper {
     async fn insert_and_move(&self, node: &Node) -> anyhow::Result<NodeInsertResult> {
@@ -73,8 +68,7 @@ pub trait NodeMapper {
     async fn delete_node(&self, req: &NodeDeleteReq) -> anyhow::Result<()>;
     async fn update_node_name(&self, req: &NodeRenameReq) -> anyhow::Result<u64>;
 
-    async fn query_nodes(&self, node_filter: &NodeFilter) -> anyhow::Result<Vec<Node>>;
-    async fn query_nodes_by_content(&self, query: &NodeFetchContentLikeReq) -> anyhow::Result<Vec<Node>>;
+    async fn query_nodes(&self, node_filter: &NodeFetchReq) -> anyhow::Result<Vec<Node>>;
 
     /// Move Node.
     ///   

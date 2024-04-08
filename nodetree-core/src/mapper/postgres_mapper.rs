@@ -5,7 +5,7 @@ use bytes::BytesMut;
 use chrono::Utc;
 use deadpool_postgres::{Client, GenericClient, Pool};
 use postgres_types::{to_sql_checked, ToSql};
-use serde::{de, Deserialize};
+use serde::Deserialize;
 use tokio_postgres::Row;
 use tracing::info;
 
@@ -20,10 +20,8 @@ use crate::{
 
 use super::{
     asset::AssetMapper,
-    node::{
-        NodeDeleteReq, NodeFetchContentLikeReq, NodeMapper, NodeMoveReq, NodeMoveRsp, NodeRenameReq,
-    },
-    nodefilter::NodeFilter,
+    node::{NodeDeleteReq, NodeMapper, NodeMoveReq, NodeMoveRsp, NodeRenameReq},
+    nodefilter::{NodeFetchReq, NodeFilter},
     Mapper,
 };
 
@@ -92,12 +90,12 @@ impl PostgresMapper {
         Ok(())
     }
 
-    fn map_nodes_row(row: &Row) -> Node {
+    fn map_row_node(row: &Row) -> Node {
         let id = row.get("id");
         Node {
             id,
             name: row.get("name"),
-            content: row.get("content"),
+            content: row.try_get("content").map_or("".to_owned(), |e| e),
             user: row.get("username"),
             parsed_info: ContentParsedInfo::default(),
             parent_id: row.get("parent_id"),
@@ -262,35 +260,14 @@ SELECT id, name, content, username, delete_time, create_time, first_version_time
         .map_err(|e| anyhow::Error::new(e))
     }
 
-    async fn query_nodes(&self, node_filter: &NodeFilter) -> anyhow::Result<Vec<Node>> {
+    async fn query_nodes(&self, node_filter: &NodeFetchReq) -> anyhow::Result<Vec<Node>> {
         let stmt = self.pool.get().await?;
 
-        let (sql, args) = node_filter_to_sql(node_filter);
-        let new_slice_ref: Vec<&(dyn ToSql + Sync)> =
-            args.iter().map(|x| &**x as &(dyn ToSql + Sync)).collect();
-        let my_slice_ref: &[&(dyn ToSql + Sync)] = new_slice_ref.as_slice();
+        let sql = node_filter.to_sql();
         let nodes = stmt
-            .query(&sql, my_slice_ref)
+            .query(&sql, &[])
             .await
-            .map(|rows| rows.iter().map(|row| Self::map_nodes_row(&row)).collect())?;
-
-        Ok(nodes)
-    }
-
-    async fn query_nodes_by_content(
-        &self,
-        query: &NodeFetchContentLikeReq,
-    ) -> anyhow::Result<Vec<Node>> {
-        let stmt = self.pool.get().await?;
-        let query: &str = query.query.as_ref();
-
-        let nodes = stmt
-            .query(
-                "select * from nodes where name like $1 or content like $2",
-                &[&format!("%{}%", query), &format!("%{}%", query)],
-            )
-            .await
-            .map(|rows| rows.iter().map(|row| Self::map_nodes_row(&row)).collect())?;
+            .map(|rows| rows.iter().map(|row| Self::map_row_node(&row)).collect())?;
 
         Ok(nodes)
     }
@@ -315,7 +292,7 @@ SELECT id, name, content, username, delete_time, create_time, first_version_time
         let mut old_next = None;
 
         for row in rows {
-            let n = Self::map_nodes_row(&row);
+            let n = Self::map_row_node(&row);
             if &n.id == node_id {
                 node.replace(n);
             } else if n.prev_sliding_id.as_ref() == prev_slibing && &n.parent_id == parent_id {

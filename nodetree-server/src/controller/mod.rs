@@ -17,8 +17,8 @@ use axum::{
 };
 use ntcore::{
     mapper::{
-        node::{NodeDeleteReq, NodeFetchContentLikeReq, NodeMoveReq, NodeRenameReq},
-        nodefilter::NodeFilter,
+        node::{NodeDeleteReq, NodeMoveReq, NodeRenameReq},
+        nodefilter::{NodeFetchReq, NodeFilter},
         Mapper,
     },
     model::node::Node,
@@ -48,7 +48,6 @@ fn routes() -> Router<WebAppState> {
         .route("/api/move-node", post(move_node))
         .route("/api/delete-node", post(delete_node))
         .route("/api/update-node-name", post(update_node_name))
-        .route("/api/fetch-nodes-by-content", get(fetch_nodes_by_content))
         .merge(asset::routes())
 }
 
@@ -128,23 +127,24 @@ async fn insert_node_only(state: State<WebAppState>, Json(node): Json<Node>) -> 
     print_and_trans_to_response(rest)
 }
 
-async fn fetch_nodes(state: State<WebAppState>, Json(req): Json<NodeFilter>) -> impl IntoResponse {
+async fn fetch_nodes(
+    state: State<WebAppState>,
+    Json(req): Json<NodeFetchReq>,
+) -> impl IntoResponse {
     info!("fetch_nodes: {:?}", req);
     let rest = state.mapper.query_nodes(&req).await;
     print_and_trans_to_response(rest)
 }
 
 async fn fetch_all_nodes(state: State<WebAppState>) -> impl IntoResponse {
-    fetch_nodes(state, Json(NodeFilter::All)).await
-}
-
-async fn fetch_nodes_by_content(
-    state: State<WebAppState>,
-    Query(req): Query<NodeFetchContentLikeReq>,
-) -> impl IntoResponse {
-    info!("fetch_nodes: {:?}", req);
-    let rest = state.mapper.query_nodes_by_content(&req).await;
-    print_and_trans_to_response(rest)
+    fetch_nodes(
+        state,
+        Json(NodeFetchReq {
+            selection: None,
+            filter: Some(NodeFilter::All),
+        }),
+    )
+    .await
 }
 
 async fn move_node(state: State<WebAppState>, Json(req): Json<NodeMoveReq>) -> impl IntoResponse {

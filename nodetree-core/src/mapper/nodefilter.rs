@@ -1,35 +1,42 @@
-use std::any::Any;
+use std::{any::Any, vec};
 
 use serde::{de, Deserialize, Serialize};
 use serde_json::Value;
+use tracing::info;
 
 use crate::model::node::NodeId;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct NodeFetchReq {
-    selection: Vec<NodeSelection>,
-    filter: Option<NodeFilter>,
+    pub selection: Option<Vec<NodeSelection>>,
+    pub filter: Option<NodeFilter>,
 }
 
 impl NodeFetchReq {
-    pub fn to_sql(&self) -> String {
-        let with_content = self
-            .selection
-            .iter()
-            .any(|e| e == &NodeSelection::WithContent);
+    fn with_selection(&self, selection: &NodeSelection, def: bool) -> bool {
+        if self.selection.is_none() {
+            def
+        } else {
+            self.selection
+                .as_ref()
+                .unwrap()
+                .iter()
+                .any(|e| e == selection)
+        }
+    }
 
-        let with_history = self
-            .selection
-            .iter()
-            .any(|e| e == &NodeSelection::WithHistory);
+    pub fn to_sql(&self) -> String {
+        let with_content = self.with_selection(&NodeSelection::WithContent, false);
+
+        let with_history = self.with_selection(&NodeSelection::WithHistory, false);
 
         let selection = if with_content {
             "*"
         } else {
-            "id,delete_time, name, user, parent_id, prev_sliding_id, create_time, first_version_time"
+            "n.id, n.delete_time,  n.name, n.username, n.parent_id, n.prev_sliding_id, n.create_time, n.first_version_time"
         };
 
-        let mut s = format!("select {} from nodes ", selection);
+        let mut s = format!("select {} from nodes n", selection);
 
         if let Some(f) = self.filter.as_ref() {
             let part = f.to_sql();
@@ -38,6 +45,8 @@ impl NodeFetchReq {
                 s.push_str(&part);
             }
         }
+
+        info!("Query sql is: {}", s);
 
         s
     }
@@ -94,6 +103,7 @@ pub enum NodeFilter {
     And(Box<Vec<NodeFilter>>),
     Not(Box<NodeFilter>),
     Or(Box<Vec<NodeFilter>>),
+    Contains(String),
 }
 
 impl NodeFilter {
@@ -137,6 +147,10 @@ impl NodeFilter {
                     _ => Ok(NodeFilter::Or(Box::new(vec))),
                 }
             }
+            "contains" | "like" => {
+                let value = value.as_str().unwrap().into();
+                Ok(NodeFilter::Contains(value))
+            }
             key => Err(format!("NodeFilter: unknown filter: `{}'", key)),
         }
     }
@@ -145,14 +159,14 @@ impl NodeFilter {
         let inner = match &self {
             NodeFilter::All => "".to_string(),
             NodeFilter::Children(id) => {
-                format!("parent_id = '{}'", id.as_str())
+                format!("n.parent_id = '{}'", id.as_str())
             }
             NodeFilter::Id(id) => {
-                format!("id = '{}'", id.as_str())
+                format!("n.id = '{}'", id.as_str())
             }
             NodeFilter::Tag(tag) => {
                 format!(
-                    "id in (select node_id from tags where tag = '{}')",
+                    "n.id in (select node_id from tags t where t.tag = '{}')",
                     tag.as_str()
                 )
             }
@@ -176,6 +190,9 @@ impl NodeFilter {
                 .filter(|e| !e.is_empty())
                 .collect::<Vec<String>>()
                 .join(" or "),
+            NodeFilter::Contains(part) => {
+                format!("n.content like '%{}%' or n.name like '%{}%'", part, part)
+            }
         };
 
         return if !inner.is_empty() && !(inner.starts_with("(") && inner.ends_with(")")) {
