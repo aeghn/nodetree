@@ -5,22 +5,20 @@ import { Highlight } from "@tiptap/extension-highlight";
 import { Typography } from "@tiptap/extension-typography";
 
 import { ResizableImage } from "./extensions/resizable-image/ResizableImage";
-import { fetchNodeContent, uploadImage } from "../../helpers/data-agent";
+import { uploadImage } from "../../helpers/data-agent";
 import { MathBlock, MathInline } from "./extensions/math";
 import "katex/dist/katex.min.css";
 import { BackLink } from "./extensions/candidate/backlink";
-import { useEffect } from "react";
 import React from "react";
 import { NodeId } from "../../model";
 
 const NTEditor: React.FC<{
   height: number | undefined;
   nodeId: NodeId;
-  contentChangeCallback: (content: string) => void;
+  content: string;
+  contentChangeCallback: (content: string, nodeId: NodeId) => void;
   idChangeCallback: (content: NodeId) => void;
-}> = ({ height, nodeId, contentChangeCallback, idChangeCallback }) => {
-  console.log("draw editor", new Date().toDateString());
-
+}> = ({ height, nodeId, contentChangeCallback, idChangeCallback, content }) => {
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -34,6 +32,7 @@ const NTEditor: React.FC<{
 
       BackLink(),
     ],
+    content: content,
     editorProps: {
       attributes: {
         spellcheck: "false",
@@ -75,30 +74,10 @@ const NTEditor: React.FC<{
     onUpdate: ({ editor }) => {
       const json = editor.getJSON();
       if (json) {
-        contentChangeCallback(JSON.stringify(json));
+        contentChangeCallback(JSON.stringify(json), nodeId);
       }
     },
   });
-
-  useEffect(() => {
-    fetchNodeContent(nodeId).then((node) => {
-      let text = node.content;
-      if (text && text.length > 0) {
-        const trimedStart = text.trimStart();
-        if (trimedStart.startsWith("{") || trimedStart.startsWith("[")) {
-          try {
-            text = JSON.parse(text);
-          } catch (err) {
-            console.error("unable to parse node content: ", err);
-          }
-        }
-      }
-      // WAIT Dirty, wait Tiptap to fix this. https://github.com/ueberdosis/tiptap/issues/3764#issuecomment-1546629928
-      setTimeout(() => {
-        editor?.commands.setContent(text);
-      });
-    });
-  }, [nodeId]);
 
   const style = {
     flex: 1,

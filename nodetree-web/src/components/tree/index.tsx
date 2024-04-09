@@ -12,7 +12,7 @@ import {
 } from "react-arborist";
 import * as icons from "react-icons/md";
 import styles from "./tree.module.css";
-import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   fetchAllNodes,
   moveNode,
@@ -28,9 +28,14 @@ import React from "react";
 export const NTTree: React.FC<{
   height?: number;
   activeNodeId?: NodeId;
-  setActiveNode: (node: NTNode) => void;
+  setActiveNodeCallback: (node: NTNode) => void;
   treeRef: React.MutableRefObject<SimpleTree<NTNode> | null>;
-}> = ({ height, treeRef, activeNodeId, setActiveNode }) => {
+}> = ({
+  height,
+  treeRef,
+  activeNodeId,
+  setActiveNodeCallback,
+}) => {
   console.log("render tree", activeNodeId);
   const [data, setData] = useState<NTNode[]>([]);
   const tree = useMemo(() => new SimpleTree<NTNode>(data), [data]);
@@ -144,7 +149,7 @@ export const NTTree: React.FC<{
         onDelete={onDelete}
         openByDefault={true}
         onActivate={(node) => {
-          setActiveNode(node.data);
+          setActiveNodeCallback(node.data);
         }}
         keybinding={{
           ArrowDown: "ActivateNext",
