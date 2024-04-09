@@ -12,15 +12,13 @@ import {
 } from "react-arborist";
 import * as icons from "react-icons/md";
 import styles from "./tree.module.css";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
-  fetchAllNodes,
   moveNode,
   saveNode,
   updateNodeName,
   deteleNode as deleteNode,
 } from "../../helpers/data-agent";
-import { arrangeNodes } from "../../helpers/node-helper";
 import { NTNode, ContentParsedInfo, NodeId } from "../../model";
 import { generateId } from "../../helpers/tools";
 import React from "react";
@@ -28,146 +26,125 @@ import React from "react";
 export const NTTree: React.FC<{
   height?: number;
   activeNodeId?: NodeId;
+  treeData: NTNode[];
   setActiveNodeCallback: (node: NTNode) => void;
-  treeRef: React.MutableRefObject<SimpleTree<NTNode> | null>;
 }> = ({
   height,
-  treeRef,
   activeNodeId,
+  treeData,
   setActiveNodeCallback,
 }) => {
-  console.log("render tree", activeNodeId);
-  const [data, setData] = useState<NTNode[]>([]);
-  const tree = useMemo(() => new SimpleTree<NTNode>(data), [data]);
-  const [isLoading, setIsLoading] = useState(true);
+    console.log("render tree", activeNodeId);
+    const [data, setData] = useState<NTNode[]>(treeData);
+    const tree = useMemo(() => new SimpleTree<NTNode>(data), [data]);
+    let oldNode: NTNode | undefined = undefined;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const nodes = await fetchAllNodes();
-        const arrangedNodes = arrangeNodes(nodes);
-        setData(arrangedNodes);
-        setIsLoading(false);
-        console.log("Loaded all nodes");
-      } catch (error) {
-        console.error(`Unable get all nodes ${error}`);
+    const onMove: MoveHandler<NTNode> = (args: {
+      dragIds: string[];
+      parentId: null | string;
+      parentNode: NodeApi<NTNode> | null;
+      index: number;
+    }) => {
+      for (const id of args.dragIds) {
+        tree.move({ id, parentId: args.parentId, index: args.index });
+        const index = args.index - 1;
+        const prev = args.parentNode?.children?.[index]?.id;
+        try {
+          moveNode(id, args.parentId, prev);
+        } catch (error) {
+          console.log(error);
+        }
       }
+      setData(tree.data);
     };
 
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    treeRef.current = tree;
-    return () => {
-      treeRef.current = null;
-    };
-  }, [tree, treeRef]);
-
-  const onMove: MoveHandler<NTNode> = (args: {
-    dragIds: string[];
-    parentId: null | string;
-    parentNode: NodeApi<NTNode> | null;
-    index: number;
-  }) => {
-    for (const id of args.dragIds) {
-      tree.move({ id, parentId: args.parentId, index: args.index });
-      const index = args.index - 1;
-      const prev = args.parentNode?.children?.[index]?.id;
+    const onRename: RenameHandler<NTNode> = ({ name, id }) => {
+      tree.update({ id, changes: { name } as NTNode });
       try {
-        moveNode(id, args.parentId, prev);
+        updateNodeName(id, name);
       } catch (error) {
         console.log(error);
       }
-    }
-    setData(tree.data);
-  };
-
-  const onRename: RenameHandler<NTNode> = ({ name, id }) => {
-    tree.update({ id, changes: { name } as NTNode });
-    try {
-      updateNodeName(id, name);
-    } catch (error) {
-      console.log(error);
-    }
-    setData(tree.data);
-  };
-
-  const onCreate: CreateHandler<NTNode> = ({ parentId, index, type }) => {
-    const parsed_info: ContentParsedInfo = {};
-    const data: NTNode = {
-      id: generateId(),
-      name: "untitled",
-      content: "",
-      user: "",
-      parent_id: parentId ? parentId : undefined,
-      create_time: new Date(),
-      first_version_time: new Date(),
-      parsed_info: parsed_info,
+      setData(tree.data);
     };
 
-    if (type === "internal") data.children = [];
-    try {
-      saveNode(data, true);
-    } catch (error) {
-      console.log(error);
-    }
+    const onCreate: CreateHandler<NTNode> = ({ parentId, index, type }) => {
+      const parsed_info: ContentParsedInfo = {};
+      const data: NTNode = {
+        id: generateId(),
+        name: "untitled",
+        content: "",
+        user: "",
+        parent_id: parentId ? parentId : undefined,
+        create_time: new Date(),
+        first_version_time: new Date(),
+        parsed_info: parsed_info,
+      };
 
-    tree.create({ parentId, index, data });
-    setData(tree.data);
-    return data;
-  };
-
-  const onDelete: DeleteHandler<NTNode> = (args: { ids: string[] }) => {
-    args.ids.forEach((id) => {
-      tree.drop({ id });
+      if (type === "internal") data.children = [];
       try {
-        deleteNode(id);
+        saveNode(data, true);
       } catch (error) {
         console.log(error);
       }
-    });
 
-    setData(tree.data);
+      tree.create({ parentId, index, data });
+      setData(tree.data);
+      return data;
+    };
+
+    const onDelete: DeleteHandler<NTNode> = (args: { ids: string[] }) => {
+      args.ids.forEach((id) => {
+        tree.drop({ id });
+        try {
+          deleteNode(id);
+        } catch (error) {
+          console.log(error);
+        }
+      });
+
+      setData(tree.data);
+    };
+
+    return (
+      <div className={styles.treeContainer}>
+        <Tree
+          data={data}
+          width="100%"
+          height={height}
+          rowHeight={32}
+          renderCursor={Cursor}
+          paddingBottom={32}
+          selection={activeNodeId}
+          onMove={onMove}
+          onRename={onRename}
+          onCreate={onCreate}
+          onDelete={onDelete}
+          openByDefault={true}
+          onActivate={(node) => {
+            if (node.data != oldNode) {
+              setActiveNodeCallback(node.data);
+              oldNode = node.data;
+            }
+
+          }}
+          keybinding={{
+            ArrowDown: "ActivateNext",
+            ArrowUp: "ActivatePrev",
+            ArrowRight: "Right",
+            ArrowLeft: "Left",
+            Tab: "Toggle",
+            c: "CreateChild",
+            s: "CreateSlibing",
+            R: "Rename",
+            D: "Delete",
+          }}
+        >
+          {Node}
+        </Tree>
+      </div>
+    );
   };
-
-  return isLoading ? (
-    <div> Loading </div>
-  ) : (
-    <div className={styles.treeContainer}>
-      <Tree
-        data={data}
-        width="100%"
-        height={height}
-        rowHeight={32}
-        renderCursor={Cursor}
-        paddingBottom={32}
-        selection={activeNodeId}
-        onMove={onMove}
-        onRename={onRename}
-        onCreate={onCreate}
-        onDelete={onDelete}
-        openByDefault={true}
-        onActivate={(node) => {
-          setActiveNodeCallback(node.data);
-        }}
-        keybinding={{
-          ArrowDown: "ActivateNext",
-          ArrowUp: "ActivatePrev",
-          ArrowRight: "Right",
-          ArrowLeft: "Left",
-          Tab: "Toggle",
-          c: "CreateChild",
-          s: "CreateSlibing",
-          R: "Rename",
-          D: "Delete",
-        }}
-      >
-        {Node}
-      </Tree>
-    </div>
-  );
-};
 
 function Node({ node, style, dragHandle }: NodeRendererProps<NTNode>) {
   return (
