@@ -1,6 +1,6 @@
 import useResizeObserver from "use-resize-observer";
 import NTTree from "../tree";
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { NTNode, NodeId } from "../../model";
 import {
   fetchAllNodes,
@@ -8,13 +8,11 @@ import {
   saveNode,
 } from "../../helpers/data-agent";
 import { useThrottleEffect } from "../../hooks/use-throttle-effect";
-import React from "react";
 import { arrangeNodes } from "../../helpers/node-helper";
-
-const NTEditor = React.lazy(() => import("../editor/index"));
+import NTEditor from "../editor/index";
 
 function TreeEditor() {
-  const { ref, height } = useResizeObserver<HTMLDivElement>({});
+  const { ref: heightRef, height } = useResizeObserver<HTMLDivElement>({});
 
   const [treeData, setTreeData] = useState<NTNode[]>();
 
@@ -69,6 +67,10 @@ function TreeEditor() {
     [activeNode]
   );
 
+  const idChangeCallback = useCallback((nodeId: NodeId) => {
+    setTargetNodeId(nodeId);
+  }, []);
+
   useThrottleEffect(
     (toSaveNodes) => {
       const keysToDelete: string[] = [];
@@ -100,36 +102,31 @@ function TreeEditor() {
   }, []);
 
   return (
-    <div className="h-screen p-2 shadow">
-      <div
-        className="flex flex-row border-solid border rounded-md border-gray-300 m-0 h-full"
-        ref={ref}
-      >
-        {treeData ? (
-          <div className="w-5/12 h-full bg-[#f0f0f0]">
+    <div className="h-screen p-5 shadow bg-slate-300">
+      <div className="flex flex-row m-0 h-full content-center" ref={heightRef}>
+        <div className="w-3/12 m-0 h-full pr-4">
+          {treeData ? (
             <NTTree
               height={height}
               setActiveNodeCallback={setActiveNodeCallback}
               treeData={treeData}
               activeNodeId={targetNodeId}
             />
-          </div>
-        ) : (
-          Loading()
-        )}
+          ) : (
+            Loading()
+          )}
+        </div>
 
-        <div className="w-7/12 h-full">
+        <div className="w-9/12 h-full border-solid border rounded-md border-gray-300 bg-white shadow-lg">
           {activeNode?.id ? (
             activeNodeContent !== undefined ? (
-              <Suspense fallback={Loading()}>
-                <NTEditor
-                  height={height}
-                  nodeId={activeNode.id}
-                  content={activeNodeContent}
-                  contentChangeCallback={contentChangeCallback}
-                  idChangeCallback={setTargetNodeId}
-                />
-              </Suspense>
+              <NTEditor
+                height={height}
+                nodeId={activeNode.id}
+                content={activeNodeContent}
+                contentChangeCallback={contentChangeCallback}
+                idChangeCallback={idChangeCallback}
+              />
             ) : (
               Loading()
             )

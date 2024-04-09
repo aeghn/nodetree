@@ -17,7 +17,7 @@ const NTEditor: React.FC<{
   nodeId: NodeId;
   content: string;
   contentChangeCallback: (content: string, nodeId: NodeId) => void;
-  idChangeCallback: (content: NodeId) => void;
+  idChangeCallback: (id: NodeId) => void;
 }> = ({ height, nodeId, contentChangeCallback, idChangeCallback, content }) => {
   const editor = useEditor({
     extensions: [
@@ -36,6 +36,8 @@ const NTEditor: React.FC<{
     editorProps: {
       attributes: {
         spellcheck: "false",
+        class:
+          "prose prose-sm sm:prose focus:outline-none",
       },
       handleClickOn: (view, pos, node) => {
         if (node.type.name === "backlink") {
