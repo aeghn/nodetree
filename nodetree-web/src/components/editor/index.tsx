@@ -1,25 +1,26 @@
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import React, { MutableRefObject, useEffect } from "react";
 import "tiptap-extension-resizable-image/styles.css";
 import { Highlight } from "@tiptap/extension-highlight";
 import { Typography } from "@tiptap/extension-typography";
 
 import { ResizableImage } from "./extensions/resizable-image/ResizableImage";
-import { uploadImage } from "../../helpers/data-agent";
-import { NTNode } from "../../model";
+import { fetchNodeContent, uploadImage } from "../../helpers/data-agent";
 import { MathBlock, MathInline } from "./extensions/math";
 import "katex/dist/katex.min.css";
-import { Candidate } from "./extensions/candidate/common-candidate";
 import { BackLink } from "./extensions/candidate/backlink";
-import { SimpleTree } from "react-arborist";
+import { useEffect } from "react";
+import React from "react";
+import { NodeId } from "../../model";
 
-export const NTEditor: React.FC<{
+const NTEditor: React.FC<{
   height: number | undefined;
-  inNode: NTNode;
-  setOutNode: Function;
-  treeRef: MutableRefObject<SimpleTree<NTNode> | null>;
-}> = ({ height, inNode, setOutNode, treeRef }) => {
+  nodeId: NodeId;
+  contentChangeCallback: (content: string) => void;
+  idChangeCallback: (content: NodeId) => void;
+}> = ({ height, nodeId, contentChangeCallback, idChangeCallback }) => {
+  console.log("draw editor", new Date().toDateString());
+
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -39,7 +40,7 @@ export const NTEditor: React.FC<{
       },
       handleClickOn: (view, pos, node) => {
         if (node.type.name === "backlink") {
-          treeRef?.current?.find(node.attrs.id);
+          idChangeCallback(node.attrs.id);
         }
       },
       handlePaste: (view, event) => {
@@ -74,29 +75,30 @@ export const NTEditor: React.FC<{
     onUpdate: ({ editor }) => {
       const json = editor.getJSON();
       if (json) {
-        const node = { ...inNode, content: JSON.stringify(json) };
-        setOutNode(node);
+        contentChangeCallback(JSON.stringify(json));
       }
     },
   });
 
   useEffect(() => {
-    let text = inNode.content;
-    if (text && text.length > 0) {
-      const trimedStart = text.trimStart();
-      if (trimedStart.startsWith("{") || trimedStart.startsWith("[")) {
-        try {
-          text = JSON.parse(text);
-        } catch (err) {
-          console.error("unable to parse node content: ", err);
+    fetchNodeContent(nodeId).then((node) => {
+      let text = node.content;
+      if (text && text.length > 0) {
+        const trimedStart = text.trimStart();
+        if (trimedStart.startsWith("{") || trimedStart.startsWith("[")) {
+          try {
+            text = JSON.parse(text);
+          } catch (err) {
+            console.error("unable to parse node content: ", err);
+          }
         }
       }
-    }
-    // WAIT Dirty, wait Tiptap to fix this. https://github.com/ueberdosis/tiptap/issues/3764#issuecomment-1546629928
-    setTimeout(() => {
-      editor?.commands.setContent(text);
+      // WAIT Dirty, wait Tiptap to fix this. https://github.com/ueberdosis/tiptap/issues/3764#issuecomment-1546629928
+      setTimeout(() => {
+        editor?.commands.setContent(text);
+      });
     });
-  }, [inNode]);
+  }, [nodeId]);
 
   const style = {
     flex: 1,
@@ -113,3 +115,7 @@ export const NTEditor: React.FC<{
     />
   );
 };
+
+const NTEditorMemo = React.memo(NTEditor);
+
+export default NTEditorMemo;

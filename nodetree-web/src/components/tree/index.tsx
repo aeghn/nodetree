@@ -12,7 +12,7 @@ import {
 } from "react-arborist";
 import * as icons from "react-icons/md";
 import styles from "./tree.module.css";
-import { useEffect, useMemo, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
 import {
   fetchAllNodes,
   moveNode,
@@ -21,17 +21,19 @@ import {
   deteleNode as deleteNode,
 } from "../../helpers/data-agent";
 import { arrangeNodes } from "../../helpers/node-helper";
-import { NTNode, ContentParsedInfo } from "../../model";
+import { NTNode, ContentParsedInfo, NodeId } from "../../model";
 import { generateId } from "../../helpers/tools";
+import React from "react";
 
 export const NTTree: React.FC<{
-  height: number | undefined;
-  setActivate: Function;
+  height?: number;
+  activeNodeId?: NodeId;
+  setActiveNode: (node: NTNode) => void;
   treeRef: React.MutableRefObject<SimpleTree<NTNode> | null>;
-}> = ({ height, setActivate, treeRef }) => {
+}> = ({ height, treeRef, activeNodeId, setActiveNode }) => {
+  console.log("render tree", activeNodeId);
   const [data, setData] = useState<NTNode[]>([]);
   const tree = useMemo(() => new SimpleTree<NTNode>(data), [data]);
-
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -135,12 +137,15 @@ export const NTTree: React.FC<{
         rowHeight={32}
         renderCursor={Cursor}
         paddingBottom={32}
+        selection={activeNodeId}
         onMove={onMove}
         onRename={onRename}
         onCreate={onCreate}
         onDelete={onDelete}
         openByDefault={true}
-        onActivate={(node) => setActivate(node.data)}
+        onActivate={(node) => {
+          setActiveNode(node.data);
+        }}
         keybinding={{
           ArrowDown: "ActivateNext",
           ArrowUp: "ActivatePrev",
@@ -150,7 +155,7 @@ export const NTTree: React.FC<{
           c: "CreateChild",
           s: "CreateSlibing",
           R: "Rename",
-          D: "Delete"
+          D: "Delete",
         }}
       >
         {Node}
@@ -201,3 +206,7 @@ function FolderArrow({ node }: { node: NodeApi<NTNode> }) {
 function Cursor({ top, left }: CursorProps) {
   return <div className={styles.dropCursor} style={{ top, left }}></div>;
 }
+
+const NTTreeMemo = React.memo(NTTree);
+
+export default NTTreeMemo;

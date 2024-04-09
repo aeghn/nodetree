@@ -2,16 +2,33 @@ import { Asset, NTNode, NodeId } from "../model";
 import requests from "./request";
 
 export const fetchAllNodes = async (): Promise<NTNode[]> => {
-  console.info("begin to fetch all nodes");
   return requests.get("api/fetch-all-nodes");
 };
 
 export const fetchNodesLike = async (query: string): Promise<NTNode[]> => {
-  console.info("begin to fetch all nodes");
-  return requests.getParams("api/fetch-nodes-by-content", {
-    query: query,
+  return requests.post("api/fetch-nodes", {
+    selection: ["cont", "lim"],
+    filter: {
+      filter: "like",
+      value: query,
+    },
   });
 };
+
+export const fetchNodeContent = async (id: string): Promise<NTNode> => {
+  return requests
+    .post<NTNode[]>("api/fetch-nodes", {
+      selection: ["cont"],
+      filter: {
+        filter: "id",
+        value: id,
+      },
+    })
+    .then((nodes) => {
+      return nodes[0];
+    });
+};
+
 export const moveNode = async (
   id: string,
   parentId: string | null,

@@ -22,13 +22,30 @@ Content-Type: application/json
 }
 
 ### Query Nodes
-POST {{server}}/api/getNodes
+POST {{server}}/api/fetch-nodes
+Content-Type: application/json
+
+{"selection":["cont"],"filter":{"filter":"id","value":"39aff0b3e007-4b74-851f-9a974d839e1a"}}
+
+### Query Nodes
+POST {{server}}/api/fetch-nodes
+Content-Type: application/json
+
+{"selection": ["cont"],
+    "filter": {
+        "filter": "id", "value": "39aff0b3e007-4b74-851f-9a974d839e1a"
+    }
+}
+
+### Query Nodes
+POST {{server}}/api/fetch-nodes
 Content-Type: application/json
 
 {
-    "filter": "all"
+    "filter": {
+        "filter": "like", "value": "g"
+    }
 }
-
 
 ### Upload File
 POST {{server}}/api/upload

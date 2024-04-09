@@ -1048,6 +1048,7 @@ dependencies = [
  "deadpool-sqlite",
  "distance",
  "postgres-types",
+ "regex",
  "serde",
  "serde_json",
  "tokio",
