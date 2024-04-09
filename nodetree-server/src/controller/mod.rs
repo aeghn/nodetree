@@ -194,7 +194,7 @@ mod test {
             Some(pid.clone() + "." + (this - 1).to_string().as_str())
         };
 
-        let cur = chrono::NaiveDateTime::from_timestamp(0, 0);
+        let cur = chrono::Utc::now();
 
         Node {
             id: id.clone().into(),
@@ -202,7 +202,7 @@ mod test {
             name: id.clone(),
             content: String::new(),
             user: String::new(),
-            parent_id: pid.into(),
+            parent_id: Some(pid.into()),
             prev_sliding_id: prev.map(|e| e.into()),
             create_time: cur.clone(),
             first_version_time: cur.clone(),

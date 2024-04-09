@@ -1,5 +1,6 @@
 use std::{any::Any, vec};
 
+use regex::Regex;
 use serde::{de, Deserialize, Serialize};
 use serde_json::Value;
 use tracing::info;
@@ -25,10 +26,25 @@ impl NodeFetchReq {
         }
     }
 
+    fn with_limit(&self) -> Option<i32> {
+        if self.selection.is_none() {
+        } else {
+            for ele in self.selection.as_ref().unwrap() {
+                match ele {
+                    NodeSelection::Limit(c) => return Some(c.to_owned()),
+                    _ => {}
+                }
+            }
+        }
+        None
+    }
+
     pub fn to_sql(&self) -> String {
         let with_content = self.with_selection(&NodeSelection::WithContent, false);
 
         let with_history = self.with_selection(&NodeSelection::WithHistory, false);
+
+        let with_limit = self.with_limit();
 
         let selection = if with_content {
             "*"
@@ -46,6 +62,10 @@ impl NodeFetchReq {
             }
         }
 
+        if let Some(limit) = with_limit {
+            s.push_str(&format!(" limit {}", limit))
+        }
+
         info!("Query sql is: {}", s);
 
         s
@@ -56,12 +76,27 @@ impl NodeFetchReq {
 pub enum NodeSelection {
     WithContent,
     WithHistory,
+    Limit(i32),
 }
 
 impl TryFrom<&str> for NodeSelection {
     type Error = String;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
+        if value.starts_with("lim") {
+            let re = Regex::new(r"\d+$").unwrap();
+
+            if let Some(captures) = re.captures(value) {
+                if let Some(num_str) = captures.get(0) {
+                    if let Ok(num) = num_str.as_str().parse::<i32>() {
+                        return Ok(Self::Limit(num));
+                    }
+                }
+            } else {
+                return Ok(Self::Limit(6));
+            }
+        }
+
         let pairs = vec![
             (
                 vec!["cont", "content", "with_content", "withcontent"],
