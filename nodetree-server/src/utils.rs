@@ -2,7 +2,7 @@ pub fn split_uuid_to_file_name(uuid: &str) -> (String, String, String) {
     let trimed = uuid.replace("-", "");
     let trimed = trimed.trim();
 
-    (trimed[0..2].into(), trimed[2..4].into(), trimed[5..].into())
+    (trimed[0..2].into(), trimed[2..4].into(), trimed[4..].into())
 }
 
 #[cfg(test)]

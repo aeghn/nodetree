@@ -125,9 +125,14 @@ pub async fn download(state: State<WebAppState>, Path(id): Path<String>) -> impl
 
     let save_filepath = get_filepath(&state, &id);
 
-    let file = match tokio::fs::File::open(save_filepath).await {
+    let file = match tokio::fs::File::open(&save_filepath).await {
         Ok(file) => file,
-        Err(err) => return Err((StatusCode::NOT_FOUND, format!("File not found: {}", err))),
+        Err(err) => {
+            return Err((
+                StatusCode::NOT_FOUND,
+                format!("File not found: {:?}, {}", &save_filepath, err),
+            ))
+        }
     };
 
     let stream = ReaderStream::new(file);
