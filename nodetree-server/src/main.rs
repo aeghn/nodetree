@@ -4,13 +4,18 @@ use arguments::Arguments;
 use clap::Parser;
 use config::Config;
 use ntcore::mapper::Mapper;
-use tracing::Level;
+use tracing::{info, Level};
 
 mod arguments;
 mod config;
 mod controller;
-mod service;
 pub mod utils;
+
+async fn write_default_config(filepath: &str) {
+    tokio::fs::write(filepath, include_str!("../../data/config.example.toml"))
+        .await
+        .expect("unable to write default config")
+}
 
 #[tokio::main]
 async fn main() {
@@ -23,17 +28,19 @@ async fn main() {
 
     let args = Arguments::parse();
 
-    let config: Config = toml::from_str(
-        tokio::fs::read_to_string(args.config.as_str())
-            .await
-            .unwrap()
-            .as_str(),
-    )
-    .unwrap();
+    let config_file = tokio::fs::read_to_string(args.config.as_str()).await;
+    match config_file {
+        Ok(cf) => {
+            let config: Config = toml::from_str(cf.as_str()).unwrap();
+            let mapper: anyhow::Result<Arc<dyn Mapper + 'static>> = config.db_config.clone().into();
+            let mapper = mapper.unwrap();
 
-    let mapper: anyhow::Result<Arc<dyn Mapper + 'static>> = config.db_config.clone().into();
-    let mapper = mapper.unwrap();
-
-    mapper.ensure_tables().await.unwrap();
-    controller::serve(mapper, config).await;
+            mapper.ensure_tables().await.unwrap();
+            controller::serve(mapper, config).await;
+        }
+        Err(err) => {
+            info!("unable to read err, creating default config to it. {}", err);
+            write_default_config(args.config.as_str()).await;
+        }
+    }
 }
