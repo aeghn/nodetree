@@ -37,7 +37,7 @@ const NTEditor: React.FC<{
       attributes: {
         spellcheck: "false",
       },
-      handleClickOn: (view, pos, node) => {
+      handleClickOn: (_view, _pos, node) => {
         if (node.type.name === "backlink") {
           idChangeCallback(node.attrs.id);
         }
