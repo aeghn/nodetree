@@ -103,7 +103,7 @@ function TreeEditor() {
   }, []);
 
   return (
-    <div className="h-screen p-4 shadow bg-slate-300">
+    <div className="h-screen p-2 shadow bg-[#f5f5f5]">
       <div className="flex flex-row m-0 h-full content-center" ref={heightRef}>
         <div className="w-3/12 m-0 h-full pr-4">
           {treeData ? (

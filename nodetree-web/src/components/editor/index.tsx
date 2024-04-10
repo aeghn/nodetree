@@ -30,7 +30,7 @@ const NTEditor: React.FC<{
       MathInline,
       MathBlock,
 
-      BackLink(),
+      BackLink()
     ],
     content: content,
     editorProps: {
