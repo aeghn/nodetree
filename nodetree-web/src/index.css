@@ -12,14 +12,26 @@
   }
 }
 
+html {
+  scrollbar-color: #303030 #ffffff00;
+}
+
+
+
 .ProseMirror {
   @apply p-1 pl-4 max-w-full max-h-full h-full rounded-lg prose-ol:px-4 prose-sm prose prose-p:text-black prose-strong:text-black prose-ul:px-4 prose-headings:text-black prose-headings:my-2 sm:prose-base focus:outline-none overflow-auto prose-p:my-0 prose-p:py-0;
 }
 
-html {
-  background-color: #fff;
+
+::-webkit-scrollbar {
+  width: 12px;
+  background-color: #00000000;
 }
 
+::-webkit-scrollbar-thumb {
+  background-color: #303030;
+  border-radius: 6px;
+}
 
 /*******************************************/
 /* MATH STYLES */

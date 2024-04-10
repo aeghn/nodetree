@@ -36,8 +36,6 @@ const NTEditor: React.FC<{
     editorProps: {
       attributes: {
         spellcheck: "false",
-        class:
-          "prose prose-sm sm:prose focus:outline-none",
       },
       handleClickOn: (view, pos, node) => {
         if (node.type.name === "backlink") {
