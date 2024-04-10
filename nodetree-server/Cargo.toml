@@ -24,9 +24,11 @@ once_cell = "1.19.0"
 
 tower-http = { version = "0.5.2", features = ["cors", "trace", "set-header"] }
 chrono = { workspace = true }
-reqwest = { version = "0.11.27", features = ["json"] }
+reqwest = { version = "^0.11.27", features = ["json"] }
 
 serde_json = { workspace = true }
 regex = "1.10.4"
 
 futures = "0.3.30"
+rust-embed = { version = "^8.3.0", features = ["axum"] }
+mime_guess = { version = "2" }
