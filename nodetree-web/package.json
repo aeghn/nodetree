@@ -24,6 +24,7 @@
     "axios": "^1.6.8",
     "clsx": "^2.1.0",
     "katex": "^0.16.10",
+    "lucide-react": "^0.366.0",
     "mac-scrollbar": "^0.13.6",
     "prosemirror-commands": "^1.5.2",
     "prosemirror-keymap": "^1.2.2",

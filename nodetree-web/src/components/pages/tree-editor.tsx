@@ -1,6 +1,6 @@
 import useResizeObserver from "use-resize-observer";
 import NTTree from "../tree";
-import { useCallback, useEffect, useState } from "react";
+import { ReactNode, useCallback, useEffect, useState } from "react";
 import { NTNode, NodeId } from "../../model";
 import {
   fetchAllNodes,
@@ -10,6 +10,7 @@ import {
 import { useThrottleEffect } from "../../hooks/use-throttle-effect";
 import { arrangeNodes } from "../../helpers/node-helper";
 import NTEditor from "../editor/index";
+import { TreePine, BookX } from "lucide-react";
 
 function TreeEditor() {
   const { ref: heightRef, height } = useResizeObserver<HTMLDivElement>({});
@@ -113,7 +114,10 @@ function TreeEditor() {
               activeNodeId={targetNodeId}
             />
           ) : (
-            Loading()
+            <Loading
+              customIcon={<TreePine size={34} strokeWidth={1} />}
+              message="Loading tree"
+            />
           )}
         </div>
 
@@ -128,10 +132,13 @@ function TreeEditor() {
                 idChangeCallback={idChangeCallback}
               />
             ) : (
-              Loading()
+              <div></div>
             )
           ) : (
-            <div>Non node is selected</div>
+            <Loading
+              customIcon={<BookX size={34} strokeWidth={1} />}
+              message="No active node is selected."
+            />
           )}
         </div>
       </div>
@@ -139,8 +146,19 @@ function TreeEditor() {
   );
 }
 
-function Loading() {
-  return <div>Loading...</div>;
+function Loading({
+  customIcon,
+  message,
+}: {
+  customIcon: ReactNode;
+  message: string;
+}) {
+  return (
+    <div className="top-1/2 w-full h-full flex flex-col justify-center items-center align-middle gap-1 text-muted-foreground">
+      {customIcon}
+      <p>{message}</p>
+    </div>
+  );
 }
 
 export default TreeEditor;
