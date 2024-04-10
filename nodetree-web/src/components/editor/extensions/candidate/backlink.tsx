@@ -1,7 +1,7 @@
 import { Mention } from "@tiptap/extension-mention";
 import { CandidateConfig, suggestion } from "./candidate-suggestion";
-import { fetchNodesLike } from "../../../../helpers/data-agent";
-import { NTNode } from "../../../../model";
+import { fetchNodesLike } from "@/helpers/data-agent";
+import { NTNode } from "@/model";
 
 export const BackLink = () => {
   const config: CandidateConfig = {

@@ -1,15 +1,15 @@
 import useResizeObserver from "use-resize-observer";
-import NTTree from "../tree";
+import NTTree from "@/components/tree";
 import { ReactNode, useCallback, useEffect, useState } from "react";
-import { NTNode, NodeId } from "../../model";
+import { NTNode, NodeId } from "@/model";
 import {
   fetchAllNodes,
   fetchNodeContent,
   saveNode,
-} from "../../helpers/data-agent";
-import { useThrottleEffect } from "../../hooks/use-throttle-effect";
-import { arrangeNodes } from "../../helpers/node-helper";
-import NTEditor from "../editor/index";
+} from "@/helpers/data-agent";
+import { useThrottleEffect } from "@/hooks/use-throttle-effect";
+import { arrangeNodes } from "@/helpers/node-helper";
+import NTEditor from "@/components/editor/index";
 import { TreePine, BookX } from "lucide-react";
 
 function TreeEditor() {

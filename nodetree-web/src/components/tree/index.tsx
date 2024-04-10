@@ -18,9 +18,9 @@ import {
   saveNode,
   updateNodeName,
   deteleNode as deleteNode,
-} from "../../helpers/data-agent";
-import { NTNode, ContentParsedInfo, NodeId } from "../../model";
-import { generateId } from "../../helpers/tools";
+} from "@/helpers/data-agent";
+import { NTNode, ContentParsedInfo, NodeId } from "@/model";
+import { generateId } from "@/helpers/tools";
 import React from "react";
 
 export const NTTree: React.FC<{

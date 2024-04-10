@@ -1,4 +1,4 @@
-import { Asset, NTNode, NodeId } from "../model";
+import { Asset, NTNode, NodeId } from "@/model";
 import requests from "./request";
 
 export const fetchAllNodes = async (): Promise<NTNode[]> => {

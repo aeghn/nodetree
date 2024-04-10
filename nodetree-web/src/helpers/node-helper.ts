@@ -1,4 +1,4 @@
-import { NTNode, NodeId } from "../model";
+import { NTNode, NodeId } from "@/model";
 
 export const arrangeNodes = (nodes: NTNode[]): NTNode[] => {
   const nodeMap = new Map(nodes.map((node) => [node.id, node]));

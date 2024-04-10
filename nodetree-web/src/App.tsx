@@ -1,4 +1,4 @@
-import TreeEditor from "./components/pages/tree-editor";
+import TreeEditor from "@/components/pages/tree-editor";
 
 function App() {
   return <TreeEditor />;

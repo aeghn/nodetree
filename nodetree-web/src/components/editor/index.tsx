@@ -5,12 +5,12 @@ import { Highlight } from "@tiptap/extension-highlight";
 import { Typography } from "@tiptap/extension-typography";
 
 import { ResizableImage } from "./extensions/resizable-image/ResizableImage";
-import { uploadImage } from "../../helpers/data-agent";
+import { uploadImage } from "@/helpers/data-agent";
 import { MathBlock, MathInline } from "./extensions/math";
 import "katex/dist/katex.min.css";
 import { BackLink } from "./extensions/candidate/backlink";
 import React from "react";
-import { NodeId } from "../../model";
+import { NodeId } from "@/model";
 
 const NTEditor: React.FC<{
   height: number | undefined;
