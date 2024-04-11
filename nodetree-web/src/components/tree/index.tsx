@@ -10,7 +10,6 @@ import {
   SimpleTree,
   Tree,
 } from "react-arborist";
-import * as icons from "react-icons/md";
 import styles from "./tree.module.css";
 import { useMemo, useState } from "react";
 import {
@@ -22,6 +21,8 @@ import {
 import { NTNode, ContentParsedInfo, NodeId } from "@/model";
 import { generateId } from "@/helpers/tools";
 import React from "react";
+
+import { LuChevronRight, LuChevronDown } from "react-icons/lu";
 
 export const NTTree: React.FC<{
   height?: number;
@@ -146,7 +147,7 @@ function Node({ node, style, dragHandle }: NodeRendererProps<NTNode>) {
       ref={dragHandle}
       style={style}
       className={clsx(styles.node, node.state)}
-      onClick={() => node.isInternal && node.toggle()}
+      onClick={() => node.activate()}
     >
       <FolderArrow node={node} />
       <span>{node.isEditing ? <Input node={node} /> : node.data.name}</span>
@@ -173,8 +174,12 @@ function Input({ node }: { node: NodeApi<NTNode> }) {
 function FolderArrow({ node }: { node: NodeApi<NTNode> }) {
   if (node.isLeaf || node.children?.length == 0) return <span></span>;
   return (
-    <span>
-      {node.isOpen ? <icons.MdArrowDropDown /> : <icons.MdArrowRight />}
+    <span className="pl-2">
+      {node.isOpen ? (
+        <LuChevronDown onClick={() => node.toggle()} />
+      ) : (
+        <LuChevronRight onClick={() => node.toggle()} />
+      )}
     </span>
   );
 }
