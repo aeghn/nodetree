@@ -13,7 +13,7 @@ use ntcore::{
 };
 use tracing::info;
 
-use crate::controller::print_and_trans_to_response;
+use crate::{controller::print_and_trans_to_response, service::node::nodes_with_childrens};
 
 use super::WebAppState;
 
@@ -45,7 +45,11 @@ async fn fetch_nodes(
     Json(req): Json<NodeFetchReq>,
 ) -> impl IntoResponse {
     info!("fetch_nodes: {:?}", req);
-    let rest = state.mapper.query_nodes(&req).await;
+    let rest = state
+        .mapper
+        .query_nodes(&req)
+        .await
+        .map(|e| nodes_with_childrens(e));
     print_and_trans_to_response(rest)
 }
 

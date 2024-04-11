@@ -10,6 +10,7 @@ mod arguments;
 mod config;
 mod controller;
 pub mod utils;
+mod service;
 
 async fn write_default_config(filepath: &str) {
     tokio::fs::write(filepath, include_str!("../../data/config.example.toml"))
