@@ -93,8 +93,7 @@ function TreeEditor() {
   useEffect(() => {
     try {
       fetchAllNodes().then((nodes) => {
-        const arrangedNodes = arrangeNodes(nodes);
-        setTreeData(arrangedNodes);
+        setTreeData(nodes);
         console.log("Loaded all nodes");
       });
     } catch (error) {
