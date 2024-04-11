@@ -20,6 +20,7 @@ use axum::{
 use ntcore::mapper::Mapper;
 use serde::Serialize;
 use tower_http::{
+    compression::CompressionLayer,
     cors::{Any, CorsLayer},
     set_header::SetResponseHeaderLayer,
     trace::{self, TraceLayer},
@@ -57,6 +58,7 @@ pub async fn serve(mapper: Arc<dyn Mapper>, config: Config) {
         .merge(asset::routes())
         .merge(staticfiles::routes())
         .with_state(state)
+        .layer(CompressionLayer::new())
         .layer(SetResponseHeaderLayer::<_>::overriding(
             ACCESS_CONTROL_ALLOW_ORIGIN,
             HeaderValue::from_static("*"),
