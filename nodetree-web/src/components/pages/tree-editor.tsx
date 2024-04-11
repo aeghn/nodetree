@@ -8,9 +8,8 @@ import {
   saveNode,
 } from "@/helpers/data-agent";
 import { useThrottleEffect } from "@/hooks/use-throttle-effect";
-import { arrangeNodes } from "@/helpers/node-helper";
 import NTEditor from "@/components/editor/index";
-import { TreePine, BookX } from "lucide-react";
+import { LuTreePine, LuBookX } from "react-icons/lu";
 
 function TreeEditor() {
   const { ref: heightRef, height } = useResizeObserver<HTMLDivElement>({});
@@ -114,7 +113,7 @@ function TreeEditor() {
             />
           ) : (
             <Loading
-              customIcon={<TreePine size={64} strokeWidth={1} />}
+              customIcon={<LuTreePine size={64} strokeWidth={1} />}
               message="Loading tree"
             />
           )}
@@ -135,7 +134,7 @@ function TreeEditor() {
             )
           ) : (
             <Loading
-              customIcon={<BookX size={34} strokeWidth={1} />}
+              customIcon={<LuBookX size={34} strokeWidth={1} />}
               message="No active node is selected."
             />
           )}
