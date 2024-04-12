@@ -37,6 +37,7 @@
     "react-arborist": "file:/home/chin/Projects/react-arborist/packages/react-arborist",
     "react-dom": "^18.2.0",
     "react-icons": "^5.0.1",
+    "react-moveable": "^0.56.0",
     "tippy.js": "^6.3.7",
     "tiptap-extension-resizable-image": "^1.0.3",
     "use-resize-observer": "^9.1.0",
