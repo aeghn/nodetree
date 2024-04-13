@@ -27,7 +27,7 @@ export interface CompletionOptions {
   pluginName: string;
   items: (query: { query: string }) => any[] | Promise<any[]>;
   selectItem: (props: any, index: number) => void | undefined;
-  candidateRenderer: (item: any) => any | undefined;
+  completionItemRenderer: (item: any) => any | undefined;
 }
 
 export const createCompletion = (extend: CompletionOptions) => {

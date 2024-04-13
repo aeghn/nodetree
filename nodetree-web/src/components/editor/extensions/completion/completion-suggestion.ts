@@ -8,8 +8,13 @@ import { CompletionOptions } from ".";
 import { SuggestionProps } from "@tiptap/suggestion";
 
 export const createSuggestion = (completionConfig: CompletionOptions) => {
-  const { items, pluginName, triggerChar, selectItem, candidateRenderer } =
-    completionConfig;
+  const {
+    items,
+    pluginName,
+    triggerChar,
+    selectItem,
+    completionItemRenderer: candidateRenderer,
+  } = completionConfig;
   return {
     char: triggerChar,
     items: items,

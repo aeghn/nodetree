@@ -16,7 +16,7 @@ export const Backlink = createCompletion({
       props.command({ id: item.id, label: item.name });
     }
   },
-  candidateRenderer: (item: NTNode) => {
+  completionItemRenderer: (item: NTNode) => {
     return (
       <div>
         <div>{item.name}</div>
