@@ -64,7 +64,7 @@ function TreeEditor() {
         );
       }
     },
-    [activeNode]
+    [activeNode, toSaveNodes]
   );
 
   const idChangeCallback = useCallback((nodeId: NodeId) => {
