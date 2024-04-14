@@ -26,3 +26,24 @@ export const Backlink = createCompletion({
     );
   }
 });
+
+export const Hashtag = createCompletion({
+  triggerChar: "#",
+  pluginName: "hashtag",
+  items: (query: { query: string }) => {
+    console.log(query)
+    return query ? [query.query] : [];
+  },
+  selectItem: (props: any, index: number) => {
+    const item: string = props.items[index];
+    console.log(props)
+    if (item) {
+      props.command({ id: item, label: item });
+    }
+  },
+  completionItemRenderer: (item: string) => {
+    return (
+      <div>{item}</div>
+    );
+  }
+});
