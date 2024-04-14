@@ -93,7 +93,7 @@ export const ImageExtension = (deleteImage?: DeleteImage, restoreFile?: RestoreI
                 const wasDeleted = this.storage.images.get(image.attrs.src);
                 if (wasDeleted === undefined) {
                   this.storage.images.set(image.attrs.src, false);
-                } else if (wasDeleted === true) {
+                } else if (wasDeleted === true && restoreFile) {
                   await onNodeRestored(image.attrs.src, restoreFile);
                 }
               });

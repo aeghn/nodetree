@@ -6,6 +6,7 @@ import { PluginKey } from "@tiptap/pm/state";
 
 import { CompletionOptions } from ".";
 import { SuggestionProps } from "@tiptap/suggestion";
+import { Editor } from "@tiptap/core";
 
 export const createSuggestion = (completionConfig: CompletionOptions) => {
   const {
@@ -24,7 +25,15 @@ export const createSuggestion = (completionConfig: CompletionOptions) => {
     // https://github.com/ueberdosis/tiptap/issues/823
     allowSpaces: true,
 
-    command: ({ editor, range, props }) => {
+    command: ({
+      editor,
+      range,
+      props,
+    }: {
+      editor: Editor;
+      range: any;
+      props: any;
+    }) => {
       // increase range.to by one when the next node is of type "text"
       // and starts with a space character
       const nodeAfter = editor.view.state.selection.$to.nodeAfter;
@@ -51,7 +60,7 @@ export const createSuggestion = (completionConfig: CompletionOptions) => {
 
       window.getSelection()?.collapseToEnd();
     },
-    allow: ({ state, range }) => {
+    allow: ({ state, range }: { state: any; range: any }) => {
       const $from = state.doc.resolve(range.from);
       const type = state.schema.nodes[completionConfig.pluginName];
       const allow = !!$from.parent.type.contentMatch.matchType(type);
