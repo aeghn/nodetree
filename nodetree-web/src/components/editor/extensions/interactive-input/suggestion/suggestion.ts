@@ -1,10 +1,8 @@
-import { Editor, Range } from "@tiptap/core";
+import { Editor, NodePos, Range } from "@tiptap/core";
 import { EditorState, Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet, EditorView } from "@tiptap/pm/view";
 
-import { findSuggestionMatch as defaultFindSuggestionMatch } from "@tiptap/suggestion";
-
-export interface SuggestionOptions<I = any> {
+export interface NTSuggestionOptions<I = any> {
   pluginKey?: PluginKey;
   editor: Editor;
   char?: string;
@@ -28,7 +26,7 @@ export interface SuggestionOptions<I = any> {
     state: EditorState;
     range: Range;
   }) => boolean;
-  findSuggestionMatch?: typeof defaultFindSuggestionMatch;
+  markTypes: string[];
 }
 
 export interface SuggestionProps<I = any> {
@@ -63,8 +61,8 @@ export function NTSuggestion<I = any>({
   items = () => [],
   render = () => ({}),
   allow = () => true,
-  findSuggestionMatch = defaultFindSuggestionMatch,
-}: SuggestionOptions<I>) {
+  markTypes = [],
+}: NTSuggestionOptions<I>) {
   let props: SuggestionProps<I> | undefined;
   const renderer = render?.();
 
@@ -203,8 +201,11 @@ export function NTSuggestion<I = any>({
         //   * a composition is active (see: https://github.com/ueberdosis/tiptap/issues/1449)
         if (isEditable && (empty || editor.view.composing)) {
           // https://github.com/ueberdosis/tiptap/issues/326
-          const node = editor.state.selection.$to.node();
-          if (node) {
+          const node = state.doc.nodeAt(selection.anchor - 1);
+          const mark = node?.marks.find((mark) =>
+            markTypes.find((know) => mark.type.name === know)
+          );
+          if (node?.text && mark) {
             // Reset active state if we just left the previous suggestion range
             if (
               (from < prev.range.from || from > prev.range.to) &&
@@ -214,28 +215,21 @@ export function NTSuggestion<I = any>({
               next.active = false;
             }
 
-            // Try to match against where our cursor currently is
-            const match = findSuggestionMatch({
-              char,
-              allowSpaces,
-              allowedPrefixes,
-              startOfLine,
-              $position: selection.$from,
-            });
             const decorationId = `id_${Math.floor(Math.random() * 0xffffffff)}`;
 
             // If we found a match, update the current state to show it
-            if (match && allow({ editor, state, range: match.range })) {
-              next.active = true;
-              next.decorationId = prev.decorationId
-                ? prev.decorationId
-                : decorationId;
-              next.range = match.range;
-              next.query = match.query;
-              next.text = match.text;
-            } else {
-              next.active = false;
-            }
+            next.active = true;
+            next.decorationId = prev.decorationId
+              ? prev.decorationId
+              : decorationId;
+            const start =
+              selection.from - (selection.$from.nodeBefore?.text?.length ?? 0);
+            next.range = {
+              from: start,
+              to: start + node.text.length,
+            };
+            next.query = node.text;
+            next.text = node.text;
           }
         } else {
           next.active = false;

@@ -1,9 +1,9 @@
 import { Mark, mergeAttributes } from "@tiptap/core";
 import { CompletionOptions } from "./suggestion/completion";
-import { NTSuggestion } from "./suggestion/suggestion";
 import { createSuggestion } from "./suggestion/completion-suggestion";
 import { fetchNodesLike } from "@/helpers/data-agent";
 import { NTNode } from "@/model";
+import { NTSuggestion } from "./suggestion/suggestion";
 
 export interface InteractiveInputOptions {
   HTMLAttributes?: Record<string, any>;
@@ -40,14 +40,15 @@ export const createInteractiveInput = (options: InteractiveInputOptions) => {
       ];
     },
 
-    /*     addProseMirrorPlugins() {
-          return [
-            NTSuggestion({
-              editor: this.editor,
-              ...suggestion,
-            }),
-          ];
-        }, */
+    addProseMirrorPlugins() {
+      return [
+        NTSuggestion({
+          editor: this.editor,
+          ...suggestion,
+          markTypes: ["hashtag", "backlink", "reminder"]
+        }),
+      ];
+    },
   });
 };
 
@@ -55,7 +56,7 @@ export const Hashtag = createInteractiveInput({
   prefix: "#",
   suffix: "#",
   completionOptions: {
-    pluginName: "backlink",
+    pluginName: "hashtag",
     items: (query: { query: string; }) => {
       return fetchNodesLike(query.query);
 
