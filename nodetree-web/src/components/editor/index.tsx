@@ -13,9 +13,13 @@ import { ImageExtension } from "./extensions/image";
 import { startImageUpload } from "./extensions/image/upload-image";
 import { findTableAncestor } from "./util";
 import { ImageResizer } from "./extensions/image/image-resize";
-import { TaskList } from "@tiptap/extension-task-list"
-import { TaskItem } from "@tiptap/extension-task-item"
+import { TaskList } from "@tiptap/extension-task-list";
+import { TaskItem } from "@tiptap/extension-task-item";
 import "@/styles/editor.css";
+import { Hashtag, Reminder } from "./extensions/interactive-input/mark-builder";
+import {
+  NTRules,
+} from "./extensions/interactive-input/autoparser";
 
 const NTEditor: React.FC<{
   height: number | undefined;
@@ -45,8 +49,10 @@ const NTEditor: React.FC<{
       TaskList,
       TaskItem.configure({
         nested: true,
-        taskListTypeName: "taasdjkaklsdhklajshd"
       }),
+      Hashtag,
+      Reminder,
+      NTRules,
     ],
     content: content,
     editorProps: {
