@@ -1,5 +1,5 @@
 import { escapeForRegEx } from "@/helpers/tools";
-import { InputRule, Mark } from "@tiptap/core";
+import { InputRule, Mark, Node } from "@tiptap/core";
 
 import { Hashtag, Reminder } from "./mark-builder";
 
@@ -28,7 +28,7 @@ export function interactiveInputRule(config: {
   return new InputRule({
     find: regex,
     handler: ({ state, range, match, commands }) => {
-      const { tr, schema } = state;
+      const { tr } = state;
 
       for (const type of config.types) {
         const empty = emptyBody(type);
@@ -48,7 +48,7 @@ export function interactiveInputRule(config: {
 
 export interface NTRuleOptions {}
 
-export const NTRules = Mark.create<NTRuleOptions>({
+export const NTRules = Node.create<NTRuleOptions>({
   name: "NTRules",
 
   addInputRules() {

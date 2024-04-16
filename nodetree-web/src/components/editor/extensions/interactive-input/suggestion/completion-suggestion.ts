@@ -4,9 +4,9 @@ import tippy, { Instance, Props } from "tippy.js";
 import { CompletionList } from "./completion-list";
 import { PluginKey } from "@tiptap/pm/state";
 
-import { CompletionOptions } from ".";
 import { SuggestionProps } from "@tiptap/suggestion";
 import { Editor } from "@tiptap/core";
+import { CompletionOptions } from "./completion";
 
 export const createSuggestion = (completionConfig: CompletionOptions) => {
   const {
@@ -20,7 +20,7 @@ export const createSuggestion = (completionConfig: CompletionOptions) => {
     char: triggerChar,
     items: items,
     // https://blog.projectan.cn/vue/tiptap-multiple-mention-instances/
-    pluginKey: new PluginKey(pluginName),
+    pluginKey: new PluginKey(`sug-${pluginName}`),
 
     // https://github.com/ueberdosis/tiptap/issues/823
     allowSpaces: true,
@@ -88,6 +88,7 @@ export const createSuggestion = (completionConfig: CompletionOptions) => {
             return;
           }
 
+          // @ts-ignore
           popup = tippy("body", {
             getReferenceClientRect: props.clientRect,
             appendTo: () => document.body,
