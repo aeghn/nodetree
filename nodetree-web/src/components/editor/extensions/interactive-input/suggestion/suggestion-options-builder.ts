@@ -1,23 +1,23 @@
 import { ReactRenderer } from "@tiptap/react";
 import tippy, { Instance, Props } from "tippy.js";
 
-import { CompletionList } from "./completion-list";
+import { CompletionList } from "./suggestion-list";
 import { PluginKey } from "@tiptap/pm/state";
 
 import { SuggestionProps } from "@tiptap/suggestion";
 import { Editor } from "@tiptap/core";
-import { CompletionOptions } from "./completion";
+import { InteractiveInputOptions } from "../mark-builder";
 
-export const createSuggestion = (completionConfig: CompletionOptions) => {
+export const createSuggestionOptions = (
+  completionConfig: InteractiveInputOptions
+) => {
   const {
     items,
     pluginName,
-    triggerChar,
     selectItem,
     completionItemRenderer: candidateRenderer,
   } = completionConfig;
   return {
-    char: triggerChar,
     items: items,
     // https://blog.projectan.cn/vue/tiptap-multiple-mention-instances/
     pluginKey: new PluginKey(`sug-${pluginName}`),
@@ -28,7 +28,6 @@ export const createSuggestion = (completionConfig: CompletionOptions) => {
     command: ({
       editor,
       range,
-      props,
     }: {
       editor: Editor;
       range: any;
@@ -43,7 +42,7 @@ export const createSuggestion = (completionConfig: CompletionOptions) => {
         range.to += 1;
       }
 
-      editor
+      /*       editor
         .chain()
         .focus()
         .insertContentAt(range, [
@@ -58,14 +57,7 @@ export const createSuggestion = (completionConfig: CompletionOptions) => {
         ])
         .run();
 
-      window.getSelection()?.collapseToEnd();
-    },
-    allow: ({ state, range }: { state: any; range: any }) => {
-      const $from = state.doc.resolve(range.from);
-      const type = state.schema.nodes[completionConfig.pluginName];
-      const allow = !!$from.parent.type.contentMatch.matchType(type);
-
-      return allow;
+      window.getSelection()?.collapseToEnd(); */
     },
 
     render: () => {

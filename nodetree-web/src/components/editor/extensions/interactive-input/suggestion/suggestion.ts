@@ -1,14 +1,12 @@
-import { Editor, NodePos, Range } from "@tiptap/core";
+import { Editor, Range } from "@tiptap/core";
 import { EditorState, Plugin, PluginKey } from "@tiptap/pm/state";
-import { Decoration, DecorationSet, EditorView } from "@tiptap/pm/view";
+import { Decoration, DecorationSet } from "@tiptap/pm/view";
+import { SuggestionKeyDownProps, SuggestionProps } from "@tiptap/suggestion";
 
-export interface NTSuggestionOptions<I = any> {
+interface NTSuggestionOptions<I = any> {
   pluginKey?: PluginKey;
+  markName: string;
   editor: Editor;
-  char?: string;
-  allowSpaces?: boolean;
-  allowedPrefixes?: string[] | null;
-  startOfLine?: boolean;
   decorationTag?: string;
   decorationClass?: string;
   command?: (props: { editor: Editor; range: Range; props: I }) => void;
@@ -26,44 +24,21 @@ export interface NTSuggestionOptions<I = any> {
     state: EditorState;
     range: Range;
   }) => boolean;
-  markTypes: string[];
-}
-
-export interface SuggestionProps<I = any> {
-  editor: Editor;
-  range: Range;
-  query: string;
-  text: string;
-  items: I[];
-  command: (props: I) => void;
-  decorationNode: Element | null;
-  clientRect?: (() => DOMRect | null) | null;
-}
-
-export interface SuggestionKeyDownProps {
-  view: EditorView;
-  event: KeyboardEvent;
-  range: Range;
 }
 
 export const NTSuggestionPluginKey = new PluginKey("nt-suggestion");
 
-export function NTSuggestion<I = any>({
+export function NTSuggestion({
   pluginKey = NTSuggestionPluginKey,
   editor,
-  char = "",
-  allowSpaces = false,
-  allowedPrefixes = [" "],
-  startOfLine = false,
   decorationTag = "span",
   decorationClass = "suggestion",
   command = () => null,
   items = () => [],
   render = () => ({}),
-  allow = () => true,
-  markTypes = [],
-}: NTSuggestionOptions<I>) {
-  let props: SuggestionProps<I> | undefined;
+  markName = "",
+}: NTSuggestionOptions) {
+  let props: SuggestionProps | undefined;
   const renderer = render?.();
 
   const plugin: Plugin<any> = new Plugin({
@@ -201,10 +176,8 @@ export function NTSuggestion<I = any>({
         //   * a composition is active (see: https://github.com/ueberdosis/tiptap/issues/1449)
         if (isEditable && (empty || editor.view.composing)) {
           // https://github.com/ueberdosis/tiptap/issues/326
-          const node = state.doc.nodeAt(selection.anchor - 1);
-          const mark = node?.marks.find((mark) =>
-            markTypes.find((know) => mark.type.name === know)
-          );
+          const node = state.doc.nodeAt(selection.to - 1);
+          const mark = node?.marks.find((mark) => markName === mark.type.name);
           if (node?.text && mark) {
             // Reset active state if we just left the previous suggestion range
             if (

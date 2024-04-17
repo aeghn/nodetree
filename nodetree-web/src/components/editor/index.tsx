@@ -19,7 +19,7 @@ import "@/styles/editor.css";
 import { Hashtag, Reminder } from "./extensions/interactive-input/mark-builder";
 import {
   NTRules,
-} from "./extensions/interactive-input/autoparser";
+} from "./extensions/interactive-input/nt-input-rules";
 
 const NTEditor: React.FC<{
   height: number | undefined;

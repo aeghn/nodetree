@@ -1,20 +1,17 @@
 import { Mark, mergeAttributes } from "@tiptap/core";
-import { CompletionOptions } from "./suggestion/completion";
-import { createSuggestion } from "./suggestion/completion-suggestion";
-import { fetchNodesLike } from "@/helpers/data-agent";
-import { NTNode } from "@/model";
+import { createSuggestionOptions } from "./suggestion/suggestion-options-builder";
 import { NTSuggestion } from "./suggestion/suggestion";
 
 export interface InteractiveInputOptions {
   HTMLAttributes?: Record<string, any>;
-  prefix: string;
-  suffix: string;
-  completionOptions: CompletionOptions;
+  pluginName: string;
+  items: (query: { query: string }) => any[] | Promise<any[]>;
+  selectItem: (props: any, index: number) => void | undefined;
+  completionItemRenderer: (item: any) => any | undefined;
 }
 
-export const createInteractiveInput = (options: InteractiveInputOptions) => {
-  const suggestion = createSuggestion(options.completionOptions);
-  const pluginName = options.completionOptions.pluginName;
+const createInteractiveInput = (options: InteractiveInputOptions) => {
+  const pluginName = options.pluginName;
 
   return Mark.create<InteractiveInputOptions>({
     name: pluginName,
@@ -44,8 +41,8 @@ export const createInteractiveInput = (options: InteractiveInputOptions) => {
       return [
         NTSuggestion({
           editor: this.editor,
-          ...suggestion,
-          markTypes: ["hashtag", "backlink", "reminder"]
+          ...createSuggestionOptions(options),
+          markName: options.pluginName,
         }),
       ];
     },
@@ -53,53 +50,40 @@ export const createInteractiveInput = (options: InteractiveInputOptions) => {
 };
 
 export const Hashtag = createInteractiveInput({
-  prefix: "#",
-  suffix: "#",
-  completionOptions: {
-    pluginName: "hashtag",
-    items: (query: { query: string; }) => {
-      return fetchNodesLike(query.query);
-
-    },
-    selectItem: (props: any, index: number) => {
-      const item: NTNode = props.items[index];
-      console.log(props);
-      if (item) {
-        props.command({ id: item.id, label: item.name });
-      }
-    },
-    completionItemRenderer: (item: NTNode) => {
-      return (
-        <div>
-          <div>{item.name}</div>
-          <br />
-          <div>{item.content}</div>
-        </div>
-      );
-    },
-    triggerChar: ""
-  }
+  pluginName: "hashtag",
+  items: (query: { query: string }) => {
+    return query ? [query.query] : [];
+  },
+  selectItem: (props: any, index: number) => {
+    const item: string = props.items[index];
+    console.log(props);
+    if (item) {
+      props.command({ id: item, label: item });
+    }
+  },
+  completionItemRenderer: (item: string) => {
+    return (
+      <div>
+        <div>{item}</div>
+      </div>
+    );
+  },
 });
 
 export const Reminder = createInteractiveInput({
-  prefix: "<",
-  suffix: ">",
-  completionOptions: {
-    items: (query: { query: string; }) => {
-      console.log(query);
-      return query ? [query.query] : [];
-    },
-    selectItem: (props: any, index: number) => {
-      const item: string = props.items[index];
-      console.log(props);
-      if (item) {
-        props.command({ id: item, label: item });
-      }
-    },
-    completionItemRenderer: (item: string) => {
-      return <div>{item}</div>;
-    },
-    triggerChar: "",
-    pluginName: "reminder"
+  items: (query: { query: string }) => {
+    console.log(query);
+    return query ? [query.query] : [];
   },
+  selectItem: (props: any, index: number) => {
+    const item: string = props.items[index];
+    console.log(props);
+    if (item) {
+      props.command({ id: item, label: item });
+    }
+  },
+  completionItemRenderer: (item: string) => {
+    return <div>{item}</div>;
+  },
+  pluginName: "reminder",
 });

@@ -200,12 +200,23 @@ ul[data-type="taskList"]>li {
 }
 
 .is-selected {
-  background-color: #000;
+  background-color: #ddd;
 }
 
 /* hashtag */
 .hashtag::before,
 .hashtag::after {
   content: "#";
+  color: #aa0000;
+}
+
+/* reminder */
+.reminder::before {
+  content: "<";
+  color: #aa0000;
+}
+
+.reminder::after {
+  content: ">";
   color: #aa0000;
 }
