@@ -1,23 +1,17 @@
 import { ReactRenderer } from "@tiptap/react";
 import tippy, { Instance, Props } from "tippy.js";
 
-import { CompletionList } from "./suggestion-list";
+import { SuggestionList } from "./suggestion-list";
 import { PluginKey } from "@tiptap/pm/state";
 
 import { SuggestionProps } from "@tiptap/suggestion";
 import { Editor } from "@tiptap/core";
 import { InteractiveInputOptions } from "../mark-builder";
 
-export const createSuggestionOptions = (
-  completionConfig: InteractiveInputOptions
-) => {
-  const {
-    items,
-    pluginName,
-    selectItem,
-    completionItemRenderer: candidateRenderer,
-  } = completionConfig;
+export const createSuggestionOptions = (options: InteractiveInputOptions) => {
+  const { items, pluginName, selectItem, itemRenderer, prefixChar } = options;
   return {
+    char: prefixChar,
     items: items,
     // https://blog.projectan.cn/vue/tiptap-multiple-mention-instances/
     pluginKey: new PluginKey(`sug-${pluginName}`),
@@ -28,6 +22,7 @@ export const createSuggestionOptions = (
     command: ({
       editor,
       range,
+      props,
     }: {
       editor: Editor;
       range: any;
@@ -42,12 +37,12 @@ export const createSuggestionOptions = (
         range.to += 1;
       }
 
-      /*       editor
+      editor
         .chain()
         .focus()
         .insertContentAt(range, [
           {
-            type: completionConfig.pluginName,
+            type: options.pluginName,
             attrs: props,
           },
           {
@@ -57,7 +52,7 @@ export const createSuggestionOptions = (
         ])
         .run();
 
-      window.getSelection()?.collapseToEnd(); */
+      window.getSelection()?.collapseToEnd();
     },
 
     render: () => {
@@ -69,9 +64,9 @@ export const createSuggestionOptions = (
           const propsExtend = {
             ...props,
             selectItem,
-            candidateRenderer,
+            itemRenderer,
           };
-          reactRenderer = new ReactRenderer(CompletionList, {
+          reactRenderer = new ReactRenderer(SuggestionList, {
             props: propsExtend,
             editor: props.editor,
           });

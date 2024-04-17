@@ -17,9 +17,6 @@ import { TaskList } from "@tiptap/extension-task-list";
 import { TaskItem } from "@tiptap/extension-task-item";
 import "@/styles/editor.css";
 import { Hashtag, Reminder } from "./extensions/interactive-input/mark-builder";
-import {
-  NTRules,
-} from "./extensions/interactive-input/nt-input-rules";
 
 const NTEditor: React.FC<{
   height: number | undefined;
@@ -52,7 +49,6 @@ const NTEditor: React.FC<{
       }),
       Hashtag,
       Reminder,
-      NTRules,
     ],
     content: content,
     editorProps: {

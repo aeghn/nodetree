@@ -1,44 +1,27 @@
-import { Editor, Range } from "@tiptap/core";
-import { EditorState, Plugin, PluginKey } from "@tiptap/pm/state";
+import { Range } from "@tiptap/core";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
-import { SuggestionKeyDownProps, SuggestionProps } from "@tiptap/suggestion";
 
-interface NTSuggestionOptions<I = any> {
-  pluginKey?: PluginKey;
-  markName: string;
-  editor: Editor;
-  decorationTag?: string;
-  decorationClass?: string;
-  command?: (props: { editor: Editor; range: Range; props: I }) => void;
-  items?: (props: { query: string; editor: Editor }) => I[] | Promise<I[]>;
-  render?: () => {
-    onBeforeStart?: (props: SuggestionProps<I>) => void;
-    onStart?: (props: SuggestionProps<I>) => void;
-    onBeforeUpdate?: (props: SuggestionProps<I>) => void;
-    onUpdate?: (props: SuggestionProps<I>) => void;
-    onExit?: (props: SuggestionProps<I>) => void;
-    onKeyDown?: (props: SuggestionKeyDownProps) => boolean;
-  };
-  allow?: (props: {
-    editor: Editor;
-    state: EditorState;
-    range: Range;
-  }) => boolean;
-}
+import { SuggestionOptions, SuggestionProps, findSuggestionMatch as defaultFindSuggestionMatch } from "@tiptap/suggestion";
 
-export const NTSuggestionPluginKey = new PluginKey("nt-suggestion");
+export const SuggestionPluginKey = new PluginKey("suggestion");
 
-export function NTSuggestion({
-  pluginKey = NTSuggestionPluginKey,
+export function NTSuggestion<I = any>({
+  pluginKey = SuggestionPluginKey,
   editor,
+  char = "@",
+  allowSpaces = false,
+  allowedPrefixes = [" "],
+  startOfLine = false,
   decorationTag = "span",
   decorationClass = "suggestion",
   command = () => null,
   items = () => [],
   render = () => ({}),
-  markName = "",
-}: NTSuggestionOptions) {
-  let props: SuggestionProps | undefined;
+  allow = () => true,
+  findSuggestionMatch = defaultFindSuggestionMatch,
+}: SuggestionOptions<I>) {
+  let props: SuggestionProps<I> | undefined;
   const renderer = render?.();
 
   const plugin: Plugin<any> = new Plugin({
@@ -59,6 +42,13 @@ export function NTSuggestion({
           const handleStart = started || moved;
           const handleChange = changed && !moved;
           const handleExit = stopped || moved;
+
+          /*           console.log(
+            `started ${started} stopped ${stopped} changed ${changed} start ${handleStart} change ${handleChange} exit ${handleExit} moved ${moved}`
+          ); */
+          console.log(
+            `sug2> prev.active && !next.active; ${prev.active} ${next.active}`
+          );
 
           // Cancel when suggestion isn't active
           if (!handleStart && !handleChange && !handleExit) {
@@ -115,6 +105,7 @@ export function NTSuggestion({
           }
 
           if (handleExit) {
+            console.log("sug2> exit 4");
             renderer?.onExit?.(props);
           }
 
@@ -128,6 +119,8 @@ export function NTSuggestion({
         },
 
         destroy: () => {
+          console.log("sug2> exit 2");
+
           if (!props) {
             return;
           }
@@ -162,7 +155,7 @@ export function NTSuggestion({
       },
 
       // Apply changes to the plugin state from a view transaction.
-      apply(transaction, prev, _oldState, state) {
+      apply(transaction, prev, oldState, state) {
         const { isEditable } = editor;
         const { composing } = editor.view;
         const { selection } = transaction;
@@ -175,34 +168,36 @@ export function NTSuggestion({
         //   * there is no selection, or
         //   * a composition is active (see: https://github.com/ueberdosis/tiptap/issues/1449)
         if (isEditable && (empty || editor.view.composing)) {
-          // https://github.com/ueberdosis/tiptap/issues/326
-          const node = state.doc.nodeAt(selection.to - 1);
-          const mark = node?.marks.find((mark) => markName === mark.type.name);
-          if (node?.text && mark) {
-            // Reset active state if we just left the previous suggestion range
-            if (
-              (from < prev.range.from || from > prev.range.to) &&
-              !composing &&
-              !prev.composing
-            ) {
-              next.active = false;
-            }
+          // Reset active state if we just left the previous suggestion range
+          if (
+            (from < prev.range.from || from > prev.range.to) &&
+            !composing &&
+            !prev.composing
+          ) {
+            next.active = false;
+          }
 
-            const decorationId = `id_${Math.floor(Math.random() * 0xffffffff)}`;
+          // Try to match against where our cursor currently is
+          const match = findSuggestionMatch({
+            char,
+            allowSpaces,
+            allowedPrefixes,
+            startOfLine,
+            $position: selection.$from,
+          });
+          const decorationId = `id_${Math.floor(Math.random() * 0xffffffff)}`;
 
-            // If we found a match, update the current state to show it
+          // If we found a match, update the current state to show it
+          if (match && allow({ editor, state, range: match.range })) {
             next.active = true;
             next.decorationId = prev.decorationId
               ? prev.decorationId
               : decorationId;
-            const start =
-              selection.from - (selection.$from.nodeBefore?.text?.length ?? 0);
-            next.range = {
-              from: start,
-              to: start + node.text.length,
-            };
-            next.query = node.text;
-            next.text = node.text;
+            next.range = match.range;
+            next.query = match.query;
+            next.text = match.text;
+          } else {
+            next.active = false;
           }
         } else {
           next.active = false;

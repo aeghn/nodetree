@@ -7,7 +7,8 @@ export interface InteractiveInputOptions {
   pluginName: string;
   items: (query: { query: string }) => any[] | Promise<any[]>;
   selectItem: (props: any, index: number) => void | undefined;
-  completionItemRenderer: (item: any) => any | undefined;
+  itemRenderer: (item: any) => any | undefined;
+  prefixChar: string;
 }
 
 const createInteractiveInput = (options: InteractiveInputOptions) => {
@@ -42,7 +43,6 @@ const createInteractiveInput = (options: InteractiveInputOptions) => {
         NTSuggestion({
           editor: this.editor,
           ...createSuggestionOptions(options),
-          markName: options.pluginName,
         }),
       ];
     },
@@ -50,18 +50,18 @@ const createInteractiveInput = (options: InteractiveInputOptions) => {
 };
 
 export const Hashtag = createInteractiveInput({
+  prefixChar: "#",
   pluginName: "hashtag",
   items: (query: { query: string }) => {
     return query ? [query.query] : [];
   },
   selectItem: (props: any, index: number) => {
     const item: string = props.items[index];
-    console.log(props);
     if (item) {
       props.command({ id: item, label: item });
     }
   },
-  completionItemRenderer: (item: string) => {
+  itemRenderer: (item: string) => {
     return (
       <div>
         <div>{item}</div>
@@ -71,18 +71,17 @@ export const Hashtag = createInteractiveInput({
 });
 
 export const Reminder = createInteractiveInput({
+  prefixChar: "<",
   items: (query: { query: string }) => {
-    console.log(query);
     return query ? [query.query] : [];
   },
   selectItem: (props: any, index: number) => {
     const item: string = props.items[index];
-    console.log(props);
     if (item) {
       props.command({ id: item, label: item });
     }
   },
-  completionItemRenderer: (item: string) => {
+  itemRenderer: (item: string) => {
     return <div>{item}</div>;
   },
   pluginName: "reminder",

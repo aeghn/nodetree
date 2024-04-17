@@ -2,7 +2,7 @@ import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 
 import { SuggestionKeyDownProps } from "@tiptap/suggestion";
 
-export const CompletionList = forwardRef<any, any>((props, ref) => {
+export const SuggestionList = forwardRef<any, any>((props, ref) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const selectItem = props.selectItem
