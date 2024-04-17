@@ -15,6 +15,11 @@ import { findTableAncestor } from "./util";
 import { ImageResizer } from "./extensions/image/image-resize";
 import { TaskList } from "@tiptap/extension-task-list";
 import { TaskItem } from "@tiptap/extension-task-item";
+import { Link } from "@tiptap/extension-link";
+
+import { cx } from "class-variance-authority";
+
+
 import "@/styles/editor.css";
 import { Backlink, Hashtag, Reminder } from "./extensions/interactive-input";
 
@@ -49,7 +54,14 @@ const NTEditor: React.FC<{
       }),
       Hashtag,
       Reminder,
-      Backlink
+      Backlink,
+      Link.configure({
+        autolink: true, HTMLAttributes: {
+          class: cx(
+            "text-muted-foreground underline underline-offset-[3px] hover:text-primary transition-colors cursor-pointer",
+          ),
+        },
+      })
     ],
     content: content,
     editorProps: {
