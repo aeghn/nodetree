@@ -3,6 +3,7 @@ import Suggestion, { SuggestionProps } from "@tiptap/suggestion";
 import { createSuggestionOptions } from "./suggestion/suggestion-options-builder";
 import { fetchNodesLike } from "@/helpers/data-agent";
 import { NTNode } from "@/model";
+import { cx } from "class-variance-authority";
 
 
 
@@ -158,13 +159,78 @@ export const Backlink = createInteractiveInput<NTNode>({
   },
 
   extendOptions: {
+    addOptions() {
+      return {
+        HTMLAttributes: {
+          target: '_blank',
+          rel: 'noopener noreferrer nofollow',
+          class: cx(
+            "text-muted-foreground underline underline-offset-[3px] hover:text-primary transition-colors cursor-pointer",
+          ),
+          dataType: "backlink"
+        },
+      }
+    },
+
     addAttributes() {
       return {
         href: {
           default: null,
         },
       }
-    }
-  }
-});
+    },
+    parseHTML() {
+      return [{ tag: 'a[href]:not([href *= "javascript:" i])' }]
+    },
 
+    renderHTML({ HTMLAttributes }: { HTMLAttributes: Record<string, any> }) {
+      // False positive; we're explicitly checking for javascript: links to ignore them
+      // eslint-disable-next-line no-script-url
+      if (HTMLAttributes.href?.startsWith('javascript:')) {
+        // strip out the href
+        return ['a', mergeAttributes(this.options.HTMLAttributes, { ...HTMLAttributes, href: '' }), 0]
+      }
+      return ['a', mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0]
+    },
+  },
+
+  extendPMPlugins: [
+    new Plugin({
+      key: new PluginKey('handleClickBackLink'),
+      props: {
+        handleClick: (view, pos, event) => {
+          if (event.button !== 0) {
+            return false
+          }
+
+          let a = event.target as HTMLElement
+          const els = []
+
+          while (a.nodeName !== 'DIV') {
+            els.push(a)
+            a = a.parentNode as HTMLElement
+            a.nextSibling
+          }
+
+          if (!els.find(value => value.nodeName === 'A')) {
+            return false
+          }
+
+          const attrs = getAttributes(view.state, "href")
+          const link = (event.target as HTMLLinkElement)
+
+          const href = link?.href ?? attrs.href
+          const target = link?.target ?? attrs.target
+
+          if (link && href) {
+            window.open(href, target)
+
+            return true
+          }
+
+          return false
+        },
+      },
+    })
+  ]
+});

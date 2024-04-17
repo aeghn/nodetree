@@ -56,7 +56,8 @@ const NTEditor: React.FC<{
       Reminder,
       Backlink,
       Link.configure({
-        autolink: true, HTMLAttributes: {
+        autolink: true,
+        HTMLAttributes: {
           class: cx(
             "text-muted-foreground underline underline-offset-[3px] hover:text-primary transition-colors cursor-pointer",
           ),
