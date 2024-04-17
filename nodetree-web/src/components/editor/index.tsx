@@ -16,7 +16,7 @@ import { ImageResizer } from "./extensions/image/image-resize";
 import { TaskList } from "@tiptap/extension-task-list";
 import { TaskItem } from "@tiptap/extension-task-item";
 import "@/styles/editor.css";
-import { Hashtag, Reminder } from "./extensions/interactive-input/mark-builder";
+import { Backlink, Hashtag, Reminder } from "./extensions/interactive-input";
 
 const NTEditor: React.FC<{
   height: number | undefined;
@@ -49,6 +49,7 @@ const NTEditor: React.FC<{
       }),
       Hashtag,
       Reminder,
+      Backlink
     ],
     content: content,
     editorProps: {

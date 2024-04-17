@@ -7,15 +7,15 @@ export const SuggestionList = forwardRef<any, any>((props, ref) => {
 
   const selectItem = props.selectItem
     ? (index: number) => {
-        props.selectItem(props, index);
-      }
+      props.selectItem(props, index);
+    }
     : (index: number) => {
-        const item = props.items[index];
+      const item = props.items[index];
 
-        if (item) {
-          props.command({ id: item });
-        }
-      };
+      if (item) {
+        props.command({ id: item });
+      }
+    };
 
   const upHandler = () => {
     setSelectedIndex(
@@ -63,7 +63,7 @@ export const SuggestionList = forwardRef<any, any>((props, ref) => {
             key={index}
             onClick={() => selectItem(index)}
           >
-            {props.candidateRenderer ? props.candidateRenderer(item) : item}
+            {props.itemRenderer ? props.itemRenderer(item) : item}
           </button>
         ))
       ) : (

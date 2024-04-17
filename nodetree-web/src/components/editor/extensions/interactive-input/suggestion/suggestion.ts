@@ -2,7 +2,11 @@ import { Range } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 
-import { SuggestionOptions, SuggestionProps, findSuggestionMatch as defaultFindSuggestionMatch } from "@tiptap/suggestion";
+import {
+  SuggestionOptions,
+  SuggestionProps,
+  findSuggestionMatch as defaultFindSuggestionMatch,
+} from "@tiptap/suggestion";
 
 export const SuggestionPluginKey = new PluginKey("suggestion");
 
@@ -42,13 +46,6 @@ export function NTSuggestion<I = any>({
           const handleStart = started || moved;
           const handleChange = changed && !moved;
           const handleExit = stopped || moved;
-
-          /*           console.log(
-            `started ${started} stopped ${stopped} changed ${changed} start ${handleStart} change ${handleChange} exit ${handleExit} moved ${moved}`
-          ); */
-          console.log(
-            `sug2> prev.active && !next.active; ${prev.active} ${next.active}`
-          );
 
           // Cancel when suggestion isn't active
           if (!handleStart && !handleChange && !handleExit) {
@@ -105,7 +102,6 @@ export function NTSuggestion<I = any>({
           }
 
           if (handleExit) {
-            console.log("sug2> exit 4");
             renderer?.onExit?.(props);
           }
 
@@ -119,8 +115,6 @@ export function NTSuggestion<I = any>({
         },
 
         destroy: () => {
-          console.log("sug2> exit 2");
-
           if (!props) {
             return;
           }

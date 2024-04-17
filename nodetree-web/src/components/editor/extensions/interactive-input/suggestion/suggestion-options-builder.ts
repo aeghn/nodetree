@@ -6,10 +6,27 @@ import { PluginKey } from "@tiptap/pm/state";
 
 import { SuggestionProps } from "@tiptap/suggestion";
 import { Editor } from "@tiptap/core";
-import { InteractiveInputOptions } from "../mark-builder";
+import { InteractiveInputOptions } from "..";
 
-export const createSuggestionOptions = (options: InteractiveInputOptions) => {
-  const { items, pluginName, selectItem, itemRenderer, prefixChar } = options;
+export const createSuggestionOptions = <E>(
+  options: InteractiveInputOptions<E>
+) => {
+  const {
+    items,
+    pluginName,
+    selectItem: selectItemIn,
+    itemRenderer,
+    prefixChar,
+  } = options;
+  const selectItem = selectItemIn
+    ? selectItemIn
+    : (props: SuggestionProps<E>, index: number) => {
+        const item = props.items[index];
+        if (item) {
+          props.command(item);
+        }
+      };
+
   return {
     char: prefixChar,
     items: items,
@@ -40,16 +57,13 @@ export const createSuggestionOptions = (options: InteractiveInputOptions) => {
       editor
         .chain()
         .focus()
-        .insertContentAt(range, [
+        .insertContentAt(
           {
-            type: options.pluginName,
-            attrs: props,
+            from: range.from,
+            to: range.to + (nodeAfter?.text?.length ?? 0),
           },
-          {
-            type: "text",
-            text: " ",
-          },
-        ])
+          options.elemBuilder(props)
+        )
         .run();
 
       window.getSelection()?.collapseToEnd();
