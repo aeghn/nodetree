@@ -19,9 +19,9 @@ import { Link } from "@tiptap/extension-link";
 
 import { cx } from "class-variance-authority";
 
-
 import "@/styles/editor.css";
 import { Backlink, Hashtag, Reminder } from "./extensions/interactive-input";
+import { setShouldShowSuggestion } from "./extensions/interactive-input/suggestion/suggestion-options-builder";
 
 const NTEditor: React.FC<{
   height: number | undefined;
@@ -59,20 +59,23 @@ const NTEditor: React.FC<{
         autolink: true,
         HTMLAttributes: {
           class: cx(
-            "text-muted-foreground underline underline-offset-[3px] hover:text-primary transition-colors cursor-pointer",
+            "text-muted-foreground underline underline-offset-[3px] hover:text-primary transition-colors cursor-pointer"
           ),
         },
-      })
+      }),
     ],
     content: content,
     editorProps: {
       attributes: {
         spellcheck: "false",
       },
-      handleClickOn: (_view, _pos, node) => {
-        if (node.type.name === "backlink") {
-          idChangeCallback(node.attrs.id);
-        }
+      handleDOMEvents: {
+        mousedown: () => {
+          setShouldShowSuggestion(false);
+        },
+      },
+      handleKeyDown: () => {
+        setShouldShowSuggestion(true);
       },
       handlePaste: (view, event) => {
         if (typeof window !== "undefined") {
@@ -122,6 +125,7 @@ const NTEditor: React.FC<{
       },
     },
     onUpdate: ({ editor }) => {
+      // setShouldShowSuggestion(true);
       const json = editor.getJSON();
       if (json) {
         contentChangeCallback(JSON.stringify(json), nodeId);

@@ -8,6 +8,23 @@ import { SuggestionProps } from "@tiptap/suggestion";
 import { Editor } from "@tiptap/core";
 import { InteractiveInputOptions } from "..";
 
+function permNTChanged(
+  initialValue: boolean
+): [() => boolean, (value: boolean) => void] {
+  let state = initialValue;
+
+  const setChanged = (newValue: boolean) => {
+    state = newValue;
+  };
+
+  const changed = () => state;
+
+  return [changed, setChanged];
+}
+
+const [shouldShowSug, setShouldShowSuggestion] = permNTChanged(false);
+export { setShouldShowSuggestion };
+
 export const createSuggestionOptions = <E>(
   options: InteractiveInputOptions<E>
 ) => {
@@ -18,6 +35,7 @@ export const createSuggestionOptions = <E>(
     itemRenderer,
     prefixChar,
   } = options;
+
   const selectItem = selectItemIn
     ? selectItemIn
     : (props: SuggestionProps<E>, index: number) => {
@@ -85,7 +103,7 @@ export const createSuggestionOptions = <E>(
             editor: props.editor,
           });
 
-          if (!props.clientRect) {
+          if (!props.clientRect || !shouldShowSug()) {
             return;
           }
 
@@ -104,8 +122,21 @@ export const createSuggestionOptions = <E>(
         onUpdate(props: Record<string, any>) {
           reactRenderer.updateProps(props);
 
-          if (!props.clientRect) {
+          if (!props.clientRect || !shouldShowSug()) {
             return;
+          }
+
+          if (!popup) {
+            // @ts-ignore
+            popup = tippy("body", {
+              getReferenceClientRect: props.clientRect,
+              appendTo: () => document.body,
+              content: reactRenderer.element,
+              showOnCreate: true,
+              interactive: true,
+              trigger: "manual",
+              placement: "bottom-start",
+            });
           }
 
           popup[0].setProps({
