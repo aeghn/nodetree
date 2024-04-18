@@ -125,7 +125,7 @@ export const Reminder = createInteractiveInput<string>({
   }
 });
 
-export const Backlink = createInteractiveInput<NTNode>({
+export const Backlink = (idChangeCallback: (href: string) => void) => createInteractiveInput<NTNode>({
   prefixChar: "&",
   pluginName: "backlink",
 
@@ -199,36 +199,17 @@ export const Backlink = createInteractiveInput<NTNode>({
       key: new PluginKey('handleClickBackLink'),
       props: {
         handleClick: (view, pos, event) => {
-          if (event.button !== 0) {
-            return false
+          event.preventDefault();
+
+          const node = view.state.doc.nodeAt(pos);
+
+          const marks = node?.marks.filter((e) => e.type.name === "backlink");
+          if (marks && marks.length > 0) {
+            const nodeId = marks[0].attrs["href"];
+            idChangeCallback(nodeId)
           }
 
-          let a = event.target as HTMLElement
-          const els = []
-
-          while (a.nodeName !== 'DIV') {
-            els.push(a)
-            a = a.parentNode as HTMLElement
-            a.nextSibling
-          }
-
-          if (!els.find(value => value.nodeName === 'A')) {
-            return false
-          }
-
-          const attrs = getAttributes(view.state, "href")
-          const link = (event.target as HTMLLinkElement)
-
-          const href = link?.href ?? attrs.href
-          const target = link?.target ?? attrs.target
-
-          if (link && href) {
-            window.open(href, target)
-
-            return true
-          }
-
-          return false
+          return true;
         },
       },
     })

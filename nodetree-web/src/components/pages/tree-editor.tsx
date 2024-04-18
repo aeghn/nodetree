@@ -68,6 +68,7 @@ function TreeEditor() {
   );
 
   const idChangeCallback = useCallback((nodeId: NodeId) => {
+    console.log("id changed: ", nodeId)
     setTargetNodeId(nodeId);
   }, []);
 

@@ -98,36 +98,17 @@ export const createSuggestionOptions = <E>(
             selectItem,
             itemRenderer,
           };
+          if (!shouldShowSug()) {
+            return;
+          }
+
           reactRenderer = new ReactRenderer(SuggestionList, {
             props: propsExtend,
             editor: props.editor,
           });
 
-          if (!props.clientRect || !shouldShowSug()) {
-            return;
-          }
-
-          // @ts-ignore
-          popup = tippy("body", {
-            getReferenceClientRect: props.clientRect,
-            appendTo: () => document.body,
-            content: reactRenderer.element,
-            showOnCreate: true,
-            interactive: true,
-            trigger: "manual",
-            placement: "bottom-start",
-          });
-        },
-
-        onUpdate(props: Record<string, any>) {
-          reactRenderer.updateProps(props);
-
-          if (!props.clientRect || !shouldShowSug()) {
-            return;
-          }
-
-          if (!popup) {
-            // @ts-ignore
+          if (props.clientRect && props.clientRect()) {
+            //@ts-ignore
             popup = tippy("body", {
               getReferenceClientRect: props.clientRect,
               appendTo: () => document.body,
@@ -138,10 +119,16 @@ export const createSuggestionOptions = <E>(
               placement: "bottom-start",
             });
           }
+        },
 
-          popup[0].setProps({
-            getReferenceClientRect: props.clientRect,
-          });
+        onUpdate(props: Record<string, any>) {
+          reactRenderer?.updateProps(props);
+
+          if (popup && props.clientRect) {
+            popup[0].setProps({
+              getReferenceClientRect: props.clientRect,
+            });
+          }
         },
 
         onKeyDown(props: any) {
@@ -152,12 +139,15 @@ export const createSuggestionOptions = <E>(
           }
 
           // @ts-ignore
-          return reactRenderer.ref?.onKeyDown(props);
+          return reactRenderer?.ref?.onKeyDown(props);
         },
 
         onExit() {
-          popup[0].destroy();
-          reactRenderer.destroy();
+          if (popup && popup.length > 0) {
+            popup[0].destroy();
+          }
+
+          reactRenderer?.destroy();
         },
       };
     },

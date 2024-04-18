@@ -54,7 +54,7 @@ const NTEditor: React.FC<{
       }),
       Hashtag,
       Reminder,
-      Backlink,
+      Backlink(idChangeCallback),
       Link.configure({
         autolink: true,
         HTMLAttributes: {
