@@ -14,7 +14,7 @@ import { LuTreePine, LuBookX } from "react-icons/lu";
 function TreeEditor() {
   const { ref: heightRef, height } = useResizeObserver<HTMLDivElement>({});
 
-  const [treeData, setTreeData] = useState<NTNode[]>();
+  const [treeDataList, setTreeDataList] = useState<NTNode[]>();
 
   // tree => view
   const [activeNode, setActiveNode] = useState<NTNode>();
@@ -93,7 +93,7 @@ function TreeEditor() {
   useEffect(() => {
     try {
       fetchAllNodes().then((nodes) => {
-        setTreeData(nodes);
+        setTreeDataList(nodes);
         console.log("Loaded all nodes");
       });
     } catch (error) {
@@ -105,11 +105,11 @@ function TreeEditor() {
     <div className="h-screen p-2 shadow bg-[#f5f5f5]">
       <div className="flex flex-row m-0 h-full content-center" ref={heightRef}>
         <div className="w-3/12 m-0 h-full pr-4">
-          {treeData ? (
+          {treeDataList ? (
             <NTTree
               height={height}
               setActiveNodeCallback={setActiveNodeCallback}
-              treeData={treeData}
+              treeDataList={treeDataList}
               activeNodeId={targetNodeId}
             />
           ) : (

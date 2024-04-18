@@ -11,7 +11,7 @@ import {
   Tree,
 } from "react-arborist";
 import styles from "./tree.module.css";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   moveNode,
   saveNode,
@@ -27,12 +27,11 @@ import { LuChevronRight, LuChevronDown } from "react-icons/lu";
 export const NTTree: React.FC<{
   height?: number;
   activeNodeId?: NodeId;
-  treeData: NTNode[];
+  treeDataList: NTNode[];
   setActiveNodeCallback: (node: NTNode) => void;
-}> = ({ height, activeNodeId, treeData, setActiveNodeCallback }) => {
-  console.log("render tree", activeNodeId);
-  const [data, setData] = useState<NTNode[]>(treeData);
-  const tree = useMemo(() => new SimpleTree<NTNode>(data), [data]);
+}> = ({ height, activeNodeId, treeDataList, setActiveNodeCallback }) => {
+  const [treeData, setTreeData] = useState<NTNode[]>(treeDataList);
+  const tree = useMemo(() => new SimpleTree<NTNode>(treeData), [treeData]);
   let oldNode: NTNode | undefined = undefined;
 
   const onMove: MoveHandler<NTNode> = (args: {
@@ -51,7 +50,7 @@ export const NTTree: React.FC<{
         console.log(error);
       }
     }
-    setData(tree.data);
+    setTreeData(tree.data);
   };
 
   const onRename: RenameHandler<NTNode> = ({ name, id }) => {
@@ -61,7 +60,7 @@ export const NTTree: React.FC<{
     } catch (error) {
       console.log(error);
     }
-    setData(tree.data);
+    setTreeData(tree.data);
   };
 
   const onCreate: CreateHandler<NTNode> = ({ parentId, index, type }) => {
@@ -85,7 +84,7 @@ export const NTTree: React.FC<{
     }
 
     tree.create({ parentId, index, data });
-    setData(tree.data);
+    setTreeData(tree.data);
     return data;
   };
 
@@ -99,13 +98,23 @@ export const NTTree: React.FC<{
       }
     });
 
-    setData(tree.data);
+    setTreeData(tree.data);
   };
+
+  useEffect(() => {
+    if (activeNodeId) {
+      const an = tree.find(activeNodeId);
+      if (an && an.data != oldNode) {
+        setActiveNodeCallback(an.data);
+        oldNode = an.data;
+      }
+    }
+  }, [tree, activeNodeId]);
 
   return (
     <div className={styles.treeContainer}>
       <Tree
-        data={data}
+        data={treeData}
         width="100%"
         height={height}
         rowHeight={32}
