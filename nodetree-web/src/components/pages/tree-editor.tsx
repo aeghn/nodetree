@@ -113,7 +113,7 @@ function TreeEditor() {
             />
           ) : (
             <Loading
-              customIcon={<LuTreePine size={64} strokeWidth={1} />}
+              customIcon={<LuTreePine size={128} strokeWidth={1} />}
               message="Loading tree"
             />
           )}
@@ -134,7 +134,7 @@ function TreeEditor() {
             )
           ) : (
             <Loading
-              customIcon={<LuBookX size={34} strokeWidth={1} />}
+              customIcon={<LuBookX size={128} strokeWidth={1} />}
               message="No active node is selected."
             />
           )}
