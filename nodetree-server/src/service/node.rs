@@ -100,6 +100,7 @@ mod test {
             prev_sliding_id: None,
             create_time: Utc::now(),
             first_version_time: Utc::now(),
+            node_type: ntcore::model::node::NodeType::TiptapV1,
         };
         let node = NodeWithChildren {
             node: node1.clone(),

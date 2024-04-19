@@ -1,4 +1,7 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    str::FromStr,
+};
 
 use async_trait::async_trait;
 use bytes::BytesMut;
@@ -14,7 +17,7 @@ use crate::{
     mapper::node::NodeInsertResult,
     model::{
         assert::Asset,
-        node::{ContentParsedInfo, Node, NodeId},
+        node::{ContentParsedInfo, Node, NodeId, NodeType},
     },
 };
 
@@ -103,6 +106,7 @@ impl PostgresMapper {
             delete_time: row.get("delete_time"),
             create_time: row.get("create_time"),
             first_version_time: row.get("first_version_time"),
+            node_type: NodeType::from_str(row.get("node_type")).unwrap(),
         }
     }
 }
@@ -177,18 +181,19 @@ impl NodeMapper for PostgresMapper {
     RETURNING a.*
 )
 INSERT INTO nodes_history 
-SELECT id, name, content, username, delete_time, create_time, first_version_time FROM moved_rows;",
+SELECT id, name, content, node_type, username, delete_time, create_time, first_version_time FROM moved_rows;",
             &[&node.id],
         )
         .await?;
 
         info!("begin to really insert");
 
-        stmt.execute("insert into nodes(id, name, content, username, parent_id, create_time, first_version_time, delete_time) values ($1,$2,$3,$4,$5,$6,$7,$8)",
+        stmt.execute("insert into nodes(id, name, content, node_type, username, parent_id, create_time, first_version_time, delete_time) values ($1,$2,$3,$4,$5,$6,$7,$8,$9)",
         &[
             &node.id,
             &node.name,
             &node.content,
+            &node.node_type.as_ref(),
             &node.user,
             &node.parent_id,
             &node.create_time,
@@ -401,6 +406,7 @@ impl Mapper for PostgresMapper {
     id VARCHAR(40) NOT NULL,
     name VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
+    node_type VARCHAR(255) NOT NULL,
     username TEXT NOT NULL,
     delete_time timestamptz DEFAULT NULL,
     parent_id VARCHAR(40) DEFAULT NULL,
@@ -418,6 +424,7 @@ impl Mapper for PostgresMapper {
     id VARCHAR(40) NOT NULL,
     name VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
+    node_type VARCHAR(255) NOT NULL,
     username TEXT NOT NULL,
     delete_time timestamptz DEFAULT NULL,
     create_time timestamptz NOT NULL default CURRENT_TIMESTAMP,
@@ -502,8 +509,4 @@ impl tokio_postgres::types::ToSql for NodeId {
     }
 
     to_sql_checked!();
-}
-
-fn node_filter_to_sql(_: &NodeFilter) -> (String, Vec<Box<dyn ToSql + Sync + Send>>) {
-    return ("select * from nodes".into(), vec![]);
 }

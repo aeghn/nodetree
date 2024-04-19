@@ -3,9 +3,15 @@ use std::fmt::Display;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-
+use strum::{AsRefStr, EnumString};
 
 use super::tag::Tag;
+
+#[derive(Clone, Debug, EnumString, AsRefStr, Serialize, Deserialize)]
+pub enum NodeType {
+    #[strum(serialize = "tiptap/v1")]
+    TiptapV1,
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Node {
@@ -16,6 +22,7 @@ pub struct Node {
 
     pub name: String,
     pub content: String,
+    pub node_type: NodeType,
 
     pub user: String,
     pub parsed_info: ContentParsedInfo,

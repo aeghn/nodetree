@@ -49,7 +49,7 @@ impl NodeFetchReq {
         let selection = if with_content {
             "*"
         } else {
-            "n.id, n.delete_time,  n.name, n.username, n.parent_id, n.prev_sliding_id, n.create_time, n.first_version_time"
+            "n.id, n.delete_time,  n.name, n.username, n.node_type, n.parent_id, n.prev_sliding_id, n.create_time, n.first_version_time"
         };
 
         let mut s = format!("select {} from nodes n", selection);

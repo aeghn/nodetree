@@ -5,6 +5,7 @@ members = ["nodetree-core", "nodetree-server"]
 anyhow = "1.0.75"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+strum = { version = "0.26", features = ["derive"] }
 async-trait = "0.1"
 chrono = { version = "0.4.35", features = ["serde"] }
 uuid = { version = "1.8.0", features = ["serde", "v4"] }

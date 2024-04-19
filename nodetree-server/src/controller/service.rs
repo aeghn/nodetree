@@ -124,6 +124,7 @@ mod test {
             create_time: cur.clone(),
             first_version_time: cur.clone(),
             parsed_info: ContentParsedInfo::default(),
+            node_type: ntcore::model::node::NodeType::TiptapV1,
         }
     }
 

@@ -11,6 +11,10 @@ export interface NTTag {
   create_time: Date;
 }
 
+export enum NodeType { 
+  TiptapV1 = "tiptap/v1"
+}
+
 export interface NTNode {
   id: NodeId;
 
@@ -18,6 +22,7 @@ export interface NTNode {
 
   name: string;
   content: string;
+  node_type: NodeType,
 
   user: string;
   parsed_info: ContentParsedInfo;
