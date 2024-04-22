@@ -165,44 +165,50 @@ impl NodeMapper for PostgresMapper {
             .await
             .map(|row| row.get("content"));
 
-        let should_insert = match content {
+        let changed = match content {
             Ok(content) => distance::levenshtein(&content, &node.content) > 8,
             Err(_) => true,
         };
 
-        if !should_insert {
-            return Ok(NodeInsertResult::TooLittleChange);
-        }
-
-        stmt.execute(
-            "WITH moved_rows AS (
+        if !changed {
+            stmt.execute(
+                "update nodes set content = $1, create_time = $2 where id = $3",
+                &[&node.content, &node.create_time, &node.id],
+            )
+            .await?;
+        } else {
+            stmt.execute(
+                "WITH moved_rows AS (
     DELETE FROM nodes a
     where id = $1
     RETURNING a.*
 )
 INSERT INTO nodes_history 
 SELECT id, name, content, node_type, username, delete_time, create_time, first_version_time FROM moved_rows;",
-            &[&node.id],
-        )
-        .await?;
+                &[&node.id]
+            ).await?;
 
-        info!("begin to really insert");
+            info!("begin to really insert");
 
-        stmt.execute("insert into nodes(id, name, content, node_type, username, parent_id, create_time, first_version_time, delete_time) values ($1,$2,$3,$4,$5,$6,$7,$8,$9)",
-        &[
-            &node.id,
-            &node.name,
-            &node.content,
-            &node.node_type.as_ref(),
-            &node.user,
-            &node.parent_id,
-            &node.create_time,
-            &node.first_version_time,
-            &node.delete_time
-        ])
-        .await
-        .map_err(|e| {anyhow::Error::new(e)})
-        .map(|_| ())?;
+            stmt
+                .execute(
+                    "insert into nodes(id, name, content, node_type, username, parent_id, create_time, first_version_time, delete_time) values ($1,$2,$3,$4,$5,$6,$7,$8,$9)",
+                    &[
+                        &node.id,
+                        &node.name,
+                        &node.content,
+                        &node.node_type.as_ref(),
+                        &node.user,
+                        &node.parent_id,
+                        &node.create_time,
+                        &node.first_version_time,
+                        &node.delete_time,
+                    ]
+                ).await
+                .map_err(|e| { anyhow::Error::new(e) })
+                .map(|_| ())?;
+        }
+
         Ok(NodeInsertResult::ParsedInfo(ContentParsedInfo::default()))
     }
 

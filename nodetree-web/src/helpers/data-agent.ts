@@ -1,4 +1,4 @@
-import { Asset, NTNode, NodeId } from "@/model";
+import { Asset, FullTimestampType, NTNode, NodeId } from "@/model";
 import requests from "./request";
 
 export const fetchAllNodes = async (): Promise<NTNode[]> => {
@@ -75,4 +75,10 @@ export const updateNodeName = async (
 
 export const deteleNode = async (id: NodeId): Promise<undefined> => {
   return await requests.post("api/delete-node", { id });
+};
+
+export const guessTime = async (
+  input: string
+): Promise<FullTimestampType[]> => {
+  return await requests.post("api/guess-time", { input });
 };

@@ -26,7 +26,6 @@ pub struct NodeMoveReq {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum NodeInsertResult {
-    TooLittleChange,
     ParsedInfo(ContentParsedInfo),
 }
 

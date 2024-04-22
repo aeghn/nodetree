@@ -11,8 +11,8 @@ export interface NTTag {
   create_time: Date;
 }
 
-export enum NodeType { 
-  TiptapV1 = "tiptap/v1"
+export enum NodeType {
+  TiptapV1 = "tiptap/v1",
 }
 
 export interface NTNode {
@@ -22,7 +22,7 @@ export interface NTNode {
 
   name: string;
   content: string;
-  node_type: NodeType,
+  node_type: NodeType;
 
   user: string;
   parsed_info: ContentParsedInfo;
@@ -50,4 +50,11 @@ export interface Asset {
   content_type: string;
 
   create_time: Date;
+}
+
+export interface FullTimestampType {
+  stored: string;
+  input: string;
+  standard: string;
+  cal_type: string;
 }

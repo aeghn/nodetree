@@ -10,7 +10,10 @@ use ntcore::{
         nodefilter::{NodeFetchReq, NodeFilter},
     },
     model::node::Node,
+    /*     parser::event::timestamp::guess_tss,
+     */
 };
+use serde::Deserialize;
 use tracing::info;
 
 use crate::{controller::print_and_trans_to_response, service::node::nodes_with_childrens};
@@ -26,6 +29,8 @@ pub fn routes() -> Router<WebAppState> {
         .route("/api/move-node", post(move_node))
         .route("/api/delete-node", post(delete_node))
         .route("/api/update-node-name", post(update_node_name))
+    /*         .route("/api/guess-time", post(guess_reminder))
+     */
 }
 
 async fn insert_node(state: State<WebAppState>, Json(node): Json<Node>) -> impl IntoResponse {
@@ -87,6 +92,24 @@ async fn update_node_name(
     let rest = state.mapper.update_node_name(&req).await;
     print_and_trans_to_response(rest)
 }
+
+#[derive(Clone, Debug, Deserialize)]
+struct TimeGuessReq {
+    input: String,
+}
+
+/* async fn guess_reminder(
+    _state: State<WebAppState>,
+    Json(req): Json<TimeGuessReq>,
+) -> impl IntoResponse {
+    info!(
+        "parse_time: {:?}, {}",
+        req, _state.config.common.asset_base_dir
+    );
+
+    let rest = Ok(ntcore::parser::event::timestamp::guess_tss(req.input.to_owned()));
+    print_and_trans_to_response(rest)
+} */
 
 #[cfg(test)]
 mod test {

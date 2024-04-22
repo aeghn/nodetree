@@ -1,0 +1,28 @@
+digraph {
+    rankdir = LR;
+    BaseTime [color = "yellow";];
+    WesTime [color = "yellow";];
+    TimeInterval [color = "yellow";];
+    Week [color = "yellow";];
+    TimeEnum [color = "yellow";];
+    EndEnum [color = "yellow";];
+    Times [color = "yellow";];
+    
+    
+    EventEnum -> TodoEvent;
+    TodoEvent -> {Todo Done Wait Next Calcel};
+
+
+    EventEnum -> TimeEvent -> {TimeEnum Repeater};
+    TimeEnum -> {ChnTime WesTime};
+    ChnTime -> BaseTime [label = "农[润] BaseTime";];
+    WesTime -> BaseTime [label = "BaseTime +8:00";];
+    Repeater ->  TimeInterval[label = ""];
+    Repeater -> EndEnum [label="=..."]
+    TimeInterval -> {Week BaseTime} [label = "1y2m3d4w";];
+    
+    EndEnum -> {Times TimeEnum TimeInterval};
+    
+    BaseTime -> {"2023-12" "2023-12-02" "2023-12-02 12:00" "2023-12-02 12:00:00"} [style = dashed;];
+    Times -> "1t" [style = dashed;];
+}

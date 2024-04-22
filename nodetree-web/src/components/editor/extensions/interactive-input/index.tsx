@@ -1,8 +1,8 @@
 import { Content, Mark, getAttributes, mergeAttributes } from "@tiptap/core";
 import Suggestion, { SuggestionProps } from "@tiptap/suggestion";
 import { createSuggestionOptions } from "./suggestion/suggestion-options-builder";
-import { fetchNodesLike } from "@/helpers/data-agent";
-import { NTNode } from "@/model";
+import { fetchNodesLike, guessTime } from "@/helpers/data-agent";
+import { FullTimestampType, NTNode } from "@/model";
 import { cx } from "class-variance-authority";
 
 
@@ -94,23 +94,23 @@ export const Hashtag = createInteractiveInput<string>({
   }
 });
 
-export const Reminder = createInteractiveInput<string>({
+export const Reminder = createInteractiveInput<FullTimestampType>({
   prefixChar: "<",
   pluginName: "reminder",
 
-  items: (param: { query: string; }) => {
-    return param ? [param.query] : [];
+  items: (param: { query: string }) => {
+    return param ? guessTime(param.query) : [];
   },
 
-  itemRenderer: (item: string) => {
-    return <div>{item}</div>;
+  itemRenderer: (item: FullTimestampType) => {
+    return <div>{item.standard}</div>;
   },
 
-  elemBuilder: function (item: string): Content {
+  elemBuilder: function (item: FullTimestampType): Content {
     return [
       {
         type: "text",
-        text: `${this.prefixChar}${item}`,
+        text: `${this.prefixChar}${item.standard}`,
         marks: [
           {
             type: this.pluginName,
