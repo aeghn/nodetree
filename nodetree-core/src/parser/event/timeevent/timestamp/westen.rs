@@ -3,11 +3,14 @@ use std::{ops::Deref, str::FromStr, vec};
 use chrono::{DateTime, Datelike, FixedOffset, Timelike, Utc};
 use regex::Regex;
 
-use crate::parser::{event::{timeevent::equals_any, EventBuilder}, possible::PossibleScore};
+use crate::parser::{
+    event::{retain_not_empty_parts, timeevent::equals_any, EventBuilder},
+    possible::PossibleScore,
+};
 
 use super::{
     base::{convert_time_to_secs, BaseTimestamp},
-     Timestamp, TimestampNow,
+    Timestamp, TimestampNow,
 };
 
 pub const CAL_TYPE: &str = "wes";
@@ -77,6 +80,10 @@ impl EventBuilder for WesTimestamp {
             guessed.push((WesTimestamp::now_time(), PossibleScore::Likely(100)));
         }
 
+        if let Ok(standard) = Self::from_standard(&retain_not_empty_parts(input).as_slice()) {
+            guessed.push((standard, PossibleScore::Yes(100)));
+        }
+
         guessed
     }
 
@@ -141,7 +148,6 @@ impl Timestamp for WesTimestamp {
 
 #[cfg(test)]
 mod test {
-
 
     use crate::parser::event::EventBuilder;
 

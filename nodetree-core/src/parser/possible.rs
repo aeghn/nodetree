@@ -5,6 +5,7 @@ pub enum PossibleScore {
     Maybe(u8),
     Unsure(u8),
     No(u8),
+    Num(u8),
 }
 
 impl PossibleScore {
@@ -15,6 +16,7 @@ impl PossibleScore {
             PossibleScore::Maybe(i) => 5 as f32 + Self::little_score(i),
             PossibleScore::Unsure(i) => 2 as f32 + Self::little_score(i),
             PossibleScore::No(i) => 0 as f32 + Self::little_score(i),
+            PossibleScore::Num(i) => i.to_owned() as f32 / 256.0 * 10.0,
         }
     }
 

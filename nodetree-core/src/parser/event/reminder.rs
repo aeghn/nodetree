@@ -29,7 +29,13 @@ impl From<TodoEnum> for EventEnum {
 
 impl EventBuilder for EventEnum {
     fn guess(input: &str) -> Vec<(Self, crate::parser::possible::PossibleScore)> {
-        todo!()
+        let todo_vec = TodoEnum::guess(input);
+        let time_vec = TimeEvent::guess(input);
+
+        let mut result = vec![];
+        result.extend(todo_vec.into_iter().map(|(v1, v2)| (v1.into(), v2)));
+        result.extend(time_vec.into_iter().map(|(v1, v2)| (v1.into(), v2)));
+        result
     }
 
     fn is_valid(&self) -> bool {
@@ -78,13 +84,28 @@ pub struct Reminder {
 impl Reminder {
     pub fn from_standard(input: &str) -> anyhow::Result<Reminder> {
         let parts = retain_parts(input, |e| !e.is_empty());
-        let parts_ref: Vec<&str> = parts.iter().map(|f| f.as_str()).collect();
 
         Ok(Reminder {
             id: idutils::generate_uuid(),
             input: input.to_owned(),
-            event: EventEnum::from_standard(&parts_ref)?,
+            event: EventEnum::from_standard(&parts)?,
         })
+    }
+
+    pub fn guess(input: &str) -> Vec<Reminder> {
+        let mut guess_res = EventEnum::guess(input);
+        guess_res.sort_by(|e1, e2| e1.1.cmp(&e2.1));
+
+        let res = guess_res
+            .into_iter()
+            .map(|e| Reminder {
+                id: idutils::generate_uuid(),
+                input: input.to_owned(),
+                event: e.0,
+            })
+            .collect();
+
+        res
     }
 }
 
@@ -113,7 +134,9 @@ mod test {
         let r = Reminder::from_standard("2024-02-12 12:00:00 +8:00 ..5d ,10H =2025-12 **10d =10d");
         println!("{:?}", r.unwrap().event.standard_str());
 
-        let r = Reminder::from_standard("2024-02-12 12:00:00 +8:00 ..5d ,10H =2025-12-12 12:00 **10d =10d");
+        let r = Reminder::from_standard(
+            "2024-02-12 12:00:00 +8:00 ..5d ,10H =2025-12-12 12:00 **10d =10d",
+        );
         println!("{:?}", r.unwrap().event.standard_str());
         let r = Reminder::from_standard("2024-02-12 12:00:00 +8:00 ..5d ,10H =10m **10d =10d");
         println!("{:?}", r.unwrap().event.standard_str());
@@ -129,5 +152,10 @@ mod test {
         println!("{:?}", r.unwrap().event.standard_str());
         let r = Reminder::from_standard("2024-02-12");
         println!("{:?}", r.unwrap().event.standard_str());
+
+        let r = Reminder::guess("todo");
+        println!("{:?}", r);
+        let r = Reminder::guess("now ..5d ,10H =10m **10d =10d");
+        println!("{:?}", r);
     }
 }

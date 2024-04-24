@@ -4,7 +4,7 @@ pub mod reminder;
 pub mod timeevent;
 pub mod todoevent;
 
-pub fn retain_parts<F>(input: &str, retain_func: F) -> Vec<String>
+pub fn retain_parts<F>(input: &str, retain_func: F) -> Vec<&str>
 where
     F: FnMut(&&str) -> bool,
 {
@@ -12,8 +12,11 @@ where
         .split(" ")
         .filter(|e| e.len() > 0)
         .filter(retain_func)
-        .map(|e| e.to_owned())
         .collect()
+}
+
+pub fn retain_not_empty_parts(input: &str) -> Vec<&str> {
+    retain_parts(input, |e| !e.is_empty())
 }
 
 pub trait EventBuilder

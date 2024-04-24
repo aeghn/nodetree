@@ -2,7 +2,10 @@ use std::{default, str::FromStr};
 
 use strum::{AsRefStr, EnumString};
 
-use crate::parser::{event::EventBuilder, possible::PossibleScore};
+use crate::parser::{
+    event::{retain_not_empty_parts, EventBuilder},
+    possible::PossibleScore,
+};
 
 use super::{endconditon::EndCondition, interval::TimeInterval, starts_any};
 
@@ -44,7 +47,11 @@ const TYPE_END: i32 = 3;
 
 impl EventBuilder for Repeater {
     fn guess(input: &str) -> Vec<(Self, PossibleScore)> {
-        todo!()
+        if let Ok(standard) = Self::from_standard(&retain_not_empty_parts(input)) {
+            vec![(standard, PossibleScore::Likely(100))]
+        } else {
+            vec![]
+        }
     }
 
     fn is_valid(&self) -> bool {

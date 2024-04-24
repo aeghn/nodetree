@@ -28,7 +28,7 @@ pub enum TimeEnum {
 
 impl EventBuilder for TimeEnum {
     fn guess(input: &str) -> Vec<(Self, PossibleScore)> {
-        let mut result = vec![];
+        let mut result: Vec<(TimeEnum, PossibleScore)> = vec![];
         let wes: Vec<(Self, PossibleScore)> = WesTimestamp::guess(input)
             .into_iter()
             .map(|(v, p)| (TimeEnum::Wes(v), p))

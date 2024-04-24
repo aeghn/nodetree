@@ -5,7 +5,7 @@ use crate::parser::{
 
 use self::{repeater::Repeater, timestamp::TimeEnum};
 
-use super::EventBuilder;
+use super::{retain_not_empty_parts, retain_parts, EventBuilder};
 
 pub mod endconditon;
 pub mod interval;
@@ -27,23 +27,17 @@ pub struct TimeEvent {
     repeaters: Option<Vec<Repeater>>,
 }
 
-impl EventBuilder for TimeEvent {
-    fn guess(input: &str) -> Vec<(Self, PossibleScore)> {
-        todo!()
+impl From<TimeEnum> for TimeEvent {
+    fn from(value: TimeEnum) -> Self {
+        Self {
+            base: value,
+            repeaters: None,
+        }
     }
+}
 
-    fn is_valid(&self) -> bool {
-        self.base.is_valid()
-            && (self.repeaters.is_none()
-                || self
-                    .repeaters
-                    .as_ref()
-                    .unwrap()
-                    .iter()
-                    .all(|e| e.is_valid()))
-    }
-
-    fn from_standard(segs: &[&str]) -> anyhow::Result<Self> {
+impl TimeEvent {
+    fn sep_base_and_others<'a>(segs: &[&'a str]) -> (Vec<&'a str>, Vec<Vec<&'a str>>) {
         let mut base: Vec<&str> = vec![];
         let mut others: Vec<Vec<&str>> = vec![];
         let mut sub_other: Vec<&str> = vec![];
@@ -68,6 +62,58 @@ impl EventBuilder for TimeEvent {
             others.push(sub_other);
         }
 
+        (base, others)
+    }
+}
+
+impl EventBuilder for TimeEvent {
+    fn guess(input: &str) -> Vec<(Self, PossibleScore)> {
+        let parts = retain_not_empty_parts(input);
+        let (base, others) = Self::sep_base_and_others(&parts);
+
+        let bases = TimeEnum::guess(base.join(" ").as_str());
+        let guess_repeaters: Vec<Vec<(Repeater, PossibleScore)>> = others
+            .into_iter()
+            .map(|e| Repeater::guess(e.join(" ").as_str()))
+            .collect();
+
+        if guess_repeaters.iter().all(|v| v.is_empty()) {
+            bases.into_iter().map(|(v, p)| (v.into(), p)).collect()
+        } else {
+            let mut repeaters = vec![];
+            for ele in guess_repeaters {
+                if !ele.is_empty() {
+                    repeaters.push(ele[0].clone().0)
+                }
+            }
+            bases
+                .into_iter()
+                .map(|(v, p)| {
+                    (
+                        TimeEvent {
+                            base: v,
+                            repeaters: Some(repeaters.clone()),
+                        },
+                        p,
+                    )
+                })
+                .collect()
+        }
+    }
+
+    fn is_valid(&self) -> bool {
+        self.base.is_valid()
+            && (self.repeaters.is_none()
+                || self
+                    .repeaters
+                    .as_ref()
+                    .unwrap()
+                    .iter()
+                    .all(|e| e.is_valid()))
+    }
+
+    fn from_standard(segs: &[&str]) -> anyhow::Result<Self> {
+        let (base, others) = Self::sep_base_and_others(segs);
         let repeaters = if others.is_empty() {
             None
         } else {
