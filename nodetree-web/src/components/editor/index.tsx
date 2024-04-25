@@ -20,7 +20,11 @@ import { Link } from "@tiptap/extension-link";
 import { cx } from "class-variance-authority";
 
 import "@/styles/editor.css";
-import { Backlink, Hashtag, Reminder } from "./extensions/interactive-input";
+import {
+  Backlink,
+  Hashtag,
+  Reminder,
+} from "./extensions/interactive-input";
 import { setShouldShowSuggestion } from "./extensions/interactive-input/suggestion/suggestion-options-builder";
 
 const NTEditor: React.FC<{

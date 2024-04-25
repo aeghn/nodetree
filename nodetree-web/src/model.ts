@@ -52,9 +52,8 @@ export interface Asset {
   create_time: Date;
 }
 
-export interface FullTimestampType {
-  stored: string;
+export interface Toent {
+  id: string;
   input: string;
-  standard: string;
-  cal_type: string;
+  event: string;
 }

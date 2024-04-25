@@ -10,7 +10,7 @@ use ntcore::{
         nodefilter::{NodeFetchReq, NodeFilter},
     },
     model::node::Node,
-    /*     parser::event::timestamp::guess_tss,
+    /*     parser::toent::timestamp::guess_tss,
      */
 };
 use serde::Deserialize;
@@ -29,8 +29,7 @@ pub fn routes() -> Router<WebAppState> {
         .route("/api/move-node", post(move_node))
         .route("/api/delete-node", post(delete_node))
         .route("/api/update-node-name", post(update_node_name))
-    /*         .route("/api/guess-time", post(guess_reminder))
-     */
+        .route("/api/guess-toent", post(guess_toent))
 }
 
 async fn insert_node(state: State<WebAppState>, Json(node): Json<Node>) -> impl IntoResponse {
@@ -98,7 +97,7 @@ struct TimeGuessReq {
     input: String,
 }
 
-/* async fn guess_reminder(
+async fn guess_toent(
     _state: State<WebAppState>,
     Json(req): Json<TimeGuessReq>,
 ) -> impl IntoResponse {
@@ -107,9 +106,11 @@ struct TimeGuessReq {
         req, _state.config.common.asset_base_dir
     );
 
-    let rest = Ok(ntcore::parser::event::timestamp::guess_tss(req.input.to_owned()));
+    let rest = Ok(ntcore::parser::toent::Toent::guess(
+        req.input.as_str(),
+    ));
     print_and_trans_to_response(rest)
-} */
+}
 
 #[cfg(test)]
 mod test {

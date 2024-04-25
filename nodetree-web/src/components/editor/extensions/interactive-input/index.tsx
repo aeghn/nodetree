@@ -1,14 +1,11 @@
-import { Content, Mark, getAttributes, mergeAttributes } from "@tiptap/core";
+import { Content, Mark, mergeAttributes } from "@tiptap/core";
 import Suggestion, { SuggestionProps } from "@tiptap/suggestion";
 import { createSuggestionOptions } from "./suggestion/suggestion-options-builder";
 import { fetchNodesLike, guessTime } from "@/helpers/data-agent";
-import { FullTimestampType, NTNode } from "@/model";
+import { NTNode, Toent } from "@/model";
 import { cx } from "class-variance-authority";
 
-
-
-import { Plugin, PluginKey } from '@tiptap/pm/state'
-
+import { Plugin, PluginKey } from "@tiptap/pm/state";
 
 export interface InteractiveInputOptions<E> {
   HTMLAttributes?: Record<string, any>;
@@ -18,10 +15,9 @@ export interface InteractiveInputOptions<E> {
   selectItem?: (props: SuggestionProps<E>, index: number) => void | undefined;
   elemBuilder: (props: E) => Content;
   prefixChar: string;
-  extendOptions?: {},
-  extendPMPlugins?: Plugin[]
+  extendOptions?: {};
+  extendPMPlugins?: Plugin[];
 }
-
 
 const createInteractiveInput = <E,>(options: InteractiveInputOptions<E>) => {
   const pluginName = options.pluginName;
@@ -61,7 +57,7 @@ const createInteractiveInput = <E,>(options: InteractiveInputOptions<E>) => {
       return plugins;
     },
 
-    ...options.extendOptions
+    ...options.extendOptions,
   });
 };
 
@@ -69,7 +65,7 @@ export const Hashtag = createInteractiveInput<string>({
   prefixChar: "#",
   pluginName: "hashtag",
 
-  items: (param: { query: string; }) => {
+  items: (param: { query: string }) => {
     return param ? [param.query] : [];
   },
   itemRenderer: (item: string) => {
@@ -90,11 +86,11 @@ export const Hashtag = createInteractiveInput<string>({
         type: "text",
         text: " ",
       },
-    ]
-  }
+    ];
+  },
 });
 
-export const Reminder = createInteractiveInput<FullTimestampType>({
+export const Reminder = createInteractiveInput<Toent>({
   prefixChar: "<",
   pluginName: "reminder",
 
@@ -102,15 +98,15 @@ export const Reminder = createInteractiveInput<FullTimestampType>({
     return param ? guessTime(param.query) : [];
   },
 
-  itemRenderer: (item: FullTimestampType) => {
-    return <div>{item.standard}</div>;
+  itemRenderer: (item: Toent) => {
+    return <div>{item.event}</div>;
   },
 
-  elemBuilder: function (item: FullTimestampType): Content {
+  elemBuilder: function (item: Toent): Content {
     return [
       {
         type: "text",
-        text: `${this.prefixChar}${item.standard}`,
+        text: `${this.prefixChar}${item.event}`,
         marks: [
           {
             type: this.pluginName,
@@ -121,97 +117,109 @@ export const Reminder = createInteractiveInput<FullTimestampType>({
         type: "text",
         text: " ",
       },
-    ]
-  }
+    ];
+  },
 });
 
-export const Backlink = (idChangeCallback: (href: string) => void) => createInteractiveInput<NTNode>({
-  prefixChar: "&",
-  pluginName: "backlink",
+export const Backlink = (idChangeCallback: (href: string) => void) =>
+  createInteractiveInput<NTNode>({
+    prefixChar: "&",
+    pluginName: "backlink",
 
-  items: (param: { query: string; }) => {
-    return param ? fetchNodesLike(param.query) : [];
-  },
-  itemRenderer: (node: NTNode) => {
-    return <div>{node.name}</div>;
-  },
+    items: (param: { query: string }) => {
+      return param ? fetchNodesLike(param.query) : [];
+    },
+    itemRenderer: (node: NTNode) => {
+      return <div>{node.name}</div>;
+    },
 
-  elemBuilder: function (item: NTNode): Content {
-    return [
-      {
-        type: "text",
-        text: `${this.prefixChar}${item.name}`,
+    elemBuilder: function (item: NTNode): Content {
+      return [
+        {
+          type: "text",
+          text: `${this.prefixChar}${item.name}`,
 
-        marks: [
-          {
-            type: this.pluginName,
-            attrs: {
-              "href": item.id,
+          marks: [
+            {
+              type: this.pluginName,
+              attrs: {
+                href: item.id,
+              },
+            },
+          ],
+        },
+        {
+          type: "text",
+          text: " ",
+        },
+      ];
+    },
+
+    extendOptions: {
+      addOptions() {
+        return {
+          HTMLAttributes: {
+            target: "_blank",
+            rel: "noopener noreferrer nofollow",
+            class: cx(
+              "text-muted-foreground underline underline-offset-[3px] hover:text-primary transition-colors cursor-pointer"
+            ),
+            dataType: "backlink",
+          },
+        };
+      },
+
+      addAttributes() {
+        return {
+          href: {
+            default: null,
+          },
+        };
+      },
+      parseHTML() {
+        return [{ tag: 'a[href]:not([href *= "javascript:" i])' }];
+      },
+
+      renderHTML({ HTMLAttributes }: { HTMLAttributes: Record<string, any> }) {
+        // False positive; we're explicitly checking for javascript: links to ignore them
+        // eslint-disable-next-line no-script-url
+        if (HTMLAttributes.href?.startsWith("javascript:")) {
+          // strip out the href
+          return [
+            "a",
+            mergeAttributes(this.options.HTMLAttributes, {
+              ...HTMLAttributes,
+              href: "",
+            }),
+            0,
+          ];
+        }
+        return [
+          "a",
+          mergeAttributes(this.options.HTMLAttributes, HTMLAttributes),
+          0,
+        ];
+      },
+    },
+
+    extendPMPlugins: [
+      new Plugin({
+        key: new PluginKey("handleClickBackLink"),
+        props: {
+          handleClick: (view, pos, event) => {
+            event.preventDefault();
+
+            const node = view.state.doc.nodeAt(pos);
+
+            const marks = node?.marks.filter((e) => e.type.name === "backlink");
+            if (marks && marks.length > 0) {
+              const nodeId = marks[0].attrs["href"];
+              idChangeCallback(nodeId);
             }
+
+            return true;
           },
-        ],
-      },
-      {
-        type: "text",
-        text: " ",
-      },
-    ]
-  },
-
-  extendOptions: {
-    addOptions() {
-      return {
-        HTMLAttributes: {
-          target: '_blank',
-          rel: 'noopener noreferrer nofollow',
-          class: cx(
-            "text-muted-foreground underline underline-offset-[3px] hover:text-primary transition-colors cursor-pointer",
-          ),
-          dataType: "backlink"
         },
-      }
-    },
-
-    addAttributes() {
-      return {
-        href: {
-          default: null,
-        },
-      }
-    },
-    parseHTML() {
-      return [{ tag: 'a[href]:not([href *= "javascript:" i])' }]
-    },
-
-    renderHTML({ HTMLAttributes }: { HTMLAttributes: Record<string, any> }) {
-      // False positive; we're explicitly checking for javascript: links to ignore them
-      // eslint-disable-next-line no-script-url
-      if (HTMLAttributes.href?.startsWith('javascript:')) {
-        // strip out the href
-        return ['a', mergeAttributes(this.options.HTMLAttributes, { ...HTMLAttributes, href: '' }), 0]
-      }
-      return ['a', mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0]
-    },
-  },
-
-  extendPMPlugins: [
-    new Plugin({
-      key: new PluginKey('handleClickBackLink'),
-      props: {
-        handleClick: (view, pos, event) => {
-          event.preventDefault();
-
-          const node = view.state.doc.nodeAt(pos);
-
-          const marks = node?.marks.filter((e) => e.type.name === "backlink");
-          if (marks && marks.length > 0) {
-            const nodeId = marks[0].attrs["href"];
-            idChangeCallback(nodeId)
-          }
-
-          return true;
-        },
-      },
-    })
-  ]
-});
+      }),
+    ],
+  });
