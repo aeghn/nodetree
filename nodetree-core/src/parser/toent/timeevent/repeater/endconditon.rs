@@ -1,11 +1,11 @@
 use regex::Regex;
 
-use crate::parser::{event::EventBuilder, possible::PossibleScore};
-
-use super::{
-    interval::TimeInterval,
-    timestamp::{base::TimeUnit, TimeEnum},
+use crate::parser::{
+    possible::PossibleScore,
+    toent::{timeevent::timeenum::TimeEnum, EventBuilder},
 };
+
+use super::interval::TimeInterval;
 
 use once_cell::sync::Lazy;
 

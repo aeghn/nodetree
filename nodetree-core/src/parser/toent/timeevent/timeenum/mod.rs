@@ -4,9 +4,9 @@ pub mod westen;
 
 use chrono::{DateTime, Utc};
 
-use crate::parser::{event::EventBuilder, possible::PossibleScore};
+use crate::parser::{possible::PossibleScore, toent::EventBuilder};
 
-use self::{chinese::ChnTimestamp, westen::WesTimestamp};
+use self::{chinese::ChnTime, westen::WesTime};
 
 pub trait TimestampNow {
     fn now_time() -> Self;
@@ -22,14 +22,14 @@ pub trait Timestamp {
 #[derive(Clone, Debug)]
 
 pub enum TimeEnum {
-    Wes(WesTimestamp),
-    Chn(ChnTimestamp),
+    Wes(WesTime),
+    Chn(ChnTime),
 }
 
 impl EventBuilder for TimeEnum {
     fn guess(input: &str) -> Vec<(Self, PossibleScore)> {
         let mut result: Vec<(TimeEnum, PossibleScore)> = vec![];
-        let wes: Vec<(Self, PossibleScore)> = WesTimestamp::guess(input)
+        let wes: Vec<(Self, PossibleScore)> = WesTime::guess(input)
             .into_iter()
             .map(|(v, p)| (TimeEnum::Wes(v), p))
             .collect();
@@ -47,9 +47,9 @@ impl EventBuilder for TimeEnum {
     }
 
     fn from_standard(segs: &[&str]) -> anyhow::Result<Self> {
-        if let Ok(res) = WesTimestamp::from_standard(segs) {
+        if let Ok(res) = WesTime::from_standard(segs) {
             Ok(Self::Wes(res))
-        } else if let Ok(res) = ChnTimestamp::from_standard(segs) {
+        } else if let Ok(res) = ChnTime::from_standard(segs) {
             Ok(Self::Chn(res))
         } else {
             anyhow::bail!(

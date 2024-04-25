@@ -1,16 +1,14 @@
 use crate::parser::{
-    event::timeevent::repeater::{is_repeater_seg, is_repeater_start},
     possible::PossibleScore,
+    toent::timeevent::repeater::{is_repeater_seg, is_repeater_start},
 };
 
-use self::{repeater::Repeater, timestamp::TimeEnum};
+use self::{repeater::Repeater, timeenum::TimeEnum};
 
-use super::{retain_not_empty_parts, retain_parts, EventBuilder};
+use super::{retain_parts, EventBuilder};
 
-pub mod endconditon;
-pub mod interval;
 pub mod repeater;
-pub mod timestamp;
+pub mod timeenum;
 
 fn starts_any(input: &str, anys: &[&str]) -> bool {
     anys.iter()
@@ -68,7 +66,7 @@ impl TimeEvent {
 
 impl EventBuilder for TimeEvent {
     fn guess(input: &str) -> Vec<(Self, PossibleScore)> {
-        let parts = retain_not_empty_parts(input);
+        let parts = retain_parts(input, |e| !e.is_empty());
         let (base, others) = Self::sep_base_and_others(&parts);
 
         let bases = TimeEnum::guess(base.join(" ").as_str());

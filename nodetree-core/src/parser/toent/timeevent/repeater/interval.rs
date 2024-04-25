@@ -3,18 +3,22 @@ use std::{
     vec,
 };
 
-use crate::parser::{event::EventBuilder, possible::PossibleScore};
-
-use super::timestamp::base::{BaseTimestamp, Unit};
+use crate::parser::{
+    possible::PossibleScore,
+    toent::{
+        timeevent::timeenum::base::{BaseTime, Unit},
+        EventBuilder,
+    },
+};
 
 #[derive(Clone, Debug, Default)]
 pub struct TimeInterval {
-    base: BaseTimestamp,
+    base: BaseTime,
     week: Unit,
 }
 
 impl Deref for TimeInterval {
-    type Target = BaseTimestamp;
+    type Target = BaseTime;
 
     fn deref(&self) -> &Self::Target {
         &self.base
@@ -113,7 +117,7 @@ impl EventBuilder for TimeInterval {
 #[cfg(test)]
 mod test {
 
-    use crate::parser::event::EventBuilder;
+    use crate::parser::toent::EventBuilder;
 
     use super::TimeInterval;
 

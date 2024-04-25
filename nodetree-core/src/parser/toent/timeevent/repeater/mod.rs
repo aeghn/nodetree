@@ -3,11 +3,16 @@ use std::{default, str::FromStr};
 use strum::{AsRefStr, EnumString};
 
 use crate::parser::{
-    event::{retain_not_empty_parts, EventBuilder},
     possible::PossibleScore,
+    toent::{retain_not_empty_parts, EventBuilder},
 };
 
-use super::{endconditon::EndCondition, interval::TimeInterval, starts_any};
+pub mod interval;
+pub mod endconditon;
+
+use self::{endconditon::EndCondition, interval::TimeInterval};
+
+use super::starts_any;
 
 #[derive(Clone, Debug, Default, EnumString, AsRefStr)]
 pub enum RepeatType {
@@ -144,7 +149,7 @@ impl EventBuilder for Repeater {
 
 #[cfg(test)]
 mod test {
-    use crate::parser::event::EventBuilder;
+    use crate::parser::toent::EventBuilder;
 
     use super::Repeater;
 

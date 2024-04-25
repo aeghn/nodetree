@@ -8,7 +8,7 @@ use super::EventBuilder;
 
 #[derive(Clone, Debug, EnumString, AsRefStr, EnumIter)]
 #[strum(serialize_all = "UPPERCASE")]
-pub enum TodoEnum {
+pub enum TodoEvent {
     Todo,
     Doing,
     Wait,
@@ -16,10 +16,10 @@ pub enum TodoEnum {
     Cancel,
 }
 
-impl EventBuilder for TodoEnum {
+impl EventBuilder for TodoEvent {
     fn guess(input: &str) -> Vec<(Self, crate::parser::possible::PossibleScore)> {
         let mut result = vec![];
-        for ele in TodoEnum::iter() {
+        for ele in TodoEvent::iter() {
             let enum_str = ele.as_ref();
             let enum_len = enum_str.len();
             let upper_input = input.to_uppercase();
@@ -60,12 +60,12 @@ impl EventBuilder for TodoEnum {
 
 #[cfg(test)]
 mod test {
-    use crate::parser::event::EventBuilder;
+    use crate::parser::toent::EventBuilder;
 
-    use super::TodoEnum;
+    use super::TodoEvent;
 
     #[test]
     fn test() {
-        println!("{:?}", TodoEnum::guess("done"));
+        println!("{:?}", TodoEvent::guess("done"));
     }
 }

@@ -4,7 +4,7 @@ use chrono::{Datelike, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    parser::{event::EventBuilder, possible::PossibleScore},
+    parser::{possible::PossibleScore, toent::EventBuilder},
     utils::marcos::{all_none, all_some},
 };
 
@@ -81,7 +81,7 @@ impl Deref for Unit {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct BaseTimestamp {
+pub struct BaseTime {
     pub year: Unit,
     pub month: Unit,
     pub day: Unit,
@@ -100,7 +100,7 @@ pub enum TimeUnit {
     Week,
 }
 
-impl BaseTimestamp {
+impl BaseTime {
     pub fn with_year(mut self, year: i32) -> Self {
         self.year = year.into();
         self
@@ -130,7 +130,7 @@ impl BaseTimestamp {
     }
 }
 
-impl EventBuilder for BaseTimestamp {
+impl EventBuilder for BaseTime {
     fn is_valid(&self) -> bool {
         (all_some!(self.year, self.month)
             && all_none!(self.day, self.hour, self.minute, self.second))
@@ -184,7 +184,7 @@ impl EventBuilder for BaseTimestamp {
                 }
             }
 
-            let bts = BaseTimestamp {
+            let bts = BaseTime {
                 year: year.into(),
                 month: month.into(),
                 day: day.into(),
@@ -226,7 +226,7 @@ impl EventBuilder for BaseTimestamp {
     }
 }
 
-impl Default for BaseTimestamp {
+impl Default for BaseTime {
     fn default() -> Self {
         Self {
             year: Unit::default(),
@@ -239,9 +239,9 @@ impl Default for BaseTimestamp {
     }
 }
 
-impl From<NaiveDateTime> for BaseTimestamp {
+impl From<NaiveDateTime> for BaseTime {
     fn from(value: NaiveDateTime) -> Self {
-        BaseTimestamp {
+        BaseTime {
             year: value.year().into(),
             month: value.month().into(),
             day: value.day().into(),
@@ -252,9 +252,9 @@ impl From<NaiveDateTime> for BaseTimestamp {
     }
 }
 
-impl From<NaiveDate> for BaseTimestamp {
+impl From<NaiveDate> for BaseTime {
     fn from(value: NaiveDate) -> Self {
-        BaseTimestamp {
+        BaseTime {
             year: value.year().into(),
             month: value.month().into(),
             day: value.day().into(),
@@ -263,9 +263,9 @@ impl From<NaiveDate> for BaseTimestamp {
     }
 }
 
-impl From<NaiveTime> for BaseTimestamp {
+impl From<NaiveTime> for BaseTime {
     fn from(value: NaiveTime) -> Self {
-        BaseTimestamp {
+        BaseTime {
             hour: value.hour().into(),
             minute: value.minute().into(),
             second: value.second().into(),
@@ -290,27 +290,24 @@ pub fn convert_time_to_secs(input: &str, unit: TimeUnit) -> anyhow::Result<i32> 
 
 #[cfg(test)]
 mod test {
-    use crate::parser::event::{timeevent::timestamp::base::BaseTimestamp, EventBuilder};
+    use crate::parser::toent::{timeevent::timeenum::base::BaseTime, EventBuilder};
 
     #[test]
     fn test_all() {
         // println!("{:?}", BaseTimestamp::from_standard(&["asdasd"]));
         // println!("{:?}", BaseTimestamp::from_standard(&["12"]));
         // println!("{:?}", BaseTimestamp::from_standard(&["12:03"]));
-        println!("{:?}", BaseTimestamp::from_standard(&["12-03"]));
-        println!("{:?}", BaseTimestamp::from_standard(&["12-03-04"]));
-        println!("{:?}", BaseTimestamp::from_standard(&["12-03-04", "12"]));
-        println!("{:?}", BaseTimestamp::from_standard(&["12-03-04", "12:12"]));
-        println!(
-            "{:?}",
-            BaseTimestamp::from_standard(&["12-03-04", "12:12:12"])
-        );
+        println!("{:?}", BaseTime::from_standard(&["12-03"]));
+        println!("{:?}", BaseTime::from_standard(&["12-03-04"]));
+        println!("{:?}", BaseTime::from_standard(&["12-03-04", "12"]));
+        println!("{:?}", BaseTime::from_standard(&["12-03-04", "12:12"]));
+        println!("{:?}", BaseTime::from_standard(&["12-03-04", "12:12:12"]));
         // println!("{:?}", BaseTimestamp::from_standard(&["12-03-04", "12:12:12:q23e"]));
         // println!("{:?}", BaseTimestamp::from_standard(&["12-03-04", "12:12:12:q23e", "asdasd"]));
     }
 }
 
-fn guess_numbers(input: &str) -> Vec<(BaseTimestamp, PossibleScore)> {
+fn guess_numbers(input: &str) -> Vec<(BaseTime, PossibleScore)> {
     let day_formats = ["%y-%m-%d", "%Y-%m-%d", "%y.%m.%d", "%Y.%m.%d"];
     let time_formats = ["%H:%M:%S", "%H:%m"];
     let date_time_formats = ["%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"];

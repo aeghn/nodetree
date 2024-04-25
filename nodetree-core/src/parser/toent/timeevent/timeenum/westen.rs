@@ -1,49 +1,49 @@
-use std::{ops::Deref, str::FromStr, vec};
+use std::ops::Deref;
 
 use chrono::{DateTime, Datelike, FixedOffset, Timelike, Utc};
 use regex::Regex;
 
 use crate::parser::{
-    event::{retain_not_empty_parts, timeevent::equals_any, EventBuilder},
     possible::PossibleScore,
+    toent::{retain_not_empty_parts, timeevent::equals_any, EventBuilder},
 };
 
 use super::{
-    base::{convert_time_to_secs, BaseTimestamp},
+    base::{convert_time_to_secs, BaseTime},
     Timestamp, TimestampNow,
 };
 
 pub const CAL_TYPE: &str = "wes";
 
 #[derive(Clone, Debug)]
-pub struct WesTimestamp {
+pub struct WesTime {
     offset: Option<FixedOffset>,
-    timestamp: BaseTimestamp,
+    timestamp: BaseTime,
 }
 
-impl Deref for WesTimestamp {
-    type Target = BaseTimestamp;
+impl Deref for WesTime {
+    type Target = BaseTime;
 
     fn deref(&self) -> &Self::Target {
         &self.timestamp
     }
 }
 
-impl From<BaseTimestamp> for WesTimestamp {
-    fn from(value: BaseTimestamp) -> Self {
-        WesTimestamp {
+impl From<BaseTime> for WesTime {
+    fn from(value: BaseTime) -> Self {
+        WesTime {
             offset: None,
             timestamp: value,
         }
     }
 }
 
-impl TimestampNow for WesTimestamp {
+impl TimestampNow for WesTime {
     fn now_time() -> Self {
         let time = Utc::now().naive_local();
-        WesTimestamp {
+        WesTime {
             offset: Default::default(),
-            timestamp: BaseTimestamp {
+            timestamp: BaseTime {
                 year: time.year().into(),
                 month: time.month().into(),
                 day: time.day().into(),
@@ -56,9 +56,9 @@ impl TimestampNow for WesTimestamp {
 
     fn now_date() -> Self {
         let time = Utc::now().naive_local();
-        WesTimestamp {
+        WesTime {
             offset: Default::default(),
-            timestamp: BaseTimestamp {
+            timestamp: BaseTime {
                 year: time.year().into(),
                 month: time.month().into(),
                 day: time.day().into(),
@@ -68,7 +68,7 @@ impl TimestampNow for WesTimestamp {
     }
 }
 
-impl EventBuilder for WesTimestamp {
+impl EventBuilder for WesTime {
     fn guess(input: &str) -> Vec<(Self, PossibleScore)> {
         let mut guessed = vec![];
         let trimmed = input.trim();
@@ -77,10 +77,10 @@ impl EventBuilder for WesTimestamp {
             &trimmed.to_ascii_lowercase().as_str(),
             &["t", "now", "time", "uijm", "shijian", "时间"],
         ) {
-            guessed.push((WesTimestamp::now_time(), PossibleScore::Likely(100)));
+            guessed.push((WesTime::now_time(), PossibleScore::Likely(100)));
         }
 
-        if let Ok(standard) = Self::from_standard(&retain_not_empty_parts(input).as_slice()) {
+        if let Ok(standard) = Self::from_standard(&&retain_not_empty_parts(input).as_slice()) {
             guessed.push((standard, PossibleScore::Yes(100)));
         }
 
@@ -114,9 +114,9 @@ impl EventBuilder for WesTimestamp {
             } else {
                 None
             };
-            let timestamp = BaseTimestamp::from_standard(ts_segs.as_slice())?;
+            let timestamp = BaseTime::from_standard(ts_segs.as_slice())?;
 
-            Ok(WesTimestamp { offset, timestamp })
+            Ok(WesTime { offset, timestamp })
         }
     }
 
@@ -136,7 +136,7 @@ impl EventBuilder for WesTimestamp {
     }
 }
 
-impl Timestamp for WesTimestamp {
+impl Timestamp for WesTime {
     fn to_wes_timestamp(&self) -> DateTime<Utc> {
         todo!()
     }
@@ -149,13 +149,13 @@ impl Timestamp for WesTimestamp {
 #[cfg(test)]
 mod test {
 
-    use crate::parser::event::EventBuilder;
+    use crate::parser::toent::EventBuilder;
 
-    use super::WesTimestamp;
+    use super::WesTime;
 
     #[test]
     fn from_test() {
-        let wes = WesTimestamp::from_standard(&["2020-12-02", "11:12:13", "+1:00"]);
+        let wes = WesTime::from_standard(&["2020-12-02", "11:12:13", "+1:00"]);
         print!("{:?}", wes.unwrap().standard_str())
     }
 }
