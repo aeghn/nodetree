@@ -4,7 +4,10 @@ pub mod westen;
 
 use chrono::{DateTime, Utc};
 
-use crate::parser::{possible::PossibleScore, toent::EventBuilder};
+use crate::parser::{
+    possible::PossibleScore,
+    toent::{EventBuilder, GuessType},
+};
 
 use self::{chinese::ChnTime, westen::WesTime};
 
@@ -27,14 +30,20 @@ pub enum TimeEnum {
 }
 
 impl EventBuilder for TimeEnum {
-    fn guess(input: &str) -> Vec<(Self, PossibleScore)> {
+    fn guess(input: &GuessType) -> Vec<(Self, PossibleScore)> {
         let mut result: Vec<(TimeEnum, PossibleScore)> = vec![];
         let wes: Vec<(Self, PossibleScore)> = WesTime::guess(input)
             .into_iter()
             .map(|(v, p)| (TimeEnum::Wes(v), p))
             .collect();
 
+        let chn: Vec<(Self, PossibleScore)> = ChnTime::guess(input)
+            .into_iter()
+            .map(|(v, p)| (TimeEnum::Chn(v), p))
+            .collect();
+
         result.extend(wes);
+        result.extend(chn);
 
         result
     }

@@ -4,7 +4,7 @@ use serde::{de, Deserialize, Deserializer, Serialize};
 
 use crate::parser::toent::retain_not_empty_parts;
 
-use super::{timeevent::TimeEvent, todoevent::TodoEvent, EventBuilder};
+use super::{timeevent::TimeEvent, todoevent::TodoEvent, EventBuilder, GuessType};
 
 #[derive(Clone, Debug)]
 pub enum EventEnum {
@@ -61,7 +61,7 @@ impl From<TodoEvent> for EventEnum {
 }
 
 impl EventBuilder for EventEnum {
-    fn guess(input: &str) -> Vec<(Self, crate::parser::possible::PossibleScore)> {
+    fn guess(input: &GuessType) -> Vec<(Self, crate::parser::possible::PossibleScore)> {
         let todo_vec = TodoEvent::guess(input);
         let time_vec = TimeEvent::guess(input);
 

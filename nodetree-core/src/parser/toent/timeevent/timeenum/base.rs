@@ -4,7 +4,10 @@ use chrono::{Datelike, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    parser::{possible::PossibleScore, toent::EventBuilder},
+    parser::{
+        possible::PossibleScore,
+        toent::{EventBuilder, GuessType},
+    },
     utils::marcos::{all_none, all_some},
 };
 
@@ -221,8 +224,15 @@ impl EventBuilder for BaseTime {
         }
     }
 
-    fn guess(input: &str) -> Vec<(Self, crate::parser::possible::PossibleScore)> {
-        todo!()
+    fn guess(input: &GuessType) -> Vec<(Self, crate::parser::possible::PossibleScore)> {
+        match Self::from_standard(&input.segs) {
+            Ok(base) => {
+                vec![(base, PossibleScore::Likely(100))]
+            }
+            Err(_) => {
+                vec![]
+            }
+        }
     }
 }
 

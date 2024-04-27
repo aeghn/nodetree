@@ -11,7 +11,7 @@ pub enum PossibleScore {
 impl PossibleScore {
     fn to_score(&self) -> f32 {
         match self {
-            PossibleScore::Yes(i) => 10 as f32 + Self::little_score(i),
+            PossibleScore::Yes(i) => 9 as f32 + Self::little_score(i),
             PossibleScore::Likely(i) => 8 as f32 + Self::little_score(i),
             PossibleScore::Maybe(i) => 5 as f32 + Self::little_score(i),
             PossibleScore::Unsure(i) => 2 as f32 + Self::little_score(i),
@@ -22,6 +22,10 @@ impl PossibleScore {
 
     fn little_score(i: &u8) -> f32 {
         i.to_owned() as f32 / 256 as f32
+    }
+
+    pub fn merge(self, score: u8) -> Self {
+        PossibleScore::Num(self.to_score() as u8 * 25 / 2 + score)
     }
 }
 

@@ -1,4 +1,12 @@
-use self::eventenum::EventEnum;
+use std::ops::Deref;
+
+use self::{
+    eventenum::EventEnum,
+    timeevent::{
+        repeater::{is_repeater_seg, is_repeater_start, Repeater},
+        TimeEvent,
+    },
+};
 
 use super::possible::PossibleScore;
 
@@ -23,11 +31,108 @@ pub fn retain_not_empty_parts(input: &str) -> Vec<&str> {
     retain_parts(input, |e| !e.is_empty())
 }
 
+pub struct GuessType<'a> {
+    original: &'a str,
+    segs: Vec<&'a str>,
+}
+
+impl<'a> From<&'a str> for GuessType<'a> {
+    fn from(value: &'a str) -> Self {
+        GuessType {
+            original: &value,
+            segs: retain_not_empty_parts(&value),
+        }
+    }
+}
+
+impl<'a> Deref for GuessType<'a> {
+    type Target = [&'a str];
+
+    fn deref(&self) -> &Self::Target {
+        self.segs.as_slice()
+    }
+}
+
+impl<'a> AsRef<str> for GuessType<'a> {
+    fn as_ref(&self) -> &str {
+        &self.original
+    }
+}
+
+impl<'a> GuessType<'a> {
+    fn full_contains_ig_case(&self, segs: &[&str]) -> bool {
+        let lower = self.original.to_ascii_lowercase();
+        segs.iter().any(|e| lower.contains(&e.to_lowercase()))
+    }
+
+    fn sub<F, FS, FE>(
+        &self,
+        mut filter: Option<F>,
+        mut start_include: Option<FS>,
+        mut end_exclude: Option<FE>,
+    ) -> Self
+    where
+        F: FnMut(&str) -> bool,
+        FS: FnMut(&str) -> bool,
+        FE: FnMut(&str) -> bool,
+    {
+        let mut segs = vec![];
+        let mut start = false;
+        for ele in &self.segs {
+            if start || start_include.as_mut().map_or(true, |f| f(ele)) {
+                start = true;
+            } else {
+                continue;
+            }
+
+            if end_exclude.as_mut().map_or(false, |f| f(ele)) {
+                break;
+            }
+
+            if filter.as_mut().map_or(true, |f| f(ele)) {
+                segs.push(*ele)
+            }
+        }
+        GuessType {
+            original: self.original,
+            segs,
+        }
+    }
+
+    fn filter<F>(&self, mut filter: F) -> Self
+    where
+        F: FnMut(&str) -> bool,
+    {
+        GuessType {
+            original: self.original,
+            segs: self.segs.iter().filter(|e| filter(e)).map(|e| *e).collect(),
+        }
+    }
+
+    fn groups(&self) -> (GuessType, Vec<GuessType>) {
+        let (base, repeaters) = TimeEvent::sep_base_and_others(&self.segs);
+
+        (
+            GuessType {
+                original: &self.original,
+                segs: base,
+            },
+            repeaters
+                .into_iter()
+                .map(|e| GuessType {
+                    original: &self.original,
+                    segs: e,
+                })
+                .collect(),
+        )
+    }
+}
+
 pub trait EventBuilder
 where
     Self: Sized,
 {
-    fn guess(input: &str) -> Vec<(Self, PossibleScore)>;
+    fn guess(input: &GuessType) -> Vec<(Self, PossibleScore)>;
 
     fn is_valid(&self) -> bool;
 
@@ -58,7 +163,7 @@ impl Toent {
     }
 
     pub fn guess(input: &str) -> Vec<Toent> {
-        let mut guess_res = EventEnum::guess(input);
+        let mut guess_res = EventEnum::guess(&input.into());
         guess_res.sort_by(|e1, e2| e1.1.cmp(&e2.1));
 
         let res = guess_res

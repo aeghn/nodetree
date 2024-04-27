@@ -5,7 +5,7 @@ use regex::Regex;
 
 use crate::parser::{
     possible::PossibleScore,
-    toent::{retain_not_empty_parts, timeevent::equals_any, EventBuilder},
+    toent::{retain_not_empty_parts, timeevent::equals_any, EventBuilder, GuessType},
 };
 
 use super::{
@@ -69,9 +69,9 @@ impl TimestampNow for WesTime {
 }
 
 impl EventBuilder for WesTime {
-    fn guess(input: &str) -> Vec<(Self, PossibleScore)> {
+    fn guess(input: &GuessType) -> Vec<(Self, PossibleScore)> {
         let mut guessed = vec![];
-        let trimmed = input.trim();
+        let trimmed = input.original;
 
         if equals_any(
             &trimmed.to_ascii_lowercase().as_str(),
@@ -80,7 +80,7 @@ impl EventBuilder for WesTime {
             guessed.push((WesTime::now_time(), PossibleScore::Likely(100)));
         }
 
-        if let Ok(standard) = Self::from_standard(&&retain_not_empty_parts(input).as_slice()) {
+        if let Ok(standard) = Self::from_standard(&input.segs.as_slice()) {
             guessed.push((standard, PossibleScore::Yes(100)));
         }
 

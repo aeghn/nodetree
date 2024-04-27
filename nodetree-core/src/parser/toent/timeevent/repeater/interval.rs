@@ -7,7 +7,7 @@ use crate::parser::{
     possible::PossibleScore,
     toent::{
         timeevent::timeenum::base::{BaseTime, Unit},
-        EventBuilder,
+        EventBuilder, GuessType,
     },
 };
 
@@ -32,8 +32,8 @@ impl DerefMut for TimeInterval {
 }
 
 impl EventBuilder for TimeInterval {
-    fn guess(input: &str) -> Vec<(Self, PossibleScore)> {
-        match Self::from_standard(&[input]) {
+    fn guess(input: &GuessType) -> Vec<(Self, PossibleScore)> {
+        match Self::from_standard(&input.segs) {
             Ok(v) => {
                 vec![(v, PossibleScore::Yes(10))]
             }

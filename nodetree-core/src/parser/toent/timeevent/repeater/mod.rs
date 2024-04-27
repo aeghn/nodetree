@@ -4,11 +4,11 @@ use strum::{AsRefStr, EnumString};
 
 use crate::parser::{
     possible::PossibleScore,
-    toent::{retain_not_empty_parts, EventBuilder},
+    toent::{retain_not_empty_parts, EventBuilder, GuessType},
 };
 
-pub mod interval;
 pub mod endconditon;
+pub mod interval;
 
 use self::{endconditon::EndCondition, interval::TimeInterval};
 
@@ -50,9 +50,27 @@ const TYPE_INTERVAL: i32 = 1;
 const TYPE_ALERT: i32 = 2;
 const TYPE_END: i32 = 3;
 
+impl Repeater {
+    pub fn interval_start(seg: &str) -> bool {
+        starts_any(seg, &[",,", "..", "**", ".*"])
+    }
+
+    pub fn alter_start(seg: &str) -> bool {
+        starts_any(seg, &[","])
+    }
+
+    pub fn end_start(seg: &str) -> bool {
+        starts_any(seg, &["="])
+    }
+
+    pub fn repeater_start(seg: &str) -> bool {
+        Self::interval_start(seg) || Self::alter_start(seg) || Self::end_start(seg)
+    }
+}
+
 impl EventBuilder for Repeater {
-    fn guess(input: &str) -> Vec<(Self, PossibleScore)> {
-        if let Ok(standard) = Self::from_standard(&retain_not_empty_parts(input)) {
+    fn guess(input: &GuessType) -> Vec<(Self, PossibleScore)> {
+        if let Ok(standard) = Self::from_standard(&input.segs) {
             vec![(standard, PossibleScore::Likely(100))]
         } else {
             vec![]
@@ -95,17 +113,17 @@ impl EventBuilder for Repeater {
         };
 
         for ele in segs {
-            if starts_any(ele, &[",,", "..", "**", ".*"]) {
+            if Self::interval_start(ele) {
                 last.replace(cur);
                 cur = (vec![&ele[2..]], TYPE_INTERVAL);
 
                 if let Ok(v) = RepeatType::from_str(&ele[..2]) {
                     rtype = v;
                 }
-            } else if starts_any(ele, &[","]) {
+            } else if Self::alter_start(&ele) {
                 last.replace(cur);
                 cur = (vec![&ele[1..]], TYPE_ALERT);
-            } else if starts_any(ele, &["="]) {
+            } else if Self::end_start(&ele) {
                 last.replace(cur);
                 cur = (vec![&ele[1..]], TYPE_END);
             } else {

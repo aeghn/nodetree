@@ -2,7 +2,7 @@ use regex::Regex;
 
 use crate::parser::{
     possible::PossibleScore,
-    toent::{timeevent::timeenum::TimeEnum, EventBuilder},
+    toent::{timeevent::timeenum::TimeEnum, EventBuilder, GuessType},
 };
 
 use super::interval::TimeInterval;
@@ -18,8 +18,8 @@ pub struct Times {
 static TIMES_REGEX: Lazy<Regex> = regex_static::lazy_regex!(r"^(\d+)t$");
 
 impl EventBuilder for Times {
-    fn guess(input: &str) -> Vec<(Self, crate::parser::possible::PossibleScore)> {
-        match Self::from_standard(&[input]) {
+    fn guess(input: &GuessType) -> Vec<(Self, crate::parser::possible::PossibleScore)> {
+        match Self::from_standard(&input) {
             Ok(v) => vec![(v, PossibleScore::Likely(100))],
             Err(_) => vec![],
         }
@@ -73,7 +73,7 @@ impl From<TimeEnum> for EndCondition {
 }
 
 impl EventBuilder for EndCondition {
-    fn guess(input: &str) -> Vec<(Self, crate::parser::possible::PossibleScore)> {
+    fn guess(input: &GuessType) -> Vec<(Self, crate::parser::possible::PossibleScore)> {
         let mut value = vec![];
         value.extend(
             TimeEnum::guess(input)

@@ -5,7 +5,7 @@ use crate::parser::{
 
 use self::{repeater::Repeater, timeenum::TimeEnum};
 
-use super::{retain_parts, EventBuilder};
+use super::{retain_parts, EventBuilder, GuessType};
 
 pub mod repeater;
 pub mod timeenum;
@@ -18,6 +18,11 @@ fn starts_any(input: &str, anys: &[&str]) -> bool {
 fn equals_any(input: &str, anys: &[&str]) -> bool {
     anys.contains(&input.to_ascii_lowercase().as_str())
 }
+
+fn contains_any(input: &str, anys: &[&str]) -> bool {
+    let input = input.to_lowercase();
+    anys.iter()
+        .any(|e| input.contains(e.to_ascii_lowercase().as_str()))}
 
 #[derive(Debug, Clone)]
 pub struct TimeEvent {
@@ -35,7 +40,7 @@ impl From<TimeEnum> for TimeEvent {
 }
 
 impl TimeEvent {
-    fn sep_base_and_others<'a>(segs: &[&'a str]) -> (Vec<&'a str>, Vec<Vec<&'a str>>) {
+    pub fn sep_base_and_others<'a>(segs: &[&'a str]) -> (Vec<&'a str>, Vec<Vec<&'a str>>) {
         let mut base: Vec<&str> = vec![];
         let mut others: Vec<Vec<&str>> = vec![];
         let mut sub_other: Vec<&str> = vec![];
@@ -65,15 +70,11 @@ impl TimeEvent {
 }
 
 impl EventBuilder for TimeEvent {
-    fn guess(input: &str) -> Vec<(Self, PossibleScore)> {
-        let parts = retain_parts(input, |e| !e.is_empty());
-        let (base, others) = Self::sep_base_and_others(&parts);
-
-        let bases = TimeEnum::guess(base.join(" ").as_str());
-        let guess_repeaters: Vec<Vec<(Repeater, PossibleScore)>> = others
-            .into_iter()
-            .map(|e| Repeater::guess(e.join(" ").as_str()))
-            .collect();
+    fn guess(input: &GuessType) -> Vec<(Self, PossibleScore)> {
+        let (base, repeaters) = input.groups();
+        let bases: Vec<(TimeEnum, PossibleScore)> = TimeEnum::guess(&base);
+        let guess_repeaters: Vec<Vec<(Repeater, PossibleScore)>> =
+            repeaters.into_iter().map(|e| Repeater::guess(&e)).collect();
 
         if guess_repeaters.iter().all(|v| v.is_empty()) {
             bases.into_iter().map(|(v, p)| (v.into(), p)).collect()

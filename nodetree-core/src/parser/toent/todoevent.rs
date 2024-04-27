@@ -4,7 +4,7 @@ use strum::{AsRefStr, EnumIter, EnumString, IntoEnumIterator};
 
 use crate::parser::possible::PossibleScore;
 
-use super::EventBuilder;
+use super::{EventBuilder, GuessType};
 
 #[derive(Clone, Debug, EnumString, AsRefStr, EnumIter)]
 #[strum(serialize_all = "UPPERCASE")]
@@ -17,12 +17,12 @@ pub enum TodoEvent {
 }
 
 impl EventBuilder for TodoEvent {
-    fn guess(input: &str) -> Vec<(Self, crate::parser::possible::PossibleScore)> {
+    fn guess(input: &GuessType) -> Vec<(Self, crate::parser::possible::PossibleScore)> {
         let mut result = vec![];
         for ele in TodoEvent::iter() {
             let enum_str = ele.as_ref();
             let enum_len = enum_str.len();
-            let upper_input = input.to_uppercase();
+            let upper_input = input.original.to_uppercase();
 
             let distance = distance::levenshtein(enum_str, &upper_input);
             if distance < enum_len {
@@ -66,6 +66,6 @@ mod test {
 
     #[test]
     fn test() {
-        println!("{:?}", TodoEvent::guess("done"));
+        println!("{:?}", TodoEvent::guess(&"done".into()));
     }
 }
