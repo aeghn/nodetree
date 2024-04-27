@@ -10,6 +10,7 @@ use super::tag::Tag;
 #[derive(Clone, Debug, EnumString, AsRefStr, Serialize, Deserialize)]
 pub enum NodeType {
     #[strum(serialize = "tiptap/v1")]
+    #[serde(rename = "tiptap/v1")]
     TiptapV1,
 }
 

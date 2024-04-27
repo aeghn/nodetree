@@ -18,7 +18,7 @@ import {
   updateNodeName,
   deteleNode as deleteNode,
 } from "@/helpers/data-agent";
-import { NTNode, ContentParsedInfo, NodeId } from "@/model";
+import { NTNode, ContentParsedInfo, NodeId, NodeType } from "@/model";
 import { generateId } from "@/helpers/tools";
 import React from "react";
 
@@ -74,6 +74,7 @@ export const NTTree: React.FC<{
       create_time: new Date(),
       first_version_time: new Date(),
       parsed_info: parsed_info,
+      node_type: NodeType.TiptapV1
     };
 
     if (type === "internal") data.children = [];

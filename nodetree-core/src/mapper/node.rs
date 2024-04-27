@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
+use tracing::error;
 
 use crate::model::node::{self, ContentParsedInfo, Node, NodeId};
 
@@ -43,6 +44,7 @@ pub struct NodeRenameReq {
 #[async_trait]
 pub trait NodeMapper {
     async fn insert_and_move(&self, node: &Node) -> anyhow::Result<NodeInsertResult> {
+        error!("aaaaaaaaaaaaaaa: {:?}", node);
         let insert_result = self.insert_node_only(node).await;
         let move_req = NodeMoveReq {
             id: node.id.clone(),
