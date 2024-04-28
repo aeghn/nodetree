@@ -20,11 +20,7 @@ import { Link } from "@tiptap/extension-link";
 import { cx } from "class-variance-authority";
 
 import "@/styles/editor.css";
-import {
-  Backlink,
-  Hashtag,
-  Reminder,
-} from "./extensions/interactive-input";
+import { Backlink, Hashtag, Reminder } from "./extensions/interactive-input";
 import { setShouldShowSuggestion } from "./extensions/interactive-input/suggestion/suggestion-options-builder";
 
 const NTEditor: React.FC<{
@@ -78,9 +74,9 @@ const NTEditor: React.FC<{
           setShouldShowSuggestion(false);
         },
       },
-      handleKeyDown: () => {
+      /* handleKeyDown: () => {
         setShouldShowSuggestion(true);
-      },
+      }, */
       handlePaste: (view, event) => {
         if (typeof window !== "undefined") {
           const selection: any = window?.getSelection();
@@ -129,7 +125,7 @@ const NTEditor: React.FC<{
       },
     },
     onUpdate: ({ editor }) => {
-      // setShouldShowSuggestion(true);
+      setShouldShowSuggestion(true);
       const json = editor.getJSON();
       if (json) {
         contentChangeCallback(JSON.stringify(json), nodeId);

@@ -14,7 +14,9 @@ function permNTChanged(
   let state = initialValue;
 
   const setChanged = (newValue: boolean) => {
-    state = newValue;
+    if (state != newValue) {
+      state = newValue;
+    }
   };
 
   const changed = () => state;
