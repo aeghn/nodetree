@@ -143,7 +143,7 @@ export const Backlink = (idChangeCallback: (href: string) => void) =>
             {
               type: this.pluginName,
               attrs: {
-                href: item.id,
+                nthref: item.id,
               },
             },
           ],
@@ -171,25 +171,25 @@ export const Backlink = (idChangeCallback: (href: string) => void) =>
 
       addAttributes() {
         return {
-          href: {
+          nthref: {
             default: null,
           },
         };
       },
       parseHTML() {
-        return [{ tag: 'a[href]:not([href *= "javascript:" i])' }];
+        return [{ tag: 'a[nthref]:not([nthref *= "javascript:" i])' }];
       },
 
       renderHTML({ HTMLAttributes }: { HTMLAttributes: Record<string, any> }) {
         // False positive; we're explicitly checking for javascript: links to ignore them
         // eslint-disable-next-line no-script-url
-        if (HTMLAttributes.href?.startsWith("javascript:")) {
+        if (HTMLAttributes.nthref?.startsWith("javascript:")) {
           // strip out the href
           return [
             "a",
             mergeAttributes(this.options.HTMLAttributes, {
               ...HTMLAttributes,
-              href: "",
+              nthref: "",
             }),
             0,
           ];
@@ -213,7 +213,7 @@ export const Backlink = (idChangeCallback: (href: string) => void) =>
 
             const marks = node?.marks.filter((e) => e.type.name === "backlink");
             if (marks && marks.length > 0) {
-              const nodeId = marks[0].attrs["href"];
+              const nodeId = marks[0].attrs["nthref"];
               idChangeCallback(nodeId);
             }
 
