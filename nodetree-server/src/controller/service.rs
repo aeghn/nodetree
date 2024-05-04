@@ -6,7 +6,7 @@ use axum::{
 };
 use ntcore::{
     mapper::{
-        node::{NodeDeleteReq, NodeMoveReq, NodeRenameReq},
+        node::{NodeDeleteReq, NodeMoveReq, NodeRenameReq, NodeUpdateContentReq},
         nodefilter::{NodeFetchReq, NodeFilter},
     },
     model::node::Node,
@@ -30,6 +30,7 @@ pub fn routes() -> Router<WebAppState> {
         .route("/api/delete-node", post(delete_node))
         .route("/api/update-node-name", post(update_node_name))
         .route("/api/guess-toent", post(guess_toent))
+        .route("/api/update-node-content", post(update_node_content))
 }
 
 async fn insert_node(state: State<WebAppState>, Json(node): Json<Node>) -> impl IntoResponse {
@@ -90,6 +91,14 @@ async fn update_node_name(
     info!("rename_node: {:?}", req);
     let rest = state.mapper.update_node_name(&req).await;
     print_and_trans_to_response(rest)
+}
+
+async fn update_node_content(
+    state: State<WebAppState>,
+    Json(req): Json<NodeUpdateContentReq>,
+) -> impl IntoResponse {
+    let res = state.mapper.update_node_content(&req).await;
+    print_and_trans_to_response(res)
 }
 
 #[derive(Clone, Debug, Deserialize)]

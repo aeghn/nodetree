@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::error;
 
@@ -41,6 +42,13 @@ pub struct NodeRenameReq {
     pub name: String,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct NodeUpdateContentReq {
+    pub id: NodeId,
+    pub content: String,
+    pub version_time: DateTime<Utc>,
+}
+
 #[async_trait]
 pub trait NodeMapper {
     async fn insert_and_move(&self, node: &Node) -> anyhow::Result<NodeInsertResult> {
@@ -68,6 +76,28 @@ pub trait NodeMapper {
     /// 2. Delete node but level its descentants(TODO).
     async fn delete_node(&self, req: &NodeDeleteReq) -> anyhow::Result<()>;
     async fn update_node_name(&self, req: &NodeRenameReq) -> anyhow::Result<u64>;
+    async fn update_node_content(
+        &self,
+        req: &NodeUpdateContentReq,
+    ) -> anyhow::Result<NodeInsertResult> {
+        let node = self
+            .query_nodes(&NodeFetchReq {
+                selection: None,
+                filter: Some(NodeFilter::Id(req.id.clone())),
+            })
+            .await;
+
+        if let Ok(Some(node)) = node.as_ref().map(|e| e.get(0)) {
+            self.insert_node_only(&Node {
+                content: req.content.clone(),
+                version_time: req.version_time,
+                ..node.clone()
+            })
+            .await
+        } else {
+            anyhow::bail!("unable to save to db")
+        }
+    }
 
     async fn query_nodes(&self, node_filter: &NodeFetchReq) -> anyhow::Result<Vec<Node>>;
 
