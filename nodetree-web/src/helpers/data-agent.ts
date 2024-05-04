@@ -1,4 +1,4 @@
-import { Asset, Toent, NTNode, NodeId } from "@/model";
+import { Asset, Toent, NTNode, NodeId, ContentParsedInfo } from "@/model";
 import requests from "./request";
 
 export const fetchAllNodes = async (): Promise<NTNode[]> => {
@@ -53,17 +53,36 @@ export const uploadImage = async (file: File): Promise<Asset> => {
 export const saveNode = async (
   node: NTNode,
   move: boolean = false
-): Promise<NTNode> => {
+): Promise<ContentParsedInfo> => {
   if (move) {
-    const parsedNode: NTNode = await requests.post("api/insert-node", node);
+    const parsedNode: ContentParsedInfo = await requests.post(
+      "api/insert-node",
+      node
+    );
     return parsedNode;
   } else {
-    const parsedNode: NTNode = await requests.post(
+    const parsedNode: ContentParsedInfo = await requests.post(
       "api/insert-node-only",
       node
     );
     return parsedNode;
   }
+};
+
+export const updateNodeContent = async (
+  id: NodeId,
+  content: string,
+  version_time: Date
+): Promise<ContentParsedInfo> => {
+  const parsedNode: ContentParsedInfo = await requests.post(
+    "api/update-node-content",
+    {
+      id,
+      content,
+      version_time,
+    }
+  );
+  return parsedNode;
 };
 
 export const updateNodeName = async (

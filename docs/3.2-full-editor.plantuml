@@ -1,0 +1,58 @@
+@startuml fulleditor
+
+!pragma teoz true
+box Explorer
+
+    box Tree 
+        participant TreeNode
+    end box
+
+    
+
+    box FullEditor
+        box Props
+            participant nodeId
+            participant nodeChangeCallBack
+        end box
+
+        box Atoms #LightCoral
+            participant toc
+            participant node
+            participant content
+        end box
+
+        participant Content
+        participant ToC
+
+        box Topbar #LightBlue
+            participant CreateTime
+            participant FirstTime
+            participant TocSwitch
+            participant "Readonly\nSwitch" as roSW
+        end box
+    end box
+
+end box
+
+
+TreeNode -> TreeNode: undefined, \nempty page
+TreeNode -> nodeId: set Current NodeId
+
+nodeId -> node: fetch node
+nodeId -> content: fetch content
+
+toc -> TocSwitch
+TocSwitch -> toc
+
+node -> CreateTime
+node -> FirstTime
+node -> roSW
+
+content -> Content
+
+Content -> Content: edit
+
+Content -> node: insert And Return
+
+content -> ToC
+@enduml

@@ -24,6 +24,8 @@ export interface NTNode {
   content: string;
   node_type: NodeType;
 
+  readonly?: boolean;
+
   user: string;
   parsed_info: ContentParsedInfo;
 

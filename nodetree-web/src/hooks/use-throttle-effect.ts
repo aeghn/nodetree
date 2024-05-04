@@ -29,7 +29,7 @@ export const useThrottleEffect = <T, U extends React.DependencyList>(
       };
       timeout.current = setTimeout(timeoutCallback, delay);
     }
-  }, args);
+  }, [args]);
 
   /*   useUnMount(() => {
     timeout.current && clearTimeout(timeout.current);

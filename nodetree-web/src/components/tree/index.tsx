@@ -18,21 +18,24 @@ import {
   updateNodeName,
   deteleNode as deleteNode,
 } from "@/helpers/data-agent";
-import { NTNode, ContentParsedInfo, NodeId, NodeType } from "@/model";
+import { NTNode, ContentParsedInfo, NodeType } from "@/model";
 import { generateId } from "@/helpers/tools";
 import React from "react";
 
 import { LuChevronRight, LuChevronDown } from "react-icons/lu";
+import { useAtom } from "jotai";
+import { setNodeAtom, treeNodeIdAtom } from "@/state/explorer";
 
 export const NTTree: React.FC<{
   height?: number;
-  activeNodeId?: NodeId;
   treeDataList: NTNode[];
-  setActiveNodeCallback: (node: NTNode) => void;
-}> = ({ height, activeNodeId, treeDataList, setActiveNodeCallback }) => {
+}> = ({ height, treeDataList }) => {
   const [treeData, setTreeData] = useState<NTNode[]>(treeDataList);
   const tree = useMemo(() => new SimpleTree<NTNode>(treeData), [treeData]);
   let oldNode: NTNode | undefined = undefined;
+
+  const [activeNodeId] = useAtom(treeNodeIdAtom);
+  const [, setNode] = useAtom(setNodeAtom);
 
   const onMove: MoveHandler<NTNode> = (args: {
     dragIds: string[];
@@ -106,7 +109,7 @@ export const NTTree: React.FC<{
     if (activeNodeId) {
       const an = tree.find(activeNodeId);
       if (an && an.data != oldNode) {
-        setActiveNodeCallback(an.data);
+        setNode(an.data);
         oldNode = an.data;
       }
     }
@@ -128,8 +131,8 @@ export const NTTree: React.FC<{
         onDelete={onDelete}
         openByDefault={true}
         onActivate={(node) => {
-          if (node.data != oldNode) {
-            setActiveNodeCallback(node.data);
+          if (node.data !== oldNode) {
+            setNode(node.data);
             oldNode = node.data;
           }
         }}

@@ -91,7 +91,7 @@ export const Hashtag = createInteractiveInput<string>({
 });
 
 export const Reminder = createInteractiveInput<Toent>({
-  prefixChar: "<",
+  prefixChar: "%",
   pluginName: "reminder",
 
   items: (param: { query: string }) => {

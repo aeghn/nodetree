@@ -1,7 +1,7 @@
-import TreeEditor from "@/components/pages/tree-editor";
+import Explorer from "@/components/pages/explorer";
 
 function App() {
-  return <TreeEditor />;
+  return <Explorer />;
 }
 
 export default App;
