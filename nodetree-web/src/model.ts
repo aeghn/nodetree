@@ -30,8 +30,8 @@ export interface NTNode {
   parent_id?: NodeId;
   prev_sliding_id?: NodeId;
 
-  create_time: Date;
-  first_version_time: Date;
+  version_time: Date;
+  initial_time: Date;
 
   children?: NTNode[];
 }

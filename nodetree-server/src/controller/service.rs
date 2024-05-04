@@ -106,9 +106,7 @@ async fn guess_toent(
         req, _state.config.common.asset_base_dir
     );
 
-    let rest = Ok(ntcore::parser::toent::Toent::guess(
-        req.input.as_str(),
-    ));
+    let rest = Ok(ntcore::parser::toent::Toent::guess(req.input.as_str()));
     print_and_trans_to_response(rest)
 }
 
@@ -145,8 +143,8 @@ mod test {
             user: String::new(),
             parent_id: Some(pid.into()),
             prev_sliding_id: prev.map(|e| e.into()),
-            create_time: cur.clone(),
-            first_version_time: cur.clone(),
+            version_time: cur.clone(),
+            initial_time: cur.clone(),
             parsed_info: ContentParsedInfo::default(),
             node_type: ntcore::model::node::NodeType::TiptapV1,
         }

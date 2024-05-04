@@ -71,8 +71,8 @@ export const NTTree: React.FC<{
       content: "",
       user: "",
       parent_id: parentId ? parentId : undefined,
-      create_time: new Date(),
-      first_version_time: new Date(),
+      version_time: new Date(),
+      initial_time: new Date(),
       parsed_info: parsed_info,
       node_type: NodeType.TiptapV1
     };

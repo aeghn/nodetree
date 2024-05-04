@@ -34,8 +34,8 @@ pub struct Node {
     #[serde(default)]
     pub prev_sliding_id: Option<NodeId>,
 
-    pub create_time: DateTime<Utc>,
-    pub first_version_time: DateTime<Utc>,
+    pub version_time: DateTime<Utc>,
+    pub initial_time: DateTime<Utc>,
 }
 
 #[derive(Default, Serialize, Deserialize, Debug, Clone)]

@@ -26,7 +26,7 @@ fn to_children(
         children,
         |e| e.node.id.clone(),
         |e| e.node.prev_sliding_id.clone().map(|e| e),
-        |e| e.node.create_time.clone(),
+        |e| e.node.version_time.clone(),
     );
     NodeWithChildren {
         node: n.clone(),
@@ -71,7 +71,7 @@ pub fn nodes_with_childrens(nodes: Vec<Node>) -> Vec<NodeWithChildren> {
             .collect(),
         |e| e.node.id.clone(),
         |e| e.node.prev_sliding_id.clone().map(|e| e),
-        |e| e.node.create_time.clone(),
+        |e| e.node.version_time.clone(),
     )
 }
 
@@ -98,8 +98,8 @@ mod test {
             parsed_info: ContentParsedInfo::default(),
             parent_id: None,
             prev_sliding_id: None,
-            create_time: Utc::now(),
-            first_version_time: Utc::now(),
+            version_time: Utc::now(),
+            initial_time: Utc::now(),
             node_type: ntcore::model::node::NodeType::TiptapV1,
         };
         let node = NodeWithChildren {

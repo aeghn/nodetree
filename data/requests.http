@@ -12,11 +12,11 @@ Content-Type: application/json
     "todo_status": "Todo",
     "parent_id": "asdasdasd",
     "prev_sliding_id": "asdasdasdasdasd",
-    "create_time": "2024-03-18T05:28:58.000000000",
-    "first_version_time": "2024-03-18T05:28:58.000000000",
+    "version_time": "2024-03-18T05:28:58.000000000",
+    "initial_time": "2024-03-18T05:28:58.000000000",
     "tags": [{
         "name": "taga",
-        "create_time": "2024-03-18T05:28:58.000000000"
+        "version_time": "2024-03-18T05:28:58.000000000"
     }],
     "delete_time": "2024-03-18T05:28:58.000000000"
 }
