@@ -54,12 +54,24 @@ impl NodeFetchReq {
 
         let mut s = format!("select {} from nodes n", selection);
 
+        let mut has_where = false;
+
         if let Some(f) = self.filter.as_ref() {
             let part = f.to_sql();
             if !part.is_empty() {
                 s.push_str(" where ");
                 s.push_str(&part);
+                has_where = true;
             }
+        }
+
+        if !with_history {
+            if has_where {
+                s.push_str(" and ");
+            } else {
+                s.push_str(" where ");
+            }
+            s.push_str("(n.delete_time isnull)");
         }
 
         if let Some(limit) = with_limit {
