@@ -17,6 +17,25 @@
                 "<node_internals>/**"
             ],
             "type": "node"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'nodetree-server'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=nodetree-server",
+                    "--package=nodetree-server"
+                ],
+                "filter": {
+                    "name": "nodetree-server",
+                    "kind": "bin"
+                }
+            },
+            "args": ["--config", "./data/config.example.toml"],
+            "cwd": "${workspaceFolder}",
+            "env": {}
         }
     ]
 }
