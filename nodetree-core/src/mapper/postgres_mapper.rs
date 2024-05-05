@@ -192,7 +192,7 @@ SELECT id, name, content, node_type, username, delete_time, version_time, initia
 
             stmt
                 .execute(
-                    "insert into nodes(id, name, content, node_type, username, parent_id, version_time, initial_time, delete_time) values ($1,$2,$3,$4,$5,$6,$7,$8,$9)",
+                    "insert into nodes(id, name, content, node_type, username, parent_id, prev_sliding_id, version_time, initial_time, delete_time) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
                     &[
                         &node.id,
                         &node.name,
@@ -200,6 +200,7 @@ SELECT id, name, content, node_type, username, delete_time, version_time, initia
                         &node.node_type.as_ref(),
                         &node.user,
                         &node.parent_id,
+                        &node.prev_sliding_id,
                         &node.version_time,
                         &node.initial_time,
                         &node.delete_time,

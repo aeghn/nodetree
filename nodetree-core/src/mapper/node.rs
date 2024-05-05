@@ -87,15 +87,23 @@ pub trait NodeMapper {
             })
             .await;
 
-        if let Ok(Some(node)) = node.as_ref().map(|e| e.get(0)) {
-            self.insert_node_only(&Node {
-                content: req.content.clone(),
-                version_time: req.version_time,
-                ..node.clone()
-            })
-            .await
-        } else {
-            anyhow::bail!("unable to save to db")
+        match node.as_ref().map(|e| e.get(0)) {
+            Ok(Some(node)) => {
+                self.insert_node_only(&Node {
+                    content: req.content.clone(),
+                    version_time: req.version_time,
+                    ..node.clone()
+                })
+                .await
+            }
+            Ok(None) => {
+                error!("Unable to fetch node, {:?}", req);
+                anyhow::bail!("Unable to fetch node, {:?}", req)
+            }
+            Err(err) => {
+                error!("Unable to fetch node, err {:?}", req);
+                anyhow::bail!("Unable to fetch node, {:?}, err {:?}", req, err)
+            }
         }
     }
 
