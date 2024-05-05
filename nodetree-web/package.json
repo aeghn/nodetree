@@ -34,6 +34,7 @@
     "axios": "^1.6.8",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
+    "date-fns": "^3.6.0",
     "jotai": "^2.8.0",
     "jsx-dom-cjs": "^8.1.4",
     "katex": "^0.16.10",

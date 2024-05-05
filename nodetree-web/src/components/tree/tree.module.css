@@ -3,6 +3,7 @@
 [role="treeitem"]:has(.node) {
   color: #999;
   cursor: pointer;
+  font-family: "inter";
   font-weight: 400;
   font-size: 14px;
   user-select: none;

@@ -25,6 +25,7 @@ import React from "react";
 import { LuChevronRight, LuChevronDown } from "react-icons/lu";
 import { useAtom } from "jotai";
 import { setNodeAtom, treeNodeIdAtom } from "@/state/explorer";
+import { shortDate } from "@/helpers/date-helper";
 
 export const NTTree: React.FC<{
   height?: number;
@@ -163,7 +164,9 @@ function Node({ node, style, dragHandle }: NodeRendererProps<NTNode>) {
       onClick={() => node.activate()}
     >
       <FolderArrow node={node} />
-      <span>{node.isEditing ? <Input node={node} /> : node.data.name}</span>
+      {node.data.parsed_info.todo_status ?? <div className="border rounded">{node.data.parsed_info.todo_status}</div>}
+      <div className="p-1 m-0 text-sm text-gray-500 text-pretty">{shortDate(node.data.initial_time)}</div>
+      <div className="text-base">{node.isEditing ? <Input node={node} /> : node.data.name}</div>
     </div>
   );
 }
