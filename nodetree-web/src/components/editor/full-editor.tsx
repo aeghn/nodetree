@@ -16,6 +16,7 @@ import {
   getInitialTime,
   contentChangedAtom,
   getContentAtom,
+  setNodeAtom,
 } from "@/state/explorer";
 import Loading from "../element/loading";
 import { useThrottleEffect } from "@/hooks/use-throttle-effect";
@@ -24,10 +25,9 @@ const topbarElemClassName =
   "border border-solid border-gray-300 rounded-lg p-1 bg-slate-100 ml-2";
 
 const EditorTopbarSaver: React.FC<{ nodeId: NodeId }> = ({ nodeId }) => {
-
   const [saving, setSaving] = useState(false);
   const [version_time] = useAtom(getVersionTimeAtom);
-  const [content] = useAtom(getContentAtom)
+  const [content] = useAtom(getContentAtom);
   const [, setParsedInfo] = useAtom(setParsedInfoAtom);
   const [contentChanged, setContentChanged] = useAtom(contentChangedAtom);
 
@@ -40,18 +40,23 @@ const EditorTopbarSaver: React.FC<{ nodeId: NodeId }> = ({ nodeId }) => {
           setParsedInfo(parsed_info);
           setSaving(false);
           setContentChanged(false);
-        })
+        });
       }
     },
     [version_time, content, contentChanged],
     1000
   );
 
-
-  return (<div className={topbarElemClassName}>
-    {saving ? "Saving" : version_time ? formatDistanceToNow(version_time) : "Unknown Version Time"}
-  </div>)
-}
+  return (
+    <div className={topbarElemClassName}>
+      {saving
+        ? "Saving"
+        : version_time
+        ? formatDistanceToNow(version_time)
+        : "Unknown Version Time"}
+    </div>
+  );
+};
 
 const EditorTopbar: React.FC<{ nodeId: NodeId }> = ({ nodeId }) => {
   const [tocSwitch, setTocSwitch] = useAtom(tocSwitchAtom);
@@ -61,16 +66,18 @@ const EditorTopbar: React.FC<{ nodeId: NodeId }> = ({ nodeId }) => {
 
   const toggleReadOnly = useCallback(() => {
     setReadonly(!readonly);
-  }, []);
+  }, [readonly, setReadonly]);
 
   const toggleTocVisable = useCallback(() => {
     setTocSwitch(!tocSwitch);
-  }, []);
+  }, [setTocSwitch, tocSwitch]);
 
   return (
     <div className="h-[30] m-0 p-1 text-sm border-0 border-b border-gray-300 flex flex-row items-end justify-end">
       <div className={topbarElemClassName}>
-        {initial_time ? formatDistanceToNow(initial_time) : "Unknown Initial Time"}
+        {initial_time
+          ? formatDistanceToNow(initial_time)
+          : "Unknown Initial Time"}
       </div>
       <EditorTopbarSaver nodeId={nodeId} />
       <button onClick={toggleTocVisable} className={topbarElemClassName}>
@@ -96,7 +103,7 @@ const FullEditor: React.FC<{
   const [nodeId] = useAtom(getNodeIdAtom);
   const [, setContent] = useAtom(setContentAtom);
   const [, setTreeId] = useAtom(setTreeNodeIdAtom);
-
+  const [, setNode] = useAtom(setNodeAtom);
 
   useEffect(() => {
     if (nodeId) {
@@ -112,7 +119,7 @@ const FullEditor: React.FC<{
             }
           }
         }
-
+        setNode(retNode);
         setNodeContent(text);
       });
     }
