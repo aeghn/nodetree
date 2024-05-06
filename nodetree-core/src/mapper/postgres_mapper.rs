@@ -1,5 +1,6 @@
 use std::{
     collections::{HashMap, HashSet},
+    os::unix::process::parent_id,
     str::FromStr,
 };
 
@@ -23,7 +24,7 @@ use crate::{
 
 use super::{
     asset::AssetMapper,
-    node::{NodeDeleteReq, NodeMapper, NodeMoveReq, NodeMoveRsp, NodeRenameReq},
+    node::{NodeDeleteReq, NodeMapper, NodeMoveReq, NodeMoveRsp, NodeRelation, NodeRenameReq},
     nodefilter::{NodeFetchReq, NodeFilter},
     Mapper,
 };
@@ -177,17 +178,7 @@ impl NodeMapper for PostgresMapper {
             )
             .await?;
         } else {
-            stmt.execute(
-                "WITH moved_rows AS (
-    DELETE FROM nodes a
-    where id = $1
-    RETURNING a.*
-)
-INSERT INTO nodes_history 
-SELECT id, name, content, node_type, username, delete_time, version_time, initial_time FROM moved_rows;",
-                &[&node.id]
-            ).await?;
-
+            self._move_node_to_history(&node.id).await?;
             info!("begin to really insert");
 
             stmt
@@ -287,74 +278,128 @@ SELECT id, name, content, node_type, username, delete_time, version_time, initia
     async fn move_nodes(&self, node_move_req: &NodeMoveReq) -> anyhow::Result<NodeMoveRsp> {
         let node_id = &node_move_req.id;
         let parent_id = &node_move_req.parent_id;
-        let prev_slibing = node_move_req.prev_sliding_id.as_ref();
+        let prev_slibing = &node_move_req.prev_sliding_id;
 
         info!("move {:?} to {:?}.{:?}|^", node_id, parent_id, prev_slibing);
+
+        let old = self._delete_relation(node_id, false).await?;
+        let new = self
+            ._insert_relation(node_id, parent_id, prev_slibing)
+            .await?;
+
+        Ok(NodeMoveRsp { new, old })
+    }
+
+    async fn _delete_relation(
+        &self,
+        node_id: &NodeId,
+        to_history: bool,
+    ) -> anyhow::Result<NodeRelation> {
         let stmt = self.pool.get().await?;
 
         let rows = stmt
             .query(
-                "select * from nodes where id = $1 or prev_sliding_id = $2 or (parent_id = $3 and prev_sliding_id = $4)",
-                &[&node_id, &node_id, &parent_id, &prev_slibing],
+                "select id, prev_sliding_id, parent_id from nodes where (id = $1 or prev_sliding_id = $2) and parent_id in (select parent_id from nodes where id = $3)", & [&node_id, &node_id, &node_id],
             )
             .await?;
 
-        let mut node = None;
-        let mut new_next = None;
-        let mut old_next = None;
+        let mut parent_id = None::<NodeId>;
+        let mut prev_id = None::<NodeId>;
+        let mut next_id = None::<NodeId>;
 
         for row in rows {
-            let n = Self::map_row_node(&row);
-            if &n.id == node_id {
-                node.replace(n);
-            } else if n.prev_sliding_id.as_ref() == prev_slibing && &n.parent_id == parent_id {
-                new_next.replace(n);
-            } else if n.prev_sliding_id.as_ref() == Some(node_id) {
-                old_next.replace(n);
+            let id: String = row.get("id");
+            let prev: String = row.get("prev_sliding_id");
+            let parent: String = row.get("parent_id");
+            if id.as_str() == node_id.as_str() {
+                parent_id.replace(parent.into());
+                prev_id.replace(prev.into());
+            } else if prev.as_str() == node_id.as_str() {
+                next_id.replace(id.into());
             }
         }
 
-        let unwrap = |e: Option<Option<NodeId>>| {
-            if let Some(t) = e {
-                t
-            } else {
-                None
-            }
-        };
-        let old_prev_id = unwrap(node.as_ref().map(|e| e.prev_sliding_id.clone()));
-        let old_parent_id = unwrap(node.map(|e| e.parent_id.clone()));
-
-        if let Some(ref old_next) = old_next {
-            stmt.execute(
-                "update nodes set prev_sliding_id = $1 where id = $2",
-                &[&old_prev_id, &old_next.id],
-            )
-            .await?;
+        if to_history {
+            self._move_node_to_history(node_id).await?;
         }
 
         stmt.execute(
-            "update nodes set prev_sliding_id = $1, parent_id = $2 where id = $3",
-            &[&prev_slibing, &parent_id, &node_id],
+            "update nodes set prev_sliding_id = $1 where id = $2",
+            &[&prev_id, &next_id],
         )
         .await?;
 
-        if let Some(ref new_next) = new_next {
-            info!("move new next");
+        Ok(NodeRelation {
+            parent_id,
+            prev_id,
+            next_id,
+        })
+    }
+
+    async fn _insert_relation(
+        &self,
+        node_id: &NodeId,
+        new_parent_id: &Option<NodeId>,
+        new_prev_id: &Option<NodeId>,
+    ) -> anyhow::Result<NodeRelation> {
+        let stmt = self.pool.get().await?;
+
+        let rows = stmt
+            .query(
+                "select id, prev_sliding_id, parent_id from nodes where parent_id = $1 and prev_sliding_id = $2", & [&new_parent_id, &new_prev_id],
+            )
+            .await?;
+
+        let mut next_id = None::<NodeId>;
+
+        for row in rows {
+            let id: String = row.get("id");
+            let prev: String = row.get("prev_sliding_id");
+            let parent: String = row.get("parent_id");
+            if id.as_str() == prev.as_str() {
+                next_id.replace(id.into());
+            }
+        }
+
+        if stmt
+            .execute(
+                "update nodes set prev_sliding_id = $1, parent_id = $2 where id = $3",
+                &[&new_prev_id, &new_parent_id, &node_id],
+            )
+            .await?
+            <= 0
+        {
+            return anyhow::bail!("there are no node with id: {:?}", node_id);
+        }
+
+        if let Some(next) = next_id.as_ref() {
             stmt.execute(
                 "update nodes set prev_sliding_id = $1 where id = $2",
-                &[node_id, &new_next.id],
+                &[&node_id, &next],
             )
             .await?;
         }
 
-        Ok(NodeMoveRsp {
-            new_parent: parent_id.clone(),
-            new_prev: prev_slibing.clone().map(|e| e.clone()),
-            new_next: new_next.map(|e| e.id.clone()),
-            old_parent: old_parent_id,
-            old_prev: old_prev_id,
-            old_next: old_next.map(|o| o.id.clone()),
+        Ok(NodeRelation {
+            parent_id: new_parent_id.clone(),
+            prev_id: new_prev_id.clone(),
+            next_id,
         })
+    }
+
+    async fn _move_node_to_history(&self, node_id: &NodeId) -> anyhow::Result<u64> {
+        let stmt = self.pool.get().await?;
+
+        Ok(stmt.execute(
+            "WITH moved_rows AS (
+DELETE FROM nodes a
+where id = $1
+RETURNING a.*
+)
+INSERT INTO nodes_history 
+SELECT id, name, content, node_type, username, delete_time, version_time, initial_time FROM moved_rows;",
+            &[&node_id]
+        ).await?)
     }
 
     async fn find_descendant_ids(

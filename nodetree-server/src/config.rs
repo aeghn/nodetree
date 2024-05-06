@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use anyhow::Ok;
+use clap::builder::Str;
 use ntcore::mapper::{
     postgres_mapper::{PostgresConfig, PostgresMapper},
     sqlite_mapper::{SqliteConfig, SqliteMapper},
@@ -27,6 +28,12 @@ pub struct Common {
     pub asset_base_dir: String,
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct Backup {
+    pub dir: String,
+    pub interval: Option<u32>,
+}
+
 impl Into<anyhow::Result<Arc<dyn Mapper>>> for DbConfig {
     fn into(self) -> anyhow::Result<Arc<(dyn Mapper + 'static)>> {
         let mapper = match self {
@@ -46,6 +53,7 @@ pub struct Config {
     pub db_config: DbConfig,
     pub server: Server,
     pub common: Common,
+    pub backup: Option<Backup>,
 }
 
 pub mod tests {

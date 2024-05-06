@@ -11,12 +11,15 @@ use super::nodefilter::{NodeFetchReq, NodeFilter};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct NodeMoveRsp {
-    pub new_parent: Option<NodeId>,
-    pub new_prev: Option<NodeId>,
-    pub new_next: Option<NodeId>,
-    pub old_parent: Option<NodeId>,
-    pub old_prev: Option<NodeId>,
-    pub old_next: Option<NodeId>,
+    pub old: NodeRelation,
+    pub new: NodeRelation,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct NodeRelation {
+    pub parent_id: Option<NodeId>,
+    pub prev_id: Option<NodeId>,
+    pub next_id: Option<NodeId>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -129,6 +132,20 @@ pub trait NodeMapper {
     /// 3. set F's prev as P  
     /// 4. set X's parent as A and X' prev as D and E's prev as X  
     async fn move_nodes(&self, node_move_req: &NodeMoveReq) -> anyhow::Result<NodeMoveRsp>;
+
+    async fn _delete_relation(
+        &self,
+        node_id: &NodeId,
+        to_history: bool,
+    ) -> anyhow::Result<NodeRelation>;
+    async fn _insert_relation(
+        &self,
+        node_id: &NodeId,
+        parent_id: &Option<NodeId>,
+        prev_id: &Option<NodeId>,
+    ) -> anyhow::Result<NodeRelation>;
+
+    async fn _move_node_to_history(&self, node_id: &NodeId) -> anyhow::Result<u64>;
 
     /// Find descendants recursively.  
     ///
