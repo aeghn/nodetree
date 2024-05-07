@@ -187,6 +187,7 @@ export const Backlink = (idChangeCallback: (href: string) => void) =>
           // strip out the href
           return [
             "a",
+            // @ts-ignore
             mergeAttributes(this.options.HTMLAttributes, {
               ...HTMLAttributes,
               nthref: "",
@@ -196,6 +197,7 @@ export const Backlink = (idChangeCallback: (href: string) => void) =>
         }
         return [
           "a",
+          // @ts-ignore
           mergeAttributes(this.options.HTMLAttributes, HTMLAttributes),
           0,
         ];

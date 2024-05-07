@@ -90,9 +90,9 @@ const EditorTopbar: React.FC<{ nodeId: NodeId }> = ({ nodeId }) => {
   );
 };
 
-const EditorToC: React.FC<{}> = () => {
+/* const EditorToC: React.FC<{}> = () => {
   return <></>;
-};
+}; */
 
 const FullEditor: React.FC<{
   height: number | undefined;
