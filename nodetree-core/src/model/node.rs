@@ -25,7 +25,7 @@ pub struct Node {
     pub content: String,
     pub node_type: NodeType,
 
-    pub user: String,
+    pub domain: String,
     pub parsed_info: ContentParsedInfo,
 
     #[serde(default)]

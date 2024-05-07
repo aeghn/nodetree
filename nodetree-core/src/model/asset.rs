@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 pub struct Asset {
     pub id: String,
 
-    pub username: Option<String>,
+    pub domain: Option<String>,
     pub ori_file_name: String,
 
     pub content_type: String,

@@ -73,12 +73,12 @@ export const NTTree: React.FC<{
       id: generateId(),
       name: "untitled",
       content: "",
-      user: "",
+      domain: "",
       parent_id: parentId ? parentId : undefined,
       version_time: new Date(),
       initial_time: new Date(),
       parsed_info: parsed_info,
-      node_type: NodeType.TiptapV1
+      node_type: NodeType.TiptapV1,
     };
 
     if (type === "internal") data.children = [];
@@ -164,9 +164,17 @@ function Node({ node, style, dragHandle }: NodeRendererProps<NTNode>) {
       onClick={() => node.activate()}
     >
       <FolderArrow node={node} />
-      {node.data.parsed_info.todo_status ?? <div className="border rounded">{node.data.parsed_info.todo_status}</div>}
-      <div className="p-1 m-0 text-sm text-gray-500 text-pretty">{shortDate(node.data.initial_time)}</div>
-      <div className="text-base">{node.isEditing ? <Input node={node} /> : node.data.name}</div>
+      {node.data.parsed_info.todo_status ?? (
+        <div className="border rounded">
+          {node.data.parsed_info.todo_status}
+        </div>
+      )}
+      <div className="p-1 m-0 text-sm text-gray-500 text-pretty">
+        {shortDate(node.data.initial_time)}
+      </div>
+      <div className="text-base">
+        {node.isEditing ? <Input node={node} /> : node.data.name}
+      </div>
     </div>
   );
 }

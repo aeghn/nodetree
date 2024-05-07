@@ -26,7 +26,7 @@ export interface NTNode {
 
   readonly?: boolean;
 
-  user: string;
+  domain: string;
   parsed_info: ContentParsedInfo;
 
   parent_id?: NodeId;
@@ -46,7 +46,7 @@ export interface ContentParsedInfo {
 export interface Asset {
   id: string;
 
-  username: string | undefined;
+  domain: string | undefined;
   ori_file_name: string;
 
   content_type: string;

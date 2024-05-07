@@ -8,7 +8,7 @@ Content-Type: application/json
     "id": "2",
     "name": "test1",
     "content": "",
-    "user": "foo",
+    "domain": "foo",
     "todo_status": "Todo",
     "parent_id": "asdasdasd",
     "prev_sliding_id": "asdasdasdasdasd",

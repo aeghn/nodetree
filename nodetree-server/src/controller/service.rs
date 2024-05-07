@@ -149,7 +149,7 @@ mod test {
             delete_time: None,
             name: id.clone(),
             content: String::new(),
-            user: String::new(),
+            domain: String::new(),
             parent_id: Some(pid.into()),
             prev_sliding_id: prev.map(|e| e.into()),
             version_time: cur.clone(),

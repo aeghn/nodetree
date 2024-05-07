@@ -14,7 +14,7 @@ pub struct Nodes {
     pub content: String,
     pub node_type: NodeType,
 
-    pub username: String,
+    pub domain: String,
 
     #[serde(default)]
     pub parent_id: Option<NodeId>,
@@ -37,7 +37,7 @@ pub struct NodesHistory {
     pub content: String,
     pub node_type: NodeType,
 
-    pub username: String,
+    pub domain: String,
 
     pub version_time: DateTime<Utc>,
     pub initial_time: DateTime<Utc>,
@@ -47,7 +47,7 @@ pub struct NodesHistory {
 pub struct Assets {
     pub id: String,
     pub ori_file_name: String,
-    pub username: String,
+    pub domain: String,
     pub create_time: DateTime<Utc>,
     pub content_type: String,
 }

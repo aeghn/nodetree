@@ -94,7 +94,7 @@ mod test {
             delete_time: None,
             name: "a".to_string(),
             content: "a".to_string(),
-            user: "a".to_string(),
+            domain: "a".to_string(),
             parsed_info: ContentParsedInfo::default(),
             parent_id: None,
             prev_sliding_id: None,

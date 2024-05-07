@@ -101,7 +101,7 @@ impl PostgresMapper {
             id,
             name: row.get("name"),
             content: row.try_get("content").map_or("".to_owned(), |e| e),
-            user: row.get("username"),
+            domain: row.get("domain"),
             parsed_info: ContentParsedInfo::default(),
             parent_id: row.get("parent_id"),
             prev_sliding_id: row.get("prev_sliding_id"),
@@ -120,21 +120,21 @@ impl AssetMapper for PostgresMapper {
         ori_file_name: &str,
         id: String,
         content_type: String,
-        username: Option<String>,
+        domain: Option<String>,
     ) -> anyhow::Result<Asset> {
         let stmt = self.pool.get().await?;
 
         let create_time = Utc::now().to_owned();
 
         stmt.execute(
-            "insert into assets(id, username, ori_file_name, content_type, create_time) values ($1,$2,$3,$4, $5)",
-            &[&id, &username, &ori_file_name, &content_type, &create_time],
+            "insert into assets(id, domain, ori_file_name, content_type, create_time) values ($1,$2,$3,$4, $5)",
+            &[&id, &domain, &ori_file_name, &content_type, &create_time],
         )
         .await
         .map_err(|e| anyhow::Error::new(e))
         .map(|_| Asset {
             id,
-            username,
+            domain,
             ori_file_name: ori_file_name.to_string(),
             content_type,
             create_time,
@@ -149,7 +149,7 @@ impl AssetMapper for PostgresMapper {
 
         Ok(Asset {
             id: row.get("id"),
-            username: row.get("username"),
+            domain: row.get("domain"),
             ori_file_name: row.get("ori_file_name"),
             content_type: row.get("content_type"),
             create_time: row.get("create_time"),
@@ -184,13 +184,13 @@ impl NodeMapper for PostgresMapper {
 
             stmt
                 .execute(
-                    "insert into nodes(id, name, content, node_type, username, parent_id, prev_sliding_id, version_time, initial_time, delete_time) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+                    "insert into nodes(id, name, content, node_type, domain, parent_id, prev_sliding_id, version_time, initial_time, delete_time) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
                     &[
                         &node.id,
                         &node.name,
                         &node.content,
                         &node.node_type.as_ref(),
-                        &node.user,
+                        &node.domain,
                         &node.parent_id,
                         &node.prev_sliding_id,
                         &node.version_time,
@@ -398,7 +398,7 @@ where id = $1
 RETURNING a.*
 )
 INSERT INTO nodes_history 
-SELECT id, name, content, node_type, username, delete_time, version_time, initial_time FROM moved_rows;",
+SELECT id, name, content, node_type, domain, delete_time, version_time, initial_time FROM moved_rows;",
             &[&node_id]
         ).await?)
     }
@@ -460,7 +460,7 @@ impl Mapper for PostgresMapper {
     name VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
     node_type VARCHAR(255) NOT NULL,
-    username TEXT NOT NULL,
+    domain TEXT NOT NULL,
     delete_time timestamptz DEFAULT NULL,
     parent_id VARCHAR(40) DEFAULT NULL,
     prev_sliding_id VARCHAR(40),
@@ -478,7 +478,7 @@ impl Mapper for PostgresMapper {
     name VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
     node_type VARCHAR(255) NOT NULL,
-    username TEXT NOT NULL,
+    domain TEXT NOT NULL,
     delete_time timestamptz DEFAULT NULL,
     version_time timestamptz NOT NULL default CURRENT_TIMESTAMP,
     initial_time timestamptz NOT NULL
@@ -515,7 +515,7 @@ impl Mapper for PostgresMapper {
             "CREATE TABLE assets (
     id VARCHAR(40) NOT NULL,
     ori_file_name TEXT NOT NULL,
-    username TEXT NOT NULL,
+    domain TEXT NOT NULL,
     create_time timestamptz NOT NULL default CURRENT_TIMESTAMP,
     content_type TEXT,
     primary key (id)

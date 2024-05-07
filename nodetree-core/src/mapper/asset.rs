@@ -13,7 +13,7 @@ pub trait AssetMapper {
         ori_file_name: &str,
         id: String,
         content_type: String,
-        username: Option<String>,
+        domain: Option<String>,
     ) -> anyhow::Result<Asset>;
 
     async fn query_asset_by_id(&self, id: &str) -> anyhow::Result<Asset>;
