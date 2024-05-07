@@ -417,7 +417,7 @@ SELECT id, name, content, node_type, domain, delete_time, version_time, initial_
         let map = stmt
             .query(
                 "with recursive children(id, parent_id) as (
-select n.id, n.parent_id from nodes n where n.id = $1
+select n.id, n.parent_id from nodes n where n.parent_id = $1
 union 
 select n.id, n.parent_id from nodes n, children c where n.parent_id = c.id
 )
