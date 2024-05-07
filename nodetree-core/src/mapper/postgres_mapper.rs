@@ -284,6 +284,12 @@ impl NodeMapper for PostgresMapper {
         info!("move {:?} to {:?}.{:?}|^", node_id, parent_id, prev_slibing);
 
         let old = self._delete_relation(node_id, false).await?;
+
+        info!(
+            "delete old {:?} to {:?}.{:?}|^",
+            node_id, parent_id, prev_slibing
+        );
+
         let new = self
             ._insert_relation(node_id, parent_id, prev_slibing)
             .await?;
@@ -309,13 +315,13 @@ impl NodeMapper for PostgresMapper {
         let mut next_id = None::<NodeId>;
 
         for row in rows {
-            let id: String = row.get("id");
-            let prev: String = row.get("prev_sliding_id");
-            let parent: String = row.get("parent_id");
+            let id: NodeId = row.get("id");
+            let prev: Option<NodeId> = row.get("prev_sliding_id");
+            let parent: Option<NodeId> = row.get("parent_id");
             if id.as_str() == node_id.as_str() {
-                parent_id.replace(parent.into());
-                prev_id.replace(prev.into());
-            } else if prev.as_str() == node_id.as_str() {
+                parent_id = parent;
+                prev_id = prev;
+            } else if prev.as_ref() == Some(node_id) {
                 next_id.replace(id.into());
             }
         }
@@ -354,10 +360,9 @@ impl NodeMapper for PostgresMapper {
         let mut next_id = None::<NodeId>;
 
         for row in rows {
-            let id: String = row.get("id");
-            let prev: String = row.get("prev_sliding_id");
-            let parent: String = row.get("parent_id");
-            if id.as_str() == prev.as_str() {
+            let id: NodeId = row.get("id");
+            let prev: Option<NodeId> = row.get("prev_sliding_id");
+            if Some(node_id) == prev.as_ref() {
                 next_id.replace(id.into());
             }
         }
