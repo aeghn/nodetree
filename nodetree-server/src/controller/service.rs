@@ -16,7 +16,7 @@ use ntcore::{
 use serde::Deserialize;
 use tracing::info;
 
-use crate::{controller::print_and_trans_to_response, service::node::nodes_with_childrens};
+use crate::controller::print_and_trans_to_response;
 
 use super::WebAppState;
 
@@ -54,7 +54,7 @@ async fn fetch_nodes(
         .mapper
         .query_nodes(&req)
         .await
-        .map(|e| nodes_with_childrens(e));
+        .map(|e| crate::adapter::node_with_children::nodes_with_childrens(e));
     print_and_trans_to_response(rest)
 }
 

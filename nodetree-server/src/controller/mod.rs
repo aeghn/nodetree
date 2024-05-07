@@ -27,15 +27,15 @@ use tower_http::{
 };
 use tracing::{debug, error, info, Level};
 
-use crate::config::Config;
+use crate::config::ServerConfig;
 
 #[derive(Clone)]
 pub struct WebAppState {
     mapper: Arc<dyn Mapper>,
-    config: Arc<Config>,
+    config: Arc<ServerConfig>,
 }
 
-pub async fn serve(mapper: Arc<dyn Mapper>, config: Config) {
+pub async fn serve(mapper: Arc<dyn Mapper>, config: ServerConfig) {
     let state = WebAppState {
         mapper,
         config: Arc::new(config.clone()),

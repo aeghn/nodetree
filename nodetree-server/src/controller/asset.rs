@@ -10,6 +10,7 @@ use axum::{
 };
 use futures::{Stream, TryStreamExt};
 
+use ntcore::parser::asset::asset_path_by_uuid;
 use tokio::{
     fs::File,
     io::{self, BufWriter},
@@ -17,19 +18,9 @@ use tokio::{
 use tokio_util::io::ReaderStream;
 use tracing::{error, info};
 
-use crate::{controller::print_and_trans_to_response, utils::split_uuid_to_file_name};
+use crate::controller::print_and_trans_to_response;
 
 use super::WebAppState;
-
-fn get_filepath(state: &State<WebAppState>, id: &str) -> PathBuf {
-    let filename_parts = split_uuid_to_file_name(&id);
-
-    let save_filepath = std::path::Path::new(&state.config.common.asset_base_dir)
-        .join(filename_parts.0)
-        .join(filename_parts.1)
-        .join(filename_parts.2);
-    save_filepath
-}
 
 async fn upload(state: State<WebAppState>, mut multipart: Multipart) -> impl IntoResponse {
     let mut result = vec![];
@@ -46,7 +37,7 @@ async fn upload(state: State<WebAppState>, mut multipart: Multipart) -> impl Int
 
         let id = mapper.generate_asset_id();
 
-        let save_filepath = get_filepath(&state, &id);
+        let save_filepath = asset_path_by_uuid(&state.config.config, &id);
         let save_dir = save_filepath.parent().unwrap();
 
         if !tokio::fs::metadata(&save_dir).await.is_ok() {
@@ -123,7 +114,7 @@ pub async fn download(state: State<WebAppState>, Path(id): Path<String>) -> impl
         }
     };
 
-    let save_filepath = get_filepath(&state, &id);
+    let save_filepath = asset_path_by_uuid(&state.config.config, &id);
 
     let file = match tokio::fs::File::open(&save_filepath).await {
         Ok(file) => file,

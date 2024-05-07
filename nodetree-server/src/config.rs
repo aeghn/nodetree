@@ -1,22 +1,6 @@
-use std::sync::Arc;
+use std::ops::Deref;
 
-use anyhow::Ok;
-use clap::builder::Str;
-use ntcore::mapper::{
-    postgres_mapper::{PostgresConfig, PostgresMapper},
-    sqlite_mapper::{SqliteConfig, SqliteMapper},
-    Mapper,
-};
 use serde::Deserialize;
-
-#[derive(Debug, Deserialize, Clone)]
-#[serde(tag = "type")]
-pub enum DbConfig {
-    #[serde(rename = "postgres")]
-    Postgres(PostgresConfig),
-    #[serde(rename = "sqlite")]
-    Sqlite(SqliteConfig),
-}
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Server {
@@ -24,36 +8,19 @@ pub struct Server {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct Common {
-    pub asset_base_dir: String,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct Backup {
-    pub dir: String,
-    pub interval: Option<u32>,
-}
-
-impl Into<anyhow::Result<Arc<dyn Mapper>>> for DbConfig {
-    fn into(self) -> anyhow::Result<Arc<(dyn Mapper + 'static)>> {
-        let mapper = match self {
-            DbConfig::Postgres(pg) => Arc::new(PostgresMapper::new(pg)?) as Arc<dyn Mapper>,
-            /*             DbConfig::Sqlite(cfg) => Arc::new(SqliteMapper::new(cfg)?) as Arc<dyn Mapper>,
-             */
-            _ => todo!(),
-        };
-
-        Ok(mapper)
-    }
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct Config {
+pub struct ServerConfig {
     #[serde(rename = "mapper")]
-    pub db_config: DbConfig,
+    #[serde(flatten)]
+    pub config: ntcore::config::Config,
     pub server: Server,
-    pub common: Common,
-    pub backup: Option<Backup>,
+}
+
+impl Deref for ServerConfig {
+    type Target = ntcore::config::Config;
+
+    fn deref(&self) -> &Self::Target {
+        &self.config
+    }
 }
 
 pub mod tests {
@@ -65,7 +32,7 @@ pub mod tests {
         filepath = "/home/123"
     "#;
 
-        let config: super::Config = toml::from_str(toml_str).unwrap();
+        let config: super::ServerConfig = toml::from_str(toml_str).unwrap();
         println!("{:?}", config);
     }
 }

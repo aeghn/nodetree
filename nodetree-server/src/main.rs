@@ -2,15 +2,17 @@ use std::sync::Arc;
 
 use arguments::Arguments;
 use clap::Parser;
-use config::Config;
+use config::ServerConfig;
 use ntcore::mapper::Mapper;
+use service::time_worker::backup;
 use tracing::{info, Level};
 
+pub mod adapter;
 mod arguments;
 mod config;
 mod controller;
-pub mod utils;
 mod service;
+pub mod utils;
 
 async fn write_default_config(filepath: &str) {
     tokio::fs::write(filepath, include_str!("../../data/config.example.toml"))
@@ -19,7 +21,7 @@ async fn write_default_config(filepath: &str) {
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
         .with_max_level(Level::INFO)
         .with_thread_ids(true)
@@ -32,11 +34,15 @@ async fn main() {
     let config_file = tokio::fs::read_to_string(args.config.as_str()).await;
     match config_file {
         Ok(cf) => {
-            let config: Config = toml::from_str(cf.as_str()).unwrap();
+            let config: ServerConfig = toml::from_str(cf.as_str())?;
             let mapper: anyhow::Result<Arc<dyn Mapper + 'static>> = config.db_config.clone().into();
-            let mapper = mapper.unwrap();
+            let mapper = mapper?;
 
-            mapper.ensure_tables().await.unwrap();
+            mapper.ensure_tables().await?;
+            if let Some(backup_config) = config.backup.as_ref() {
+                backup(&mapper, &Arc::new(config.config.clone()), backup_config).await?;
+            }
+
             controller::serve(mapper, config).await;
         }
         Err(err) => {
@@ -44,4 +50,6 @@ async fn main() {
             write_default_config(args.config.as_str()).await;
         }
     }
+
+    Ok(())
 }

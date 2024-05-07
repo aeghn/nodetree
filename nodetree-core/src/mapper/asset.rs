@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 
-use crate::model::assert::Asset;
+use crate::model::asset::Asset;
 
 #[async_trait]
 pub trait AssetMapper {

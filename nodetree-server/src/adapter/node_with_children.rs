@@ -83,7 +83,7 @@ mod test {
     use chrono::Utc;
     use ntcore::model::node::{ContentParsedInfo, Node};
 
-    use crate::service::node::nodes_with_childrens;
+    use crate::adapter::node_with_children::nodes_with_childrens;
 
     use super::NodeWithChildren;
 

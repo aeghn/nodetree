@@ -6,18 +6,19 @@ use std::{
 
 use async_trait::async_trait;
 use bytes::BytesMut;
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use deadpool_postgres::{Client, GenericClient, Pool};
 use postgres_types::{to_sql_checked, ToSql};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tokio_postgres::Row;
 use tracing::info;
 
 use crate::{
     constants::{self, MAGIC_RECYCLE_BIN},
+    dbbackup::v1::{rowmapper::row_to_table, table::Table, BackupContent, BackupHandlerV1, RowSum},
     mapper::node::NodeInsertResult,
     model::{
-        assert::Asset,
+        asset::Asset,
         node::{ContentParsedInfo, Node, NodeId, NodeType},
     },
 };
@@ -25,7 +26,7 @@ use crate::{
 use super::{
     asset::AssetMapper,
     node::{NodeDeleteReq, NodeMapper, NodeMoveReq, NodeMoveRsp, NodeRelation, NodeRenameReq},
-    nodefilter::{NodeFetchReq, NodeFilter},
+    nodefilter::NodeFetchReq,
     Mapper,
 };
 
@@ -51,7 +52,7 @@ impl Into<deadpool_postgres::Config> for PostgresConfig {
 }
 
 pub struct PostgresMapper {
-    pool: Pool,
+    pub pool: Pool,
 }
 
 impl PostgresMapper {
