@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use ntcore::{
-    model::node::{Node, NodeId},
+    model::node::{MagicNodeId, Node, NodeId},
     utils::colutils::sort_with_precessors,
 };
 use serde::{Deserialize, Serialize};
@@ -25,7 +25,11 @@ fn to_children(
     let children = sort_with_precessors(
         children,
         |e| e.node.id.clone(),
-        |e| e.node.prev_sliding_id.clone().map(|e| e),
+        |e| match &e.node.prev_sliding_id {
+            ntcore::model::node::MagicNodeId::RecycleBin => None,
+            ntcore::model::node::MagicNodeId::Empty => None,
+            ntcore::model::node::MagicNodeId::Id(id) => Some(id.clone()),
+        },
         |e| e.node.version_time.clone(),
     );
     NodeWithChildren {
@@ -48,7 +52,7 @@ pub fn nodes_with_childrens(nodes: Vec<Node>) -> Vec<NodeWithChildren> {
         .for_each(|(node, _)| nodes_ref.push(node));
 
     nodes_ref.iter().for_each(|e| match &e.parent_id {
-        Some(parent_id) => {
+        MagicNodeId::Id(parent_id) => {
             let v = relation_map.get_mut(&parent_id);
             match v {
                 Some(n2) => {
@@ -59,7 +63,7 @@ pub fn nodes_with_childrens(nodes: Vec<Node>) -> Vec<NodeWithChildren> {
                 }
             }
         }
-        None => {
+        _ => {
             top_lvl_ids.insert(&e.id);
         }
     });
@@ -70,7 +74,11 @@ pub fn nodes_with_childrens(nodes: Vec<Node>) -> Vec<NodeWithChildren> {
             .map(|nid| to_children(&mut relation_map, nid))
             .collect(),
         |e| e.node.id.clone(),
-        |e| e.node.prev_sliding_id.clone().map(|e| e),
+        |e| match &e.node.prev_sliding_id {
+            ntcore::model::node::MagicNodeId::RecycleBin => None,
+            ntcore::model::node::MagicNodeId::Empty => None,
+            ntcore::model::node::MagicNodeId::Id(id) => Some(id.clone()),
+        },
         |e| e.node.version_time.clone(),
     )
 }
@@ -81,7 +89,7 @@ mod test {
     use std::vec;
 
     use chrono::Utc;
-    use ntcore::model::node::{ContentParsedInfo, Node};
+    use ntcore::model::node::{ContentParsedInfo, MagicNodeId, Node};
 
     use crate::adapter::node_with_children::nodes_with_childrens;
 
@@ -96,8 +104,8 @@ mod test {
             content: "a".to_string(),
             domain: "a".to_string(),
             parsed_info: ContentParsedInfo::default(),
-            parent_id: None,
-            prev_sliding_id: None,
+            parent_id: MagicNodeId::default(),
+            prev_sliding_id: MagicNodeId::default(),
             version_time: Utc::now(),
             initial_time: Utc::now(),
             node_type: ntcore::model::node::NodeType::TiptapV1,

@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::model::node::{NodeId, NodeType};
+use crate::model::node::{MagicNodeId, NodeId, NodeType};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Nodes {
@@ -17,10 +17,10 @@ pub struct Nodes {
     pub domain: String,
 
     #[serde(default)]
-    pub parent_id: Option<NodeId>,
+    pub parent_id: MagicNodeId,
 
     #[serde(default)]
-    pub prev_sliding_id: Option<NodeId>,
+    pub prev_sliding_id: MagicNodeId,
 
     pub version_time: DateTime<Utc>,
     pub initial_time: DateTime<Utc>,

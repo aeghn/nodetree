@@ -5,7 +5,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::error;
 
-use crate::model::node::{self, ContentParsedInfo, Node, NodeId};
+use crate::model::node::{self, ContentParsedInfo, MagicNodeId, Node, NodeId};
 
 use super::nodefilter::{NodeFetchReq, NodeFilter};
 
@@ -17,16 +17,16 @@ pub struct NodeMoveRsp {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct NodeRelation {
-    pub parent_id: Option<NodeId>,
-    pub prev_id: Option<NodeId>,
-    pub next_id: Option<NodeId>,
+    pub parent_id: MagicNodeId,
+    pub prev_id: MagicNodeId,
+    pub next_id: MagicNodeId,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct NodeMoveReq {
     pub id: NodeId,
-    pub parent_id: Option<NodeId>,
-    pub prev_sliding_id: Option<NodeId>,
+    pub parent_id: MagicNodeId,
+    pub prev_sliding_id: MagicNodeId,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -141,8 +141,8 @@ pub trait NodeMapper {
     async fn _insert_relation(
         &self,
         node_id: &NodeId,
-        parent_id: &Option<NodeId>,
-        prev_id: &Option<NodeId>,
+        parent_id: &MagicNodeId,
+        prev_id: &MagicNodeId,
     ) -> anyhow::Result<NodeRelation>;
 
     async fn _move_node_to_history(&self, node_id: &NodeId) -> anyhow::Result<u64>;
@@ -153,13 +153,10 @@ pub trait NodeMapper {
     async fn find_descendant_ids(
         &self,
         id: &NodeId,
-    ) -> anyhow::Result<HashMap<NodeId, Option<NodeId>>>;
+    ) -> anyhow::Result<HashMap<NodeId, MagicNodeId>>;
 
     /// Like `find_descendant_ids`, but find ancestors recursively.  
     ///
     /// Return a HashMap which child_id points to its parent.
-    async fn find_ancestor_ids(
-        &self,
-        id: &NodeId,
-    ) -> anyhow::Result<HashMap<NodeId, Option<NodeId>>>;
+    async fn find_ancestor_ids(&self, id: &NodeId) -> anyhow::Result<HashMap<NodeId, MagicNodeId>>;
 }

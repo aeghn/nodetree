@@ -121,7 +121,7 @@ async fn guess_toent(
 
 #[cfg(test)]
 mod test {
-    use ntcore::model::node::{ContentParsedInfo, Node};
+    use ntcore::model::node::{ContentParsedInfo, MagicNodeId, Node};
     use regex::Regex;
     use reqwest::header::HeaderMap;
 
@@ -137,9 +137,13 @@ mod test {
         let pid = re.replace(&pid, "").to_string();
 
         let prev = if this == 1 {
-            None
+            MagicNodeId::Empty
         } else {
-            Some(pid.clone() + "." + (this - 1).to_string().as_str())
+            MagicNodeId::Id(
+                (pid.clone() + "." + (this - 1).to_string().as_str())
+                    .to_string()
+                    .into(),
+            )
         };
 
         let cur = chrono::Utc::now();
@@ -150,8 +154,8 @@ mod test {
             name: id.clone(),
             content: String::new(),
             domain: String::new(),
-            parent_id: Some(pid.into()),
-            prev_sliding_id: prev.map(|e| e.into()),
+            parent_id: pid.into(),
+            prev_sliding_id: prev.into(),
             version_time: cur.clone(),
             initial_time: cur.clone(),
             parsed_info: ContentParsedInfo::default(),

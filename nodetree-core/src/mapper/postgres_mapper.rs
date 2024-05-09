@@ -19,13 +19,15 @@ use crate::{
     mapper::node::NodeInsertResult,
     model::{
         asset::Asset,
-        node::{ContentParsedInfo, Node, NodeId, NodeType},
+        node::{ContentParsedInfo, MagicNodeId, Node, NodeId, NodeType},
     },
 };
 
 use super::{
     asset::AssetMapper,
-    node::{NodeDeleteReq, NodeMapper, NodeMoveReq, NodeMoveRsp, NodeRelation, NodeRenameReq},
+    node::{
+        self, NodeDeleteReq, NodeMapper, NodeMoveReq, NodeMoveRsp, NodeRelation, NodeRenameReq,
+    },
     nodefilter::NodeFetchReq,
     Mapper,
 };
@@ -212,7 +214,7 @@ impl NodeMapper for PostgresMapper {
 
         let mut all_ids: HashSet<&NodeId> = descendants.keys().collect();
         descendants.iter().for_each(|(_, v)| {
-            if let Some(key) = v.as_ref() {
+            if let MagicNodeId::Id(key) = v {
                 all_ids.insert(key);
             }
         });
@@ -247,8 +249,8 @@ impl NodeMapper for PostgresMapper {
 
         self.move_nodes(&NodeMoveReq {
             id: req.id.clone(),
-            parent_id: Some(NodeId::from(MAGIC_RECYCLE_BIN)),
-            prev_sliding_id: None,
+            parent_id: MagicNodeId::RecycleBin,
+            prev_sliding_id: MagicNodeId::Empty,
         })
         .await
         .map(|_| ())
@@ -310,19 +312,19 @@ impl NodeMapper for PostgresMapper {
             )
             .await?;
 
-        let mut parent_id = None::<NodeId>;
-        let mut prev_id = None::<NodeId>;
-        let mut next_id = None::<NodeId>;
+        let mut parent_id = Default::default();
+        let mut prev_id = Default::default();
+        let mut next_id = Default::default();
 
         for row in rows {
             let id: NodeId = row.get("id");
-            let prev: Option<NodeId> = row.get("prev_sliding_id");
-            let parent: Option<NodeId> = row.get("parent_id");
+            let prev: MagicNodeId = row.get("prev_sliding_id");
+            let parent: MagicNodeId = row.get("parent_id");
             if id.as_str() == node_id.as_str() {
                 parent_id = parent;
                 prev_id = prev;
-            } else if prev.as_ref() == Some(node_id) {
-                next_id.replace(id.into());
+            } else if prev.as_ref() == node_id.as_str() {
+                next_id = id.into();
             }
         }
 
@@ -346,8 +348,8 @@ impl NodeMapper for PostgresMapper {
     async fn _insert_relation(
         &self,
         node_id: &NodeId,
-        new_parent_id: &Option<NodeId>,
-        new_prev_id: &Option<NodeId>,
+        new_parent_id: &MagicNodeId,
+        new_prev_id: &MagicNodeId,
     ) -> anyhow::Result<NodeRelation> {
         let stmt = self.pool.get().await?;
 
@@ -357,13 +359,15 @@ impl NodeMapper for PostgresMapper {
             )
             .await?;
 
-        let mut next_id = None::<NodeId>;
+        let mut next_id = MagicNodeId::default();
 
         for row in rows {
             let id: NodeId = row.get("id");
-            let prev: Option<NodeId> = row.get("prev_sliding_id");
-            if Some(node_id) == prev.as_ref() {
-                next_id.replace(id.into());
+            let prev: MagicNodeId = row.get("prev_sliding_id");
+            if let MagicNodeId::Id(id2) = prev {
+                if &id2 == node_id {
+                    next_id = id.into();
+                }
             }
         }
 
@@ -378,7 +382,7 @@ impl NodeMapper for PostgresMapper {
             return anyhow::bail!("there are no node with id: {:?}", node_id);
         }
 
-        if let Some(next) = next_id.as_ref() {
+        if let MagicNodeId::Id(next) = &next_id {
             stmt.execute(
                 "update nodes set prev_sliding_id = $1 where id = $2",
                 &[&node_id, &next],
@@ -411,7 +415,7 @@ SELECT id, name, content, node_type, domain, delete_time, version_time, initial_
     async fn find_descendant_ids(
         &self,
         id: &NodeId,
-    ) -> anyhow::Result<HashMap<NodeId, Option<NodeId>>> {
+    ) -> anyhow::Result<HashMap<NodeId, MagicNodeId>> {
         let stmt = self.pool.get().await?;
 
         let map = stmt
@@ -431,10 +435,7 @@ select * from children;",
         Ok(map)
     }
 
-    async fn find_ancestor_ids(
-        &self,
-        id: &NodeId,
-    ) -> anyhow::Result<HashMap<NodeId, Option<NodeId>>> {
+    async fn find_ancestor_ids(&self, id: &NodeId) -> anyhow::Result<HashMap<NodeId, MagicNodeId>> {
         let stmt = self.pool.get().await?;
 
         let map = stmt
@@ -556,6 +557,45 @@ impl tokio_postgres::types::ToSql for NodeId {
         Self: Sized,
     {
         let inner = self.as_str();
+        <&str as ToSql>::to_sql(&inner, ty, out)
+    }
+
+    fn accepts(ty: &postgres_types::Type) -> bool
+    where
+        Self: Sized,
+    {
+        <&str as ToSql>::accepts(ty)
+    }
+
+    to_sql_checked!();
+}
+
+impl<'a> tokio_postgres::types::FromSql<'a> for MagicNodeId {
+    fn from_sql(
+        ty: &tokio_postgres::types::Type,
+        raw: &'a [u8],
+    ) -> Result<Self, Box<dyn std::error::Error + Sync + Send>> {
+        <&str as tokio_postgres::types::FromSql>::from_sql(ty, raw).map(|o| {
+            let s = o.to_string();
+            s.into()
+        })
+    }
+
+    fn accepts(ty: &tokio_postgres::types::Type) -> bool {
+        <&str as tokio_postgres::types::FromSql>::accepts(ty)
+    }
+}
+
+impl tokio_postgres::types::ToSql for MagicNodeId {
+    fn to_sql(
+        &self,
+        ty: &postgres_types::Type,
+        out: &mut BytesMut,
+    ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>>
+    where
+        Self: Sized,
+    {
+        let inner = self.as_ref();
         <&str as ToSql>::to_sql(&inner, ty, out)
     }
 

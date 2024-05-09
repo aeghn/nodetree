@@ -18,7 +18,7 @@ import {
   updateNodeName,
   deteleNode as deleteNode,
 } from "@/helpers/data-agent";
-import { NTNode, ContentParsedInfo, NodeType } from "@/model";
+import { NTNode, ContentParsedInfo, NodeType, NodeId } from "@/model";
 import { generateId } from "@/helpers/tools";
 import React from "react";
 
@@ -38,23 +38,40 @@ export const NTTree: React.FC<{
   const [activeNodeId] = useAtom(treeNodeIdAtom);
   const [, setNode] = useAtom(setNodeAtom);
 
-  const onMove: MoveHandler<NTNode> = (args: {
+  const treeFind = (nodeId?: NodeId | null) => {
+    if (nodeId) {
+      return tree.find(nodeId);
+    } else {
+      return tree.root;
+    }
+  };
+
+  const onMove: MoveHandler<NTNode> = async (args: {
     dragIds: string[];
     parentId: null | string;
     parentNode: NodeApi<NTNode> | null;
     index: number;
   }) => {
     for (const id of args.dragIds) {
-      tree.move({ id, parentId: args.parentId, index: args.index });
       const index = args.index - 1;
-      const prev = args.parentNode?.children?.[index]?.id;
+      let prev = null;
+      if (args.parentNode) {
+        prev = args.parentNode?.children?.[index]?.id;
+      } else {
+        prev = tree.root.children?.[index]?.id;
+      }
+
       try {
-        moveNode(id, args.parentId, prev);
+        moveNode(id, args.parentId, prev).then((res) => {
+          tree.move({ id, parentId: args.parentId, index: args.index });
+          setTreeData(tree.data);
+        })
+
+
       } catch (error) {
         console.log(error);
       }
     }
-    setTreeData(tree.data);
   };
 
   const onRename: RenameHandler<NTNode> = ({ name, id }) => {
@@ -75,6 +92,7 @@ export const NTTree: React.FC<{
       content: "",
       domain: "",
       parent_id: parentId ? parentId : undefined,
+      prev_sliding_id: treeFind(parentId)?.children?.[index - 1]?.id,
       version_time: new Date(),
       initial_time: new Date(),
       parsed_info: parsed_info,
