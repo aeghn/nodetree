@@ -190,7 +190,7 @@ function Node({ node, style, dragHandle }: NodeRendererProps<NTNode>) {
       onClick={() => node.activate()}
     >
       <FolderArrow node={node} />
-      {node.data.parsed_info.todo_status ?? (
+      {node.data.parsed_info.todo_status != undefined ?? (
         <div className="border rounded">
           {node.data.parsed_info.todo_status}
         </div>
