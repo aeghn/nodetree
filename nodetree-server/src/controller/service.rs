@@ -55,6 +55,13 @@ async fn fetch_nodes(
         .query_nodes(&req)
         .await
         .map(|e| crate::adapter::node_with_children::nodes_with_childrens(e));
+
+    let rest = match rest {
+        Ok(Ok(o)) => Ok(o),
+        Ok(err) => err,
+        Err(err) => Err(err),
+    };
+
     print_and_trans_to_response(rest)
 }
 

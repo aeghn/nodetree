@@ -6,7 +6,7 @@ use ntcore::{
 };
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct NodeWithChildren {
     #[serde(flatten)]
     node: Node,
@@ -16,14 +16,15 @@ pub struct NodeWithChildren {
 fn to_children(
     relation_map: &mut HashMap<&NodeId, (&Node, Vec<&Node>)>,
     nid: &NodeId,
-) -> NodeWithChildren {
+) -> anyhow::Result<NodeWithChildren> {
     let (n, children) = relation_map.remove(nid).unwrap();
-    let children = children
-        .iter()
-        .map(|c| Box::new(to_children(relation_map, &c.id)))
-        .collect();
+    let mut t1: Vec<Box<NodeWithChildren>> = vec![];
+    for child in children.iter() {
+        t1.push(Box::new(to_children(relation_map, &child.id)?));
+    }
+
     let children = sort_with_precessors(
-        children,
+        t1,
         |e| e.node.id.clone(),
         |e| match &e.node.prev_sliding_id {
             ntcore::model::node::MagicNodeId::RecycleBin => None,
@@ -31,14 +32,17 @@ fn to_children(
             ntcore::model::node::MagicNodeId::Id(id) => Some(id.clone()),
         },
         |e| e.node.version_time.clone(),
-    );
-    NodeWithChildren {
+    )?;
+
+    let nc = NodeWithChildren {
         node: n.clone(),
         children,
-    }
+    };
+
+    Ok(nc)
 }
 
-pub fn nodes_with_childrens(nodes: Vec<Node>) -> Vec<NodeWithChildren> {
+pub fn nodes_with_childrens(nodes: Vec<Node>) -> anyhow::Result<Vec<NodeWithChildren>> {
     let mut relation_map: HashMap<&NodeId, (&Node, Vec<&Node>)> = HashMap::new();
     let mut top_lvl_ids: HashSet<&NodeId> = HashSet::new();
 
@@ -68,11 +72,14 @@ pub fn nodes_with_childrens(nodes: Vec<Node>) -> Vec<NodeWithChildren> {
         }
     });
 
-    sort_with_precessors(
-        top_lvl_ids
-            .iter()
-            .map(|nid| to_children(&mut relation_map, nid))
-            .collect(),
+    let mut nodes = vec![];
+
+    for nid in top_lvl_ids.iter() {
+        nodes.push(to_children(&mut relation_map, nid)?)
+    }
+
+    Ok(sort_with_precessors(
+        nodes,
         |e| e.node.id.clone(),
         |e| match &e.node.prev_sliding_id {
             ntcore::model::node::MagicNodeId::RecycleBin => None,
@@ -80,7 +87,7 @@ pub fn nodes_with_childrens(nodes: Vec<Node>) -> Vec<NodeWithChildren> {
             ntcore::model::node::MagicNodeId::Id(id) => Some(id.clone()),
         },
         |e| e.node.version_time.clone(),
-    )
+    )?)
 }
 
 #[cfg(test)]

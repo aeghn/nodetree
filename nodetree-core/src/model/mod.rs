@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-use crate::constants;
 
 pub mod alarm;
 pub mod asset;

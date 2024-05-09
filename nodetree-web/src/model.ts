@@ -1,4 +1,14 @@
+import { MAGIC_EMPTY } from "./constant";
+
 export type NodeId = string;
+
+export const strToNodeId = (key: string | undefined | null): NodeId => {
+  if (key === null || key === undefined) {
+    return MAGIC_EMPTY;
+  } else {
+    return key;
+  }
+};
 
 export type TodoStatus = string;
 
@@ -29,8 +39,8 @@ export interface NTNode {
   domain: string;
   parsed_info: ContentParsedInfo;
 
-  parent_id?: NodeId;
-  prev_sliding_id?: NodeId;
+  parent_id: NodeId;
+  prev_sliding_id: NodeId;
 
   version_time: Date;
   initial_time: Date;

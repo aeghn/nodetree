@@ -1,21 +1,19 @@
 use std::{
     collections::{HashMap, HashSet},
-    os::unix::process::parent_id,
     str::FromStr,
 };
 
 use async_trait::async_trait;
 use bytes::BytesMut;
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use deadpool_postgres::{Client, GenericClient, Pool};
 use postgres_types::{to_sql_checked, ToSql};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use tokio_postgres::Row;
-use tracing::info;
+use tracing::{error, info};
 
 use crate::{
-    constants::{self, MAGIC_RECYCLE_BIN},
-    dbbackup::v1::{rowmapper::row_to_table, table::Table, BackupContent, BackupHandlerV1, RowSum},
+    constants, log_and_bail,
     mapper::node::NodeInsertResult,
     model::{
         asset::Asset,
@@ -25,9 +23,7 @@ use crate::{
 
 use super::{
     asset::AssetMapper,
-    node::{
-        self, NodeDeleteReq, NodeMapper, NodeMoveReq, NodeMoveRsp, NodeRelation, NodeRenameReq,
-    },
+    node::{NodeDeleteReq, NodeMapper, NodeMoveReq, NodeMoveRsp, NodeRelation, NodeRenameReq},
     nodefilter::NodeFetchReq,
     Mapper,
 };
@@ -283,14 +279,14 @@ impl NodeMapper for PostgresMapper {
         let parent_id = &node_move_req.parent_id;
         let prev_slibing = &node_move_req.prev_sliding_id;
 
-        info!("move {:?} to {:?}.{:?}|^", node_id, parent_id, prev_slibing);
+        //info!("move {:?} to {:?}.{:?}|^", node_id, parent_id, prev_slibing);
 
         let old = self._delete_relation(node_id, false).await?;
 
-        info!(
+        /*        info!(
             "delete old {:?} to {:?}.{:?}|^",
             node_id, parent_id, prev_slibing
-        );
+        ); */
 
         let new = self
             ._insert_relation(node_id, parent_id, prev_slibing)
@@ -314,7 +310,7 @@ impl NodeMapper for PostgresMapper {
 
         let mut parent_id = Default::default();
         let mut prev_id = Default::default();
-        let mut next_id = Default::default();
+        let mut next_id: MagicNodeId = Default::default();
 
         for row in rows {
             let id: NodeId = row.get("id");
@@ -332,11 +328,29 @@ impl NodeMapper for PostgresMapper {
             self._move_node_to_history(node_id).await?;
         }
 
-        stmt.execute(
-            "update nodes set prev_sliding_id = $1 where id = $2",
-            &[&prev_id, &next_id],
-        )
-        .await?;
+        if let MagicNodeId::Id(_next_id) = &next_id {
+            if stmt
+                .execute(
+                    "update nodes set prev_sliding_id = $1 where id = $2",
+                    &[&prev_id, &_next_id],
+                )
+                .await?
+                <= 0
+            {
+                return log_and_bail!("_delete_relation, there are no node with id: {:?}", next_id);
+            }
+        }
+
+        if stmt
+            .execute(
+                "update nodes set prev_sliding_id = $1, parent_id = $2 where id = $3",
+                &[&MagicNodeId::Empty, &MagicNodeId::Empty, &node_id],
+            )
+            .await?
+            <= 0
+        {
+            return log_and_bail!("_delete_relation, there are no node with id: {:?}", next_id);
+        }
 
         Ok(NodeRelation {
             parent_id,
@@ -352,10 +366,12 @@ impl NodeMapper for PostgresMapper {
         new_prev_id: &MagicNodeId,
     ) -> anyhow::Result<NodeRelation> {
         let stmt = self.pool.get().await?;
+        error!("n;ew relation: {:?}/{:?}", new_parent_id, new_prev_id);
 
         let rows = stmt
             .query(
-                "select id, prev_sliding_id, parent_id from nodes where parent_id = $1 and prev_sliding_id = $2", & [&new_parent_id, &new_prev_id],
+                "select id from nodes where parent_id = $1 and prev_sliding_id = $2",
+                &[&new_parent_id, &new_prev_id],
             )
             .await?;
 
@@ -363,12 +379,8 @@ impl NodeMapper for PostgresMapper {
 
         for row in rows {
             let id: NodeId = row.get("id");
-            let prev: MagicNodeId = row.get("prev_sliding_id");
-            if let MagicNodeId::Id(id2) = prev {
-                if &id2 == node_id {
-                    next_id = id.into();
-                }
-            }
+
+            next_id = id.into();
         }
 
         if stmt
@@ -379,15 +391,20 @@ impl NodeMapper for PostgresMapper {
             .await?
             <= 0
         {
-            return anyhow::bail!("there are no node with id: {:?}", node_id);
+            return log_and_bail!(", there are no node with id: {:?}", node_id);
         }
 
         if let MagicNodeId::Id(next) = &next_id {
-            stmt.execute(
-                "update nodes set prev_sliding_id = $1 where id = $2",
-                &[&node_id, &next],
-            )
-            .await?;
+            if stmt
+                .execute(
+                    "update nodes set prev_sliding_id = $1 where id = $2",
+                    &[&node_id, &next],
+                )
+                .await?
+                <= 0
+            {
+                return log_and_bail!("_delete_relation there are no node with id: {:?}", next);
+            }
         }
 
         Ok(NodeRelation {
@@ -468,8 +485,8 @@ impl Mapper for PostgresMapper {
     node_type VARCHAR(255) NOT NULL,
     domain TEXT NOT NULL,
     delete_time timestamptz DEFAULT NULL,
-    parent_id VARCHAR(40) DEFAULT NULL,
-    prev_sliding_id VARCHAR(40),
+    parent_id VARCHAR(40) NOT NULL,
+    prev_sliding_id VARCHAR(40) NOT NULL,
     version_time timestamptz NOT NULL default CURRENT_TIMESTAMP,
     initial_time timestamptz NOT NULL,
     primary key (id)

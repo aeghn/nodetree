@@ -30,9 +30,9 @@ export const fetchNodeContent = async (id: string): Promise<NTNode> => {
 };
 
 export const moveNode = async (
-  id: string,
-  parentId: string | null,
-  prevSlidingId: string | undefined
+  id: NodeId,
+  parentId: NodeId,
+  prevSlidingId: NodeId
 ): Promise<any> => {
   console.info("move node", id, parentId, prevSlidingId);
   return requests.post("api/move-node", {

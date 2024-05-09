@@ -1,11 +1,37 @@
-use std::{collections::HashMap, hash::Hash};
+use std::{cell::RefCell, collections::HashMap, fmt::Debug, hash::Hash};
 
-pub fn sort_vecs_by_first<T, S, SV>(vec_vec: &mut Vec<Vec<T>>, s_func: S)
+use crate::log_and_bail;
+
+fn sort_node_pointers<T, S, SV>(vec_vec: &mut Vec<&NodePointer<T>>, s_func: S)
 where
     SV: Ord,
-    S: Fn(&T) -> SV,
+    S: Fn(&NodePointer<T>) -> SV,
 {
-    vec_vec.sort_by(|e1, e2| s_func(&e1[0]).cmp(&s_func(&e2[0])))
+    vec_vec.sort_by(|e1, e2| s_func(e1).cmp(&s_func(&e2)))
+}
+
+#[derive(Debug)]
+struct NodePointer<'v, T> {
+    node: T,
+    next: RefCell<Option<&'v NodePointer<'v, T>>>,
+}
+
+impl<'v, T> NodePointer<'v, T> {
+    fn new(node: T) -> Self {
+        Self {
+            node,
+            next: RefCell::new(None),
+        }
+    }
+
+    fn put_next<K: Debug>(&self, next: &'v NodePointer<'v, T>, k: &K) -> anyhow::Result<()> {
+        let n = self.next.borrow_mut().replace(next);
+        if n.is_none() {
+            Ok(())
+        } else {
+            log_and_bail!("one node has many successors, {:?}", k)
+        }
+    }
 }
 
 pub fn sort_with_precessors<T, F, P, K, S, SV>(
@@ -13,50 +39,48 @@ pub fn sort_with_precessors<T, F, P, K, S, SV>(
     k_func: F,
     p_func: P,
     s_func: S,
-) -> Vec<T>
+) -> anyhow::Result<Vec<T>>
 where
-    K: Eq + Hash + Clone,
+    T: Clone + Debug,
+    K: Eq + Hash + Clone + Debug,
     SV: Ord,
     F: Fn(&T) -> K,
     P: Fn(&T) -> Option<K>,
     S: Fn(&T) -> SV,
 {
     if vec.is_empty() {
-        return vec;
+        return Ok(vec);
     }
 
-    let mut t_map: HashMap<K, T> = vec.into_iter().map(|e| (k_func(&e), e)).collect();
-    let mut map_not_empty = true;
-    let mut vec_vec: Vec<Vec<T>> = vec![];
+    let nodes: Vec<NodePointer<T>> = vec.into_iter().map(|e| NodePointer::new(e)).collect();
 
-    while map_not_empty {
-        let ks = {
-            t_map
-                .iter()
-                .take(1)
-                .map(|e| e.0.clone())
-                .collect::<Vec<K>>()
-        };
+    let node_map: HashMap<K, &NodePointer<T>> =
+        nodes.iter().map(|e| (k_func(&e.node), e)).collect();
 
-        let key = &ks[0];
-        let any = t_map.remove(&key).unwrap();
-        let mut prev = p_func(&any);
+    let mut heads: Vec<&NodePointer<T>> = vec![];
 
-        let mut prev_vec = vec![any];
-        while let Some(p) = prev {
-            if let Some(p) = t_map.remove(&p) {
-                prev = p_func(&p);
-                prev_vec.insert(0, p);
-            } else {
-                prev = None;
-            }
+    for n in nodes.iter() {
+        if let Some(Some(nd)) = p_func(&n.node).map(|k| node_map.get(&k)) {
+            nd.put_next(n, &k_func(&nd.node))?;
+        } else {
+            heads.push(&n);
         }
-
-        vec_vec.push(prev_vec);
-        map_not_empty = !t_map.is_empty();
     }
 
-    sort_vecs_by_first(&mut vec_vec, s_func);
+    sort_node_pointers(&mut heads, |e| s_func(&e.node));
 
-    vec_vec.into_iter().flatten().collect()
+    if heads.is_empty() {
+        return anyhow::bail!("Ther are no heads.");
+    }
+
+    let mut sorted = vec![];
+    for ele in heads {
+        let mut point = Some(ele);
+        while let Some(n) = point {
+            sorted.push(n.node.clone());
+            point = *n.next.borrow();
+        }
+    }
+
+    Ok(sorted)
 }

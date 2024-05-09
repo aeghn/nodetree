@@ -18,7 +18,13 @@ import {
   updateNodeName,
   deteleNode as deleteNode,
 } from "@/helpers/data-agent";
-import { NTNode, ContentParsedInfo, NodeType, NodeId } from "@/model";
+import {
+  NTNode,
+  ContentParsedInfo,
+  NodeType,
+  NodeId,
+  strToNodeId,
+} from "@/model";
 import { generateId } from "@/helpers/tools";
 import React from "react";
 
@@ -62,12 +68,12 @@ export const NTTree: React.FC<{
       }
 
       try {
-        moveNode(id, args.parentId, prev).then((res) => {
-          tree.move({ id, parentId: args.parentId, index: args.index });
-          setTreeData(tree.data);
-        })
-
-
+        moveNode(id, strToNodeId(args.parentId), strToNodeId(prev)).then(
+          (res: any) => {
+            tree.move({ id, parentId: args.parentId, index: args.index });
+            setTreeData(tree.data);
+          }
+        );
       } catch (error) {
         console.log(error);
       }
@@ -91,8 +97,10 @@ export const NTTree: React.FC<{
       name: "untitled",
       content: "",
       domain: "",
-      parent_id: parentId ? parentId : undefined,
-      prev_sliding_id: treeFind(parentId)?.children?.[index - 1]?.id,
+      parent_id: strToNodeId(parentId),
+      prev_sliding_id: strToNodeId(
+        treeFind(parentId)?.children?.[index - 1]?.id
+      ),
       version_time: new Date(),
       initial_time: new Date(),
       parsed_info: parsed_info,
