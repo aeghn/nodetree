@@ -6,7 +6,9 @@ use axum::{
 };
 use ntcore::{
     mapper::{
-        node::{NodeDeleteReq, NodeMoveReq, NodeRenameReq, NodeUpdateContentReq},
+        node::{
+            NodeDeleteReq, NodeMoveReq, NodeRenameReq, NodeUpdateContentReq, NodeUpdateReadonlyReq,
+        },
         nodefilter::{NodeFetchReq, NodeFilter},
     },
     model::node::Node,
@@ -31,6 +33,7 @@ pub fn routes() -> Router<WebAppState> {
         .route("/api/update-node-name", post(update_node_name))
         .route("/api/guess-toent", post(guess_toent))
         .route("/api/update-node-content", post(update_node_content))
+        .route("/api/update-node-readonly", post(update_node_readonly))
 }
 
 async fn insert_node(state: State<WebAppState>, Json(node): Json<Node>) -> impl IntoResponse {
@@ -108,6 +111,14 @@ async fn update_node_content(
     print_and_trans_to_response(res)
 }
 
+async fn update_node_readonly(
+    state: State<WebAppState>,
+    Json(req): Json<NodeUpdateReadonlyReq>,
+) -> impl IntoResponse {
+    let res = state.mapper.update_node_readonly(&req).await;
+    print_and_trans_to_response(res)
+}
+
 #[derive(Clone, Debug, Deserialize)]
 struct TimeGuessReq {
     input: String,
@@ -167,6 +178,7 @@ mod test {
             initial_time: cur.clone(),
             parsed_info: ContentParsedInfo::default(),
             node_type: ntcore::model::node::NodeType::TiptapV1,
+            readonly: false,
         }
     }
 

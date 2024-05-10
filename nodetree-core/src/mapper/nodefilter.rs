@@ -39,7 +39,7 @@ impl NodeFetchReq {
         None
     }
 
-    pub fn to_sql(&self) -> String {
+    pub fn to_sql(&self, fields: &Vec<String>) -> String {
         let with_content = self.with_selection(&NodeSelection::WithContent, false);
 
         let with_history = self.with_selection(&NodeSelection::WithHistory, false);
@@ -47,9 +47,14 @@ impl NodeFetchReq {
         let with_limit = self.with_limit();
 
         let selection = if with_content {
-            "*"
+            "*".to_owned()
         } else {
-            "n.id, n.delete_time,  n.name, n.domain, n.node_type, n.parent_id, n.prev_sliding_id, n.version_time, n.initial_time"
+            fields
+                .into_iter()
+                .filter(|e| e.to_lowercase().as_str() != "content")
+                .map(|e| e.to_owned())
+                .collect::<Vec<String>>()
+                .join(", ")
         };
 
         let mut s = format!("select {} from nodes n", selection);
@@ -301,6 +306,6 @@ mod test {
         "#;
 
         let j: Result<NodeFetchReq, serde_json::Error> = serde_json::from_str(s);
-        println!("{:?}, {:?}", &j, &j.as_ref().unwrap().to_sql());
+        println!("{:?}, {:?}", &j, &j.as_ref().unwrap().to_sql(&vec![]));
     }
 }

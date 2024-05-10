@@ -36,6 +36,8 @@ pub struct Node {
     #[serde(default)]
     pub prev_sliding_id: MagicNodeId,
 
+    pub readonly: bool,
+
     pub version_time: DateTime<Utc>,
     pub initial_time: DateTime<Utc>,
 }

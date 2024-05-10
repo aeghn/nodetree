@@ -1,7 +1,11 @@
 import { NTNode, NodeId } from "@/model";
 import { useCallback, useEffect, useState } from "react";
 import { MininalEditor } from ".";
-import { fetchNodeContent, updateNodeContent } from "@/helpers/data-agent";
+import {
+  fetchNodeContent,
+  setNodeReadonly,
+  updateNodeContent,
+} from "@/helpers/data-agent";
 import { formatDistanceToNow } from "date-fns";
 import { useAtom } from "jotai";
 import { LuLock, LuScan, LuTornado, LuUnlock } from "react-icons/lu";
@@ -10,7 +14,7 @@ import {
   tocSwitchAtom,
   setContentAtom,
   setTreeNodeIdAtom,
-  readOnlyAtom,
+  readonlyAtom,
   getVersionTimeAtom,
   setParsedInfoAtom,
   getInitialTime,
@@ -58,15 +62,31 @@ const EditorTopbarSaver: React.FC<{ nodeId: NodeId }> = ({ nodeId }) => {
   );
 };
 
-const EditorTopbar: React.FC<{ nodeId: NodeId }> = ({ nodeId }) => {
-  const [tocSwitch, setTocSwitch] = useAtom(tocSwitchAtom);
-  const [readonly, setReadonly] = useAtom(readOnlyAtom);
-
-  const [initial_time] = useAtom(getInitialTime);
+const EditorTopbarReadonlySwicther: React.FC<{ nodeId: NodeId }> = ({
+  nodeId,
+}) => {
+  const [readonly, setReadonly] = useAtom(readonlyAtom);
 
   const toggleReadOnly = useCallback(() => {
-    setReadonly(!readonly);
-  }, [readonly, setReadonly]);
+    const r = !readonly;
+    setNodeReadonly(nodeId, r).then((count) => {
+      if (count > 0) {
+        setReadonly(r);
+      }
+    });
+  }, [readonly, setReadonly, nodeId]);
+
+  return (
+    <button onClick={toggleReadOnly} className={topbarElemClassName}>
+      {readonly ? <LuLock size={22} /> : <LuUnlock size={22} />}
+    </button>
+  );
+};
+
+const EditorTopbar: React.FC<{ nodeId: NodeId }> = ({ nodeId }) => {
+  const [tocSwitch, setTocSwitch] = useAtom(tocSwitchAtom);
+
+  const [initial_time] = useAtom(getInitialTime);
 
   const toggleTocVisable = useCallback(() => {
     setTocSwitch(!tocSwitch);
@@ -83,9 +103,7 @@ const EditorTopbar: React.FC<{ nodeId: NodeId }> = ({ nodeId }) => {
       <button onClick={toggleTocVisable} className={topbarElemClassName}>
         <LuTornado size={22} color={tocSwitch ? "#888888" : undefined} />
       </button>
-      <button onClick={toggleReadOnly} className={topbarElemClassName}>
-        {readonly ? <LuLock size={22} /> : <LuUnlock size={22} />}
-      </button>
+      <EditorTopbarReadonlySwicther nodeId={nodeId} />
     </div>
   );
 };
@@ -99,7 +117,7 @@ const FullEditor: React.FC<{
 }> = ({ height }) => {
   const [nodeContent, setNodeContent] = useState<string>();
 
-  const [readonly] = useAtom(readOnlyAtom);
+  const [readonly] = useAtom(readonlyAtom);
   const [nodeId] = useAtom(getNodeIdAtom);
   const [, setContent] = useAtom(setContentAtom);
   const [, setTreeId] = useAtom(setTreeNodeIdAtom);
@@ -138,7 +156,7 @@ const FullEditor: React.FC<{
       <EditorTopbar nodeId={nodeId} />
       <MininalEditor
         nodeId={nodeId}
-        readOnly={readonly}
+        readonly={readonly}
         content={nodeContent ?? ""}
         height={height ? height - 50 : undefined}
         contentChangeCallback={contentChangeCallback}

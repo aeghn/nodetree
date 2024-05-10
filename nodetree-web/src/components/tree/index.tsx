@@ -69,7 +69,7 @@ export const NTTree: React.FC<{
 
       try {
         moveNode(id, strToNodeId(args.parentId), strToNodeId(prev)).then(
-          (res: any) => {
+          (_res: any) => {
             tree.move({ id, parentId: args.parentId, index: args.index });
             setTreeData(tree.data);
           }
@@ -105,6 +105,7 @@ export const NTTree: React.FC<{
       initial_time: new Date(),
       parsed_info: parsed_info,
       node_type: NodeType.TiptapV1,
+      readonly: false
     };
 
     if (type === "internal") data.children = [];
@@ -224,7 +225,7 @@ function Input({ node }: { node: NodeApi<NTNode> }) {
 function FolderArrow({ node }: { node: NodeApi<NTNode> }) {
   if (node.isLeaf || node.children?.length == 0) return <span></span>;
   return (
-    <span className="pl-2">
+    <span>
       {node.isOpen ? (
         <LuChevronDown onClick={() => node.toggle()} />
       ) : (

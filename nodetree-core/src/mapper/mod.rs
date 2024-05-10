@@ -23,6 +23,10 @@ pub trait Mapper: Sync + Send + NodeMapper + AssetMapper + BackupHandlerV1 {
 
     async fn ensure_table_assets(&self) -> anyhow::Result<()>;
 
+    async fn get_table_fields(&self, table_name: &str) -> anyhow::Result<Vec<String>>;
+
+    async fn init(&mut self) -> anyhow::Result<()>;
+
     async fn ensure_tables(&self) -> anyhow::Result<()> {
         self.ensure_table_nodes().await?;
         self.ensure_table_tags().await?;

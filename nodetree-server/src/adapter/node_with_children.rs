@@ -116,6 +116,7 @@ mod test {
             version_time: Utc::now(),
             initial_time: Utc::now(),
             node_type: ntcore::model::node::NodeType::TiptapV1,
+            readonly: false,
         };
         let node = NodeWithChildren {
             node: node1.clone(),

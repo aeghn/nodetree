@@ -92,6 +92,16 @@ export const updateNodeName = async (
   return await requests.post("api/update-node-name", { id, name });
 };
 
+export const setNodeReadonly = async (
+  id: NodeId,
+  readonly: boolean
+): Promise<number> => {
+  return await requests.post("api/update-node-readonly", {
+    id,
+    readonly,
+  });
+};
+
 export const deteleNode = async (id: NodeId): Promise<undefined> => {
   return await requests.post("api/delete-node", { id });
 };

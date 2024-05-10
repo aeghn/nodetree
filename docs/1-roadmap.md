@@ -8,6 +8,7 @@ Rich Text Editor
 - Image Support
 - Hashtag Support
 - Back Link Support
+- Readonly Support
 
 ### v0.0.2 Auto Backup Support
 

@@ -28,10 +28,14 @@ pub struct BackupConfig {
     pub interval: Option<u32>,
 }
 
-impl Into<anyhow::Result<Arc<dyn Mapper>>> for DbConfig {
-    fn into(self) -> anyhow::Result<Arc<(dyn Mapper + 'static)>> {
+impl DbConfig {
+    pub async fn into(self) -> anyhow::Result<Arc<(dyn Mapper + 'static)>> {
         let mapper = match self {
-            DbConfig::Postgres(pg) => Arc::new(PostgresMapper::new(pg)?) as Arc<dyn Mapper>,
+            DbConfig::Postgres(pg) => {
+                let mut mapper = PostgresMapper::new(pg)?;
+                mapper.init().await?;
+                Arc::new(mapper) as Arc<dyn Mapper>
+            }
             /*             DbConfig::Sqlite(cfg) => Arc::new(SqliteMapper::new(cfg)?) as Arc<dyn Mapper>,
              */
             _ => todo!(),

@@ -7,7 +7,7 @@ import { Typography } from "@tiptap/extension-typography";
 import { uploadImage } from "@/helpers/data-agent";
 import { MathBlock, MathInline } from "./extensions/math";
 import "katex/dist/katex.min.css";
-import React from "react";
+import React, { useEffect } from "react";
 import { NodeId } from "@/model";
 import { ImageExtension } from "./extensions/image";
 import { startImageUpload } from "./extensions/image/upload-image";
@@ -25,27 +25,29 @@ import { setShouldShowSuggestion } from "./extensions/interactive-input/suggesti
 
 export const NTEditor: React.FC<{
   nodeId: NodeId;
-  readOnly?: boolean;
+  readonly?: boolean;
   content: string | undefined;
   height: number | undefined;
   contentChangeCallback: (content: string, nodeId: NodeId) => void;
   idChangeCallback: (id: NodeId) => void;
 }> = ({
   nodeId,
-  readOnly,
+  readonly,
   content,
   height,
   contentChangeCallback,
   idChangeCallback,
 }) => {
-    console.log("mini content: ", content);
-    const uploadFile = async (file: File) => {
-      return (
-        "http://chinslt.com:3011/api/download/" + (await uploadImage(file)).id
-      );
-    };
+  console.log("mini content: ", content);
+  console.log("readonly", readonly);
+  const uploadFile = async (file: File) => {
+    return (
+      "http://chinslt.com:3011/api/download/" + (await uploadImage(file)).id
+    );
+  };
 
-    const editor = useEditor({
+  const editor = useEditor(
+    {
       extensions: [
         StarterKit,
         ImageExtension().configure({
@@ -140,28 +142,37 @@ export const NTEditor: React.FC<{
           contentChangeCallback(JSON.stringify(json), nodeId);
         }
       },
-    }, [nodeId, content]);
+    },
+    [nodeId, content]
+  );
 
-    const style = {
-      flex: 1,
-      width: "100%",
-      height: height,
-    };
+  useEffect(() => {
+    if (!editor) {
+      return undefined;
+    }
 
-    return (
-      <div className="w-full">
-        <EditorContent
-          editor={editor}
-          height={height}
-          style={style}
-          readOnly={readOnly}
-          id="tiptap-editor"
-        />
-        {editor?.isActive("image") && editor?.isEditable && (
-          <ImageResizer editor={editor} />
-        )}
-      </div>
-    );
+    editor.setEditable(!readonly);
+  }, [editor, readonly]);
+
+  const style = {
+    flex: 1,
+    width: "100%",
+    height: height,
   };
+
+  return (
+    <div className="w-full">
+      <EditorContent
+        editor={editor}
+        height={height}
+        style={style}
+        id="tiptap-editor"
+      />
+      {editor?.isActive("image") && editor?.isEditable && (
+        <ImageResizer editor={editor} />
+      )}
+    </div>
+  );
+};
 
 export const NTEditorMemo = React.memo(NTEditor);

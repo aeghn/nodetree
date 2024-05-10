@@ -52,20 +52,27 @@ pub struct NodeUpdateContentReq {
     pub version_time: DateTime<Utc>,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct NodeUpdateReadonlyReq {
+    pub id: NodeId,
+    pub readonly: bool,
+}
+
 #[async_trait]
 pub trait NodeMapper {
     async fn insert_and_move(&self, node: &Node) -> anyhow::Result<NodeInsertResult> {
-        error!("aaaaaaaaaaaaaaa: {:?}", node);
-        let insert_result = self.insert_node_only(node).await;
-        let move_req = NodeMoveReq {
-            id: node.id.clone(),
-            parent_id: node.parent_id.clone(),
-            prev_sliding_id: node.prev_sliding_id.clone(),
-        };
+        let insert_result = self
+            .insert_node_only(&Node {
+                parent_id: MagicNodeId::Empty,
+                prev_sliding_id: MagicNodeId::Empty,
+                ..node.clone()
+            })
+            .await?;
 
-        self.move_nodes(&move_req).await?;
+        self._insert_relation(&node.id, &node.parent_id, &node.prev_sliding_id)
+            .await?;
 
-        insert_result
+        Ok(insert_result)
     }
 
     /// Just insert a node into nodes table, do not care about nodes relations.  
@@ -109,6 +116,8 @@ pub trait NodeMapper {
             }
         }
     }
+
+    async fn update_node_readonly(&self, req: &NodeUpdateReadonlyReq) -> anyhow::Result<u64>;
 
     async fn query_nodes(&self, node_filter: &NodeFetchReq) -> anyhow::Result<Vec<Node>>;
 

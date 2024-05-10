@@ -6,11 +6,12 @@ export const contentChangedAtom = atom(false);
 
 export const currentNodeAtom = atom<NTNode | undefined>(undefined);
 
-export const readOnlyAtom = atom(
+export const readonlyAtom = atom(
   (get) => {
     const node = get(currentNodeAtom);
     return node?.readonly;
   },
+
   (get, set, readonly: boolean) => {
     const node = get(currentNodeAtom);
     if (node) {

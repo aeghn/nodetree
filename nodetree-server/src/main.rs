@@ -35,10 +35,9 @@ async fn main() -> anyhow::Result<()> {
     match config_file {
         Ok(cf) => {
             let config: ServerConfig = toml::from_str(cf.as_str())?;
-            let mapper: anyhow::Result<Arc<dyn Mapper + 'static>> = config.db_config.clone().into();
+            let mapper: anyhow::Result<Arc<dyn Mapper + 'static>> = config.db_config.clone().into().await;
             let mapper = mapper?;
 
-            mapper.ensure_tables().await?;
             if let Some(backup_config) = config.backup.as_ref() {
                 backup(&mapper, &Arc::new(config.config.clone()), backup_config).await?;
             }

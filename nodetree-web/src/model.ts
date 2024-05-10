@@ -34,7 +34,7 @@ export interface NTNode {
   content: string;
   node_type: NodeType;
 
-  readonly?: boolean;
+  readonly: boolean;
 
   domain: string;
   parsed_info: ContentParsedInfo;

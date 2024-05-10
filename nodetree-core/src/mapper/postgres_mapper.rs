@@ -23,7 +23,10 @@ use crate::{
 
 use super::{
     asset::AssetMapper,
-    node::{NodeDeleteReq, NodeMapper, NodeMoveReq, NodeMoveRsp, NodeRelation, NodeRenameReq},
+    node::{
+        NodeDeleteReq, NodeMapper, NodeMoveReq, NodeMoveRsp, NodeRelation, NodeRenameReq,
+        NodeUpdateReadonlyReq,
+    },
     nodefilter::NodeFetchReq,
     Mapper,
 };
@@ -51,6 +54,7 @@ impl Into<deadpool_postgres::Config> for PostgresConfig {
 
 pub struct PostgresMapper {
     pub pool: Pool,
+    pub node_fields: Option<Vec<String>>,
 }
 
 impl PostgresMapper {
@@ -58,7 +62,10 @@ impl PostgresMapper {
         let pool = Into::<deadpool_postgres::Config>::into(config)
             .create_pool(None, tokio_postgres::NoTls)?;
 
-        Ok(PostgresMapper { pool })
+        Ok(PostgresMapper {
+            pool,
+            node_fields: None,
+        })
     }
 
     async fn get_client(&self) -> anyhow::Result<Client> {
@@ -107,6 +114,7 @@ impl PostgresMapper {
             version_time: row.get("version_time"),
             initial_time: row.get("initial_time"),
             node_type: NodeType::from_str(row.get("node_type")).unwrap(),
+            readonly: row.get("readonly"),
         }
     }
 }
@@ -182,7 +190,7 @@ impl NodeMapper for PostgresMapper {
 
             stmt
                 .execute(
-                    "insert into nodes(id, name, content, node_type, domain, parent_id, prev_sliding_id, version_time, initial_time, delete_time) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+                    "insert into nodes(id, name, content, node_type, domain, parent_id, prev_sliding_id, readonly, version_time, initial_time, delete_time) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)",
                     &[
                         &node.id,
                         &node.name,
@@ -191,6 +199,7 @@ impl NodeMapper for PostgresMapper {
                         &node.domain,
                         &node.parent_id,
                         &node.prev_sliding_id,
+                        &node.readonly,
                         &node.version_time,
                         &node.initial_time,
                         &node.delete_time,
@@ -262,10 +271,20 @@ impl NodeMapper for PostgresMapper {
         .map_err(|e| anyhow::Error::new(e))
     }
 
+    async fn update_node_readonly(&self, req: &NodeUpdateReadonlyReq) -> anyhow::Result<u64> {
+        let stmt = self.pool.get().await?;
+        stmt.execute(
+            "update nodes set readonly = $1 where id = $2",
+            &[&req.readonly, &req.id],
+        )
+        .await
+        .map_err(|e| anyhow::Error::new(e))
+    }
+
     async fn query_nodes(&self, node_filter: &NodeFetchReq) -> anyhow::Result<Vec<Node>> {
         let stmt = self.pool.get().await?;
 
-        let sql = node_filter.to_sql();
+        let sql = node_filter.to_sql(self.node_fields.as_ref().unwrap());
         let nodes = stmt
             .query(&sql, &[])
             .await
@@ -475,6 +494,15 @@ select * from children;",
 
 #[async_trait]
 impl Mapper for PostgresMapper {
+    async fn init(&mut self) -> anyhow::Result<()> {
+        let nodes_fields = self.get_table_fields("nodes").await?;
+
+        self.node_fields.replace(nodes_fields);
+        self.ensure_tables().await?;
+
+        Ok(())
+    }
+
     async fn ensure_table_nodes(&self) -> anyhow::Result<()> {
         self.create_table(
             constants::TABLE_NAME_NODES,
@@ -487,6 +515,7 @@ impl Mapper for PostgresMapper {
     delete_time timestamptz DEFAULT NULL,
     parent_id VARCHAR(40) NOT NULL,
     prev_sliding_id VARCHAR(40) NOT NULL,
+    readonly bool not null default false,
     version_time timestamptz NOT NULL default CURRENT_TIMESTAMP,
     initial_time timestamptz NOT NULL,
     primary key (id)
@@ -503,6 +532,7 @@ impl Mapper for PostgresMapper {
     node_type VARCHAR(255) NOT NULL,
     domain TEXT NOT NULL,
     delete_time timestamptz DEFAULT NULL,
+    readonly bool not null default false,
     version_time timestamptz NOT NULL default CURRENT_TIMESTAMP,
     initial_time timestamptz NOT NULL
 );",
@@ -530,6 +560,20 @@ impl Mapper for PostgresMapper {
 
     async fn ensure_table_alarm_definations(&self) -> anyhow::Result<()> {
         Ok(())
+    }
+
+    async fn get_table_fields(&self, table_name: &str) -> anyhow::Result<Vec<String>> {
+        let client = self.get_client().await?;
+        let row = client
+            .query(
+                "SELECT column_name FROM information_schema.columns where table_name = $1;",
+                &[&table_name],
+            )
+            .await?;
+        if row.is_empty() {
+            return log_and_bail!("table {} has no fields.", table_name);
+        }
+        Ok(row.iter().map(|c| c.get("column_name")).collect())
     }
 
     async fn ensure_table_assets(&self) -> anyhow::Result<()> {
