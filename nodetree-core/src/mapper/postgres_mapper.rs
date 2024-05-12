@@ -363,7 +363,7 @@ impl NodeMapper for PostgresMapper {
         if stmt
             .execute(
                 "update nodes set prev_sliding_id = $1, parent_id = $2 where id = $3",
-                &[&MagicNodeId::Empty, &MagicNodeId::Empty, &node_id],
+                &[&MagicNodeId::Never, &MagicNodeId::Never, &node_id],
             )
             .await?
             <= 0

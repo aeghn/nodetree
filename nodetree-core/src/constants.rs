@@ -9,3 +9,4 @@ pub const TABLE_NAME_ASSETS: &str = "assets";
 
 pub const MAGIC_RECYCLE_BIN: &str = "##Recycle_Bin##";
 pub const MAGIC_EMPTY: &str = "##Empty##";
+pub const MAGIC_NEVER: &str = "##Never##";

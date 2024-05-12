@@ -29,6 +29,7 @@ fn to_children(
         |e| match &e.node.prev_sliding_id {
             ntcore::model::node::MagicNodeId::RecycleBin => None,
             ntcore::model::node::MagicNodeId::Empty => None,
+            ntcore::model::node::MagicNodeId::Never => None,
             ntcore::model::node::MagicNodeId::Id(id) => Some(id.clone()),
         },
         |e| e.node.version_time.clone(),
@@ -84,6 +85,7 @@ pub fn nodes_with_childrens(nodes: Vec<Node>) -> anyhow::Result<Vec<NodeWithChil
         |e| match &e.node.prev_sliding_id {
             ntcore::model::node::MagicNodeId::RecycleBin => None,
             ntcore::model::node::MagicNodeId::Empty => None,
+            ntcore::model::node::MagicNodeId::Never => None,
             ntcore::model::node::MagicNodeId::Id(id) => Some(id.clone()),
         },
         |e| e.node.version_time.clone(),

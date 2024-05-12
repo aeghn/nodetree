@@ -5,7 +5,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use strum::{AsRefStr, EnumString};
 
-use crate::constants::{MAGIC_EMPTY, MAGIC_RECYCLE_BIN};
+use crate::constants::{MAGIC_EMPTY, MAGIC_NEVER, MAGIC_RECYCLE_BIN};
 
 use super::tag::Tag;
 
@@ -98,6 +98,7 @@ pub enum MagicNodeId {
     RecycleBin,
     #[default]
     Empty,
+    Never,
     Id(NodeId),
 }
 
@@ -107,6 +108,7 @@ impl Into<NodeId> for MagicNodeId {
             MagicNodeId::RecycleBin => MAGIC_RECYCLE_BIN.to_owned().into(),
             MagicNodeId::Empty => MAGIC_EMPTY.to_owned().into(),
             MagicNodeId::Id(id) => id,
+            MagicNodeId::Never => MAGIC_NEVER.to_owned().into(),
         }
     }
 }
@@ -116,6 +118,7 @@ impl From<NodeId> for MagicNodeId {
         match value.0.as_str() {
             MAGIC_RECYCLE_BIN => MagicNodeId::RecycleBin,
             MAGIC_EMPTY => MagicNodeId::Empty,
+            MAGIC_NEVER => MagicNodeId::Never,
             _ => MagicNodeId::Id(value),
         }
     }
@@ -126,6 +129,7 @@ impl From<String> for MagicNodeId {
         match value.as_str() {
             MAGIC_RECYCLE_BIN => MagicNodeId::RecycleBin,
             MAGIC_EMPTY => MagicNodeId::Empty,
+            MAGIC_NEVER => MagicNodeId::Never,
             _ => MagicNodeId::Id(NodeId(value)),
         }
     }
@@ -137,6 +141,7 @@ impl AsRef<str> for MagicNodeId {
             MagicNodeId::RecycleBin => MAGIC_RECYCLE_BIN,
             MagicNodeId::Empty => MAGIC_EMPTY,
             MagicNodeId::Id(id) => id.as_str(),
+            MagicNodeId::Never => MAGIC_NEVER,
         }
     }
 }

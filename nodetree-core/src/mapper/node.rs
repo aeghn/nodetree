@@ -5,7 +5,10 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::error;
 
-use crate::model::node::{self, ContentParsedInfo, MagicNodeId, Node, NodeId};
+use crate::{
+    log_and_bail,
+    model::node::{self, ContentParsedInfo, MagicNodeId, Node, NodeId},
+};
 
 use super::nodefilter::{NodeFetchReq, NodeFilter};
 
@@ -63,8 +66,8 @@ pub trait NodeMapper {
     async fn insert_and_move(&self, node: &Node) -> anyhow::Result<NodeInsertResult> {
         let insert_result = self
             .insert_node_only(&Node {
-                parent_id: MagicNodeId::Empty,
-                prev_sliding_id: MagicNodeId::Empty,
+                parent_id: MagicNodeId::Never,
+                prev_sliding_id: MagicNodeId::Never,
                 ..node.clone()
             })
             .await?;
@@ -99,12 +102,16 @@ pub trait NodeMapper {
 
         match node.as_ref().map(|e| e.get(0)) {
             Ok(Some(node)) => {
-                self.insert_node_only(&Node {
-                    content: req.content.clone(),
-                    version_time: req.version_time,
-                    ..node.clone()
-                })
-                .await
+                if !node.readonly {
+                    self.insert_node_only(&Node {
+                        content: req.content.clone(),
+                        version_time: req.version_time,
+                        ..node.clone()
+                    })
+                    .await
+                } else {
+                    log_and_bail!("node is readonly, {:?}", node)
+                }
             }
             Ok(None) => {
                 error!("Unable to fetch node, {:?}", req);
