@@ -10,9 +10,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useAtom } from "jotai";
 import {
   LuLoader,
-  LuLoader2,
   LuLock,
-  LuScan,
   LuTornado,
   LuUnlock,
 } from "react-icons/lu";
