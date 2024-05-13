@@ -38,8 +38,6 @@ export const NTEditor: React.FC<{
   contentChangeCallback,
   idChangeCallback,
 }) => {
-  console.log("mini content: ", content);
-  console.log("readonly", readonly);
   const uploadFile = async (file: File) => {
     return (
       "http://chinslt.com:3011/api/download/" + (await uploadImage(file)).id
@@ -150,8 +148,9 @@ export const NTEditor: React.FC<{
     if (!editor) {
       return undefined;
     }
-
-    editor.setEditable(!readonly);
+    if (readonly) {
+      editor.setEditable(!readonly, false);
+    }
   }, [editor, readonly]);
 
   const style = {

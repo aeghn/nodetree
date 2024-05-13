@@ -8,7 +8,14 @@ import {
 } from "@/helpers/data-agent";
 import { formatDistanceToNow } from "date-fns";
 import { useAtom } from "jotai";
-import { LuLock, LuScan, LuTornado, LuUnlock } from "react-icons/lu";
+import {
+  LuLoader,
+  LuLoader2,
+  LuLock,
+  LuScan,
+  LuTornado,
+  LuUnlock,
+} from "react-icons/lu";
 import {
   getNodeIdAtom,
   tocSwitchAtom,
@@ -38,13 +45,15 @@ const EditorTopbarSaver: React.FC<{ nodeId: NodeId }> = ({ nodeId }) => {
   useThrottleEffect(
     (version_time?: Date, content?: string, contentChanged?: boolean) => {
       if (contentChanged && nodeId && content !== undefined && version_time) {
-        console.log("update node");
         setSaving(true);
-        updateNodeContent(nodeId, content, version_time).then((parsed_info) => {
-          setParsedInfo(parsed_info);
-          setSaving(false);
-          setContentChanged(false);
-        });
+        updateNodeContent(nodeId, content, version_time)
+          .then((parsed_info) => {
+            setParsedInfo(parsed_info);
+          })
+          .finally(() => {
+            setSaving(false);
+            setContentChanged(false);
+          });
       }
     },
     [version_time, content, contentChanged],
@@ -124,6 +133,7 @@ const FullEditor: React.FC<{
   const [, setNode] = useAtom(setNodeAtom);
 
   useEffect(() => {
+    setNodeContent(undefined);
     if (nodeId) {
       fetchNodeContent(nodeId).then((retNode: NTNode) => {
         let text = retNode.content ?? "";
@@ -141,17 +151,20 @@ const FullEditor: React.FC<{
         setNodeContent(text);
       });
     }
-  }, [nodeId]);
+  }, [nodeId, setNode, setNodeContent]);
 
   const contentChangeCallback = useCallback((nodeContent: string) => {
     setContent(nodeContent, new Date());
   }, []);
 
-  const idChangeCallback = useCallback((id: NodeId) => {
-    setTreeId(id);
-  }, []);
+  const idChangeCallback = useCallback(
+    (id: NodeId) => {
+      setTreeId(id);
+    },
+    [setTreeId]
+  );
 
-  return nodeId ? (
+  return nodeId && nodeContent != undefined ? (
     <div className="h-full">
       <EditorTopbar nodeId={nodeId} />
       <MininalEditor
@@ -164,10 +177,7 @@ const FullEditor: React.FC<{
       />
     </div>
   ) : (
-    <Loading
-      customIcon={<LuScan size={128} strokeWidth={1} />}
-      message={""}
-    ></Loading>
+    <Loading customIcon={<LuLoader size={128} strokeWidth={1} />} message="" />
   );
 };
 
