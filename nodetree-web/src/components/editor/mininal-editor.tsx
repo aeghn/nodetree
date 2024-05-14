@@ -148,9 +148,7 @@ export const NTEditor: React.FC<{
     if (!editor) {
       return undefined;
     }
-    if (readonly) {
-      editor.setEditable(!readonly, false);
-    }
+    editor.setEditable(!readonly, false);
   }, [editor, readonly]);
 
   const style = {

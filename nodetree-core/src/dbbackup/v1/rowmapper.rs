@@ -1,7 +1,7 @@
 use tracing::error;
 
 use super::{
-    table::{Assets, Nodes, NodesHistory, Table},
+    table::{Assets, Nodes, NodesHistory, TableRow},
     BackupContent, RowSum,
 };
 
@@ -61,11 +61,11 @@ impl TryFrom<RowSum> for Assets {
     }
 }
 
-pub fn row_to_table(row_type: &BackupContent, row: RowSum) -> anyhow::Result<Table> {
+pub fn row_to_table(row_type: &BackupContent, row: RowSum) -> anyhow::Result<TableRow> {
     match row_type {
-        BackupContent::Nodes => Ok(Table::Nodes(row.try_into()?)),
-        BackupContent::NodesHistory => Ok(Table::NodesHistory(row.try_into()?)),
-        BackupContent::Assets => Ok(Table::Assets(row.try_into()?)),
+        BackupContent::Nodes => Ok(TableRow::NodesRow(row.try_into()?)),
+        BackupContent::NodesHistory => Ok(TableRow::NodesHistoryRow(row.try_into()?)),
+        BackupContent::Assets => Ok(TableRow::AssetsRow(row.try_into()?)),
         _ => {
             anyhow::bail!("unable map thie row to table")
         }

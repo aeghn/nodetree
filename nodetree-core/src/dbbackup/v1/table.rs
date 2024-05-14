@@ -53,8 +53,8 @@ pub struct Assets {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum Table {
-    Nodes(Nodes),
-    NodesHistory(NodesHistory),
-    Assets(Assets),
+pub enum TableRow {
+    NodesRow(Nodes),
+    NodesHistoryRow(NodesHistory),
+    AssetsRow(Assets),
 }

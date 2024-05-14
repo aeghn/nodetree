@@ -27,7 +27,7 @@ function Explorer() {
   return (
     <div className="h-screen p-2 shadow bg-[#f5f5f5]">
       <div className="flex flex-row m-0 h-full content-center" ref={heightRef}>
-        <div className="w-3/12 m-0 h-full pr-4">
+        <div className="w-4/12 m-0 h-full pr-4">
           {treeDataList ? (
             <NTTree
               height={height}
@@ -41,7 +41,7 @@ function Explorer() {
           )}
         </div>
 
-        <div className="w-9/12 h-full border-solid border rounded-md border-gray-300 bg-white shadow-lg">
+        <div className="w-8/12 h-full border-solid border rounded-md border-gray-300 bg-white shadow-lg">
           <FullEditor
             height={height}
           />

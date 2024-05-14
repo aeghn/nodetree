@@ -15,7 +15,7 @@ use crate::{
     parser::asset::asset_path_by_uuid,
 };
 
-use self::{rowmapper::row_to_table, table::Table};
+use self::{rowmapper::row_to_table, table::TableRow};
 
 use super::BackupVersion;
 
@@ -38,7 +38,7 @@ pub struct Backup {
     content_type: BackupContent,
     start_time: DateTime<Utc>,
     end_time: DateTime<Utc>,
-    value: Vec<Table>,
+    value: Vec<TableRow>,
 }
 
 #[async_trait]
@@ -49,7 +49,7 @@ pub trait BackupHandlerV1 {
         time_field: &str,
         start_time: &DateTime<Utc>,
         end_time: &DateTime<Utc>,
-    ) -> anyhow::Result<Vec<Table>>;
+    ) -> anyhow::Result<Vec<TableRow>>;
 
     async fn _backup_table(
         &self,
@@ -58,17 +58,19 @@ pub trait BackupHandlerV1 {
         time_field: &str,
         start_time: &DateTime<Utc>,
         end_time: &DateTime<Utc>,
-    ) -> anyhow::Result<Vec<Table>> {
+    ) -> anyhow::Result<Vec<TableRow>> {
         let mut backup_file = dir.clone();
         let table = content_type.as_ref();
         backup_file.push(format!("{}.json", table));
-        let vec: Vec<Table> = self
+        let vec: Vec<TableRow> = self
             .fetch_table(&content_type, &time_field, start_time, end_time)
             .await?;
 
-        let file = std::fs::File::create(backup_file.as_path())?;
+        if vec.len() > 0 {
+            let file = std::fs::File::create(backup_file.as_path())?;
 
-        serde_json::to_writer(file, &vec)?;
+            serde_json::to_writer(file, &vec)?;
+        }
 
         info!("Finished backuping: {:?}", content_type);
 
@@ -77,7 +79,7 @@ pub trait BackupHandlerV1 {
 
     async fn backup_asset_files(
         &self,
-        assets: &Vec<Table>,
+        assets: &Vec<TableRow>,
         backup_dir: &PathBuf,
         config: &Config,
     ) -> anyhow::Result<u64> {
@@ -85,7 +87,7 @@ pub trait BackupHandlerV1 {
         tokio::fs::create_dir_all(&asset_backup_dir).await?;
         let mut count = 0;
         for t in assets {
-            if let Table::Assets(asset) = t {
+            if let TableRow::AssetsRow(asset) = t {
                 let filepath = asset_path_by_uuid(config, &asset.id);
 
                 if tokio::fs::try_exists(&filepath).await? {
@@ -116,24 +118,29 @@ pub trait BackupHandlerV1 {
         let backup_dir = PathBuf::from(base_dir).join(&backup_dir_name);
 
         tokio::fs::create_dir_all(backup_dir.as_path()).await?;
+        let mut row_count = 0;
 
-        self._backup_table(
-            &backup_dir,
-            &BackupContent::Nodes,
-            &"version_time",
-            start_time,
-            end_time,
-        )
-        .await?;
+        row_count += self
+            ._backup_table(
+                &backup_dir,
+                &BackupContent::Nodes,
+                &"version_time",
+                start_time,
+                end_time,
+            )
+            .await?
+            .len();
 
-        self._backup_table(
-            &backup_dir,
-            &BackupContent::NodesHistory,
-            &"version_time",
-            start_time,
-            end_time,
-        )
-        .await?;
+        row_count += self
+            ._backup_table(
+                &backup_dir,
+                &BackupContent::NodesHistory,
+                &"version_time",
+                start_time,
+                end_time,
+            )
+            .await?
+            .len();
 
         let assets = self
             ._backup_table(
@@ -144,18 +151,25 @@ pub trait BackupHandlerV1 {
                 end_time,
             )
             .await?;
+        row_count += assets.len();
 
-        self.backup_asset_files(&assets, &backup_dir, &config)
-            .await?;
+        if assets.len() > 0 {
+            self.backup_asset_files(&assets, &backup_dir, &config)
+                .await?;
+        }
 
-        let backup_tar_path = PathBuf::from(base_dir).join(backup_dir_name.clone() + ".tar");
-        info!("creating backup tar: {:?}", backup_tar_path);
-        let tar_file = tokio::fs::File::create(backup_tar_path).await?;
-        let mut tar_builder = tokio_tar::Builder::new(tar_file);
+        if row_count > 0 {
+            let backup_tar_path = PathBuf::from(base_dir).join(backup_dir_name.clone() + ".tar");
+            info!("creating backup tar: {:?}", backup_tar_path);
+            let tar_file = tokio::fs::File::create(backup_tar_path).await?;
+            let mut tar_builder = tokio_tar::Builder::new(tar_file);
 
-        tar_builder
-            .append_dir_all("backup", backup_dir.as_path())
-            .await?;
+            tar_builder
+                .append_dir_all("backup", backup_dir.as_path())
+                .await?;
+        }
+
+        tokio::fs::remove_dir_all(backup_dir.as_path()).await?;
 
         Ok(())
     }
@@ -231,7 +245,7 @@ impl BackupHandlerV1 for PostgresMapper {
         time_field: &str,
         start_time: &DateTime<Utc>,
         end_time: &DateTime<Utc>,
-    ) -> anyhow::Result<Vec<Table>> {
+    ) -> anyhow::Result<Vec<TableRow>> {
         let stmt = self.pool.get().await?;
 
         let vec = stmt
@@ -247,7 +261,7 @@ impl BackupHandlerV1 for PostgresMapper {
             )
             .await?;
 
-        let mut arr: Vec<Table> = vec![];
+        let mut arr: Vec<TableRow> = vec![];
         for ele in vec.into_iter() {
             match row_to_table(&table_name, RowSum::Pg(ele)) {
                 Ok(r) => {
