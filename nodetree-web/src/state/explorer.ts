@@ -38,7 +38,10 @@ export const setContentAtom = atom(
   null,
   (get, set, content: string, version_time: Date) => {
     const node = get(currentNodeAtom);
+    console.log("content changed:", content);
     if (node && node.content !== content) {
+      console.log("content changed 2");
+
       set(currentNodeAtom, { ...node, content, version_time });
       set(contentChangedAtom, true);
     }

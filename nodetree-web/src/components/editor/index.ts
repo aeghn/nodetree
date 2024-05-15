@@ -1,1 +1,1 @@
-export { NTEditorMemo as MininalEditor } from "./mininal-editor"
+export { MininalEditor as MininalEditor } from "./mininal-editor";

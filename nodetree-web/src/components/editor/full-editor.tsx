@@ -1,4 +1,4 @@
-import { NTNode, NodeId } from "@/model";
+import { ContentParsedInfo, NTNode, NodeId } from "@/model";
 import { useCallback, useEffect, useState } from "react";
 import { MininalEditor } from ".";
 import {
@@ -8,62 +8,72 @@ import {
 } from "@/helpers/data-agent";
 import { formatDistanceToNow } from "date-fns";
 import { useAtom } from "jotai";
-import {
-  LuLoader,
-  LuLock,
-  LuTornado,
-  LuUnlock,
-} from "react-icons/lu";
+import { LuLoader, LuLock, LuTornado, LuUnlock } from "react-icons/lu";
 import {
   getNodeIdAtom,
   tocSwitchAtom,
   setContentAtom,
   setTreeNodeIdAtom,
   readonlyAtom,
-  getVersionTimeAtom,
   setParsedInfoAtom,
   getInitialTime,
   contentChangedAtom,
-  getContentAtom,
   setNodeAtom,
+  currentNodeAtom,
 } from "@/state/explorer";
 import Loading from "../element/loading";
-import { useThrottleEffect } from "@/hooks/use-throttle-effect";
+import { debounce } from "@/helpers/debouce";
 
 const topbarElemClassName =
   "border border-solid border-gray-300 rounded-lg p-1 bg-slate-100 ml-2";
 
-const EditorTopbarSaver: React.FC<{ nodeId: NodeId }> = ({ nodeId }) => {
+function onSave(
+  setSaving: (v: boolean) => void,
+  setParsedInfo: (v: ContentParsedInfo) => void,
+  setContentChanged: (v: boolean) => void,
+  node?: NTNode,
+  contentChanged?: boolean
+) {
+  if (contentChanged && node) {
+    setSaving(true);
+    updateNodeContent(node.id, node.content, node.version_time)
+      .then((parsed_info) => {
+        setParsedInfo(parsed_info);
+      })
+      .finally(() => {
+        setSaving(false);
+        setContentChanged(false);
+      });
+  }
+}
+const deferredSave = debounce(onSave, 600);
+
+const EditorTopbarSaver = () => {
   const [saving, setSaving] = useState(false);
-  const [version_time] = useAtom(getVersionTimeAtom);
-  const [content] = useAtom(getContentAtom);
+
+  const [currentNode] = useAtom(currentNodeAtom);
+
   const [, setParsedInfo] = useAtom(setParsedInfoAtom);
   const [contentChanged, setContentChanged] = useAtom(contentChangedAtom);
 
-  useThrottleEffect(
-    (version_time?: Date, content?: string, contentChanged?: boolean) => {
-      if (contentChanged && nodeId && content !== undefined && version_time) {
-        setSaving(true);
-        updateNodeContent(nodeId, content, version_time)
-          .then((parsed_info) => {
-            setParsedInfo(parsed_info);
-          })
-          .finally(() => {
-            setSaving(false);
-            setContentChanged(false);
-          });
-      }
-    },
-    [version_time, content, contentChanged],
-    1000
+  useEffect(
+    () =>
+      deferredSave(
+        setSaving,
+        setParsedInfo,
+        setContentChanged,
+        currentNode,
+        contentChanged
+      ),
+    [currentNode, contentChanged, setParsedInfo, setContentChanged]
   );
 
   return (
     <div className={topbarElemClassName}>
       {saving
         ? "Saving"
-        : version_time
-        ? formatDistanceToNow(version_time)
+        : currentNode
+        ? formatDistanceToNow(currentNode.version_time)
         : "Unknown Version Time"}
     </div>
   );
@@ -106,7 +116,7 @@ const EditorTopbar: React.FC<{ nodeId: NodeId }> = ({ nodeId }) => {
           ? formatDistanceToNow(initial_time)
           : "Unknown Initial Time"}
       </div>
-      <EditorTopbarSaver nodeId={nodeId} />
+      <EditorTopbarSaver />
       <button onClick={toggleTocVisable} className={topbarElemClassName}>
         <LuTornado size={22} color={tocSwitch ? "#888888" : undefined} />
       </button>
@@ -122,6 +132,7 @@ const EditorTopbar: React.FC<{ nodeId: NodeId }> = ({ nodeId }) => {
 const FullEditor: React.FC<{
   height: number | undefined;
 }> = ({ height }) => {
+  console.log("full", height);
   const [nodeContent, setNodeContent] = useState<string>();
 
   const [readonly] = useAtom(readonlyAtom);

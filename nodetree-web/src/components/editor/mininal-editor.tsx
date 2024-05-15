@@ -23,7 +23,7 @@ import "@/styles/editor.css";
 import { Backlink, Hashtag, Reminder } from "./extensions/interactive-input";
 import { setShouldShowSuggestion } from "./extensions/interactive-input/suggestion/suggestion-options-builder";
 
-export const NTEditor: React.FC<{
+export const MininalEditor: React.FC<{
   nodeId: NodeId;
   readonly?: boolean;
   content: string | undefined;
@@ -171,5 +171,3 @@ export const NTEditor: React.FC<{
     </div>
   );
 };
-
-export const NTEditorMemo = React.memo(NTEditor);
