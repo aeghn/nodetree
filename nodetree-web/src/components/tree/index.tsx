@@ -11,7 +11,7 @@ import {
   Tree,
 } from "react-arborist";
 import styles from "./tree.module.css";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   moveNode,
   saveNode,
@@ -30,7 +30,11 @@ import React from "react";
 
 import { LuChevronRight, LuChevronDown } from "react-icons/lu";
 import { useAtom } from "jotai";
-import { setNodeAtom, treeNodeIdAtom } from "@/state/explorer";
+import {
+  setNodeAtom,
+  setTreeNodeIdAtom,
+  treeNodeIdAtom,
+} from "@/state/explorer";
 import { shortDate } from "@/helpers/date-helper";
 
 export const NTTree: React.FC<{
@@ -39,9 +43,10 @@ export const NTTree: React.FC<{
 }> = ({ height, treeDataList }) => {
   const [treeData, setTreeData] = useState<NTNode[]>(treeDataList);
   const tree = useMemo(() => new SimpleTree<NTNode>(treeData), [treeData]);
-  let oldNode: NTNode | undefined = undefined;
+  const oldNode = useRef<NTNode | undefined>();
 
   const [activeNodeId] = useAtom(treeNodeIdAtom);
+  const [, setTreeNodeId] = useAtom(setTreeNodeIdAtom);
   const [, setNode] = useAtom(setNodeAtom);
 
   const treeFind = (nodeId?: NodeId | null) => {
@@ -105,7 +110,7 @@ export const NTTree: React.FC<{
       initial_time: new Date(),
       parsed_info: parsed_info,
       node_type: NodeType.TiptapV1,
-      readonly: false
+      readonly: false,
     };
 
     if (type === "internal") data.children = [];
@@ -136,9 +141,9 @@ export const NTTree: React.FC<{
   useEffect(() => {
     if (activeNodeId) {
       const an = tree.find(activeNodeId);
-      if (an && an.data != oldNode) {
+      if (an && an.data != oldNode.current) {
         setNode(an.data);
-        oldNode = an.data;
+        oldNode.current = an.data;
       }
     }
   }, [tree, activeNodeId]);
@@ -159,9 +164,10 @@ export const NTTree: React.FC<{
         onDelete={onDelete}
         openByDefault={true}
         onActivate={(node) => {
-          if (node.data !== oldNode) {
+          if (node.data !== oldNode.current) {
             setNode(node.data);
-            oldNode = node.data;
+            oldNode.current = node.data;
+            setTreeNodeId(node.id);
           }
         }}
         keybinding={{
