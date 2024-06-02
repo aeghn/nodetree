@@ -1,5 +1,3 @@
-use tracing::error;
-
 use super::{
     table::{Assets, Nodes, NodesHistory, TableRow},
     BackupContent, RowSum,
