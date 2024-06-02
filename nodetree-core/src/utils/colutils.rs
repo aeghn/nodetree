@@ -1,6 +1,6 @@
 use std::{cell::RefCell, collections::HashMap, fmt::Debug, hash::Hash};
 
-use crate::log_and_bail;
+use chin_tools::log_and_bail;
 
 fn sort_node_pointers<T, S, SV>(vec_vec: &mut Vec<&NodePointer<T>>, s_func: S)
 where

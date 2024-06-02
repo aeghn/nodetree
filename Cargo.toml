@@ -9,3 +9,4 @@ strum = { version = "0.26", features = ["derive"] }
 async-trait = "0.1"
 chrono = { version = "0.4.35", features = ["serde"] }
 uuid = { version = "1.8.0", features = ["serde", "v4"] }
+chin-tools = { path = "/home/chin/Projects/chin-tools" }

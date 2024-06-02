@@ -1,14 +1,12 @@
 use std::collections::HashMap;
 
 use async_trait::async_trait;
+use chin_tools::log_and_bail;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::error;
 
-use crate::{
-    log_and_bail,
-    model::node::{self, ContentParsedInfo, MagicNodeId, Node, NodeId},
-};
+use crate::model::node::{ContentParsedInfo, MagicNodeId, Node, NodeId};
 
 use super::nodefilter::{NodeFetchReq, NodeFilter};
 
