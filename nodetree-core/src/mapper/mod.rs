@@ -10,14 +10,15 @@ pub mod postgres_mapper;
 pub mod asset;
 pub mod node;
 pub mod nodefilter;
-pub mod operation;
 #[cfg(feature = "sqlite")]
 pub mod sqlite_mapper;
+pub mod todo;
 
 #[async_trait]
-pub trait Mapper: Sync + Send + NodeMapper + AssetMapper + BackupHandlerV1 {
+pub trait Mapper: Sync + Send + NodeMapper + AssetMapper + BackupHandlerV1 + TodoMapper {
     async fn ensure_table_nodes(&self) -> anyhow::Result<()>;
     async fn ensure_table_tags(&self) -> anyhow::Result<()>;
+    async fn ensure_table_todos(&self) -> anyhow::Result<()>;
     async fn ensure_table_alarm_instances(&self) -> anyhow::Result<()>;
     async fn ensure_table_alarm_definations(&self) -> anyhow::Result<()>;
 

@@ -175,10 +175,11 @@ mod test {
             parent_id: pid.into(),
             prev_sliding_id: prev.into(),
             version_time: cur.clone(),
-            initial_time: cur.clone(),
+            initial_time: cur.clone().fixed_offset(),
             parsed_info: ContentParsedInfo::default(),
             node_type: ntcore::model::node::NodeType::TiptapV1,
             readonly: false,
+            todo_status: todo!(),
         }
     }
 

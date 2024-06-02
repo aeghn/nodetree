@@ -116,9 +116,10 @@ mod test {
             parent_id: MagicNodeId::default(),
             prev_sliding_id: MagicNodeId::default(),
             version_time: Utc::now(),
-            initial_time: Utc::now(),
+            initial_time: Utc::now().fixed_offset(),
             node_type: ntcore::model::node::NodeType::TiptapV1,
             readonly: false,
+            todo_status: todo!(),
         };
         let node = NodeWithChildren {
             node: node1.clone(),

@@ -1,19 +1,60 @@
 use std::str::FromStr;
 
-use strum::{AsRefStr, EnumIter, EnumString, IntoEnumIterator};
+use num_derive::{FromPrimitive, ToPrimitive};
+use num_traits::{FromPrimitive, ToPrimitive};
+use serde::{de, Deserialize, Serialize};
+use strum::IntoEnumIterator;
 
-use crate::parser::possible::PossibleScore;
+use crate::{model::todo::TodoEvent, parser::possible::PossibleScore};
 
 use super::{EventBuilder, GuessType};
 
-#[derive(Clone, Debug, EnumString, AsRefStr, EnumIter)]
-#[strum(serialize_all = "UPPERCASE")]
-pub enum TodoEvent {
-    Todo,
-    Doing,
-    Wait,
-    Done,
-    Cancel,
+impl Serialize for TodoEvent {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_ref())
+    }
+}
+
+impl<'de> Deserialize<'de> for TodoEvent {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let o: String = String::deserialize(deserializer)?;
+        TodoEvent::from_str(o.to_ascii_uppercase().as_str())
+            .map_err(|err| serde::de::Error::custom(err))
+    }
+}
+
+#[derive(FromPrimitive, ToPrimitive, Debug, Clone)]
+pub enum TodoCreateType {
+    Auto = 0,
+    Manual = 1,
+}
+
+impl Serialize for TodoCreateType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_i32(self.to_i32().unwrap())
+    }
+}
+
+impl<'de> Deserialize<'de> for TodoCreateType {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let o: i32 = i32::deserialize(deserializer)?;
+        match TodoCreateType::from_i32(o) {
+            Some(o) => Ok(o),
+            None => Err(de::Error::custom("unable build TodoCreateType from i32")),
+        }
+    }
 }
 
 impl EventBuilder for TodoEvent {

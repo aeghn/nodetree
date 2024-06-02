@@ -1,6 +1,8 @@
 use std::path::PathBuf;
 
-use crate::{config::Config, utils::pathutils::split_uuid_to_file_name};
+use chin_tools::utils::pathutils::split_uuid_to_file_name;
+
+use crate::config::Config;
 
 pub fn asset_path_by_uuid(config: &Config, id: &str) -> PathBuf {
     let filename_parts = split_uuid_to_file_name(&id);

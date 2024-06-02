@@ -1,13 +1,12 @@
 use std::{default, fmt::Display};
 
-use async_trait::async_trait;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, FixedOffset, Utc};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use strum::{AsRefStr, EnumString};
 
 use crate::constants::{MAGIC_EMPTY, MAGIC_NEVER, MAGIC_RECYCLE_BIN};
 
-use super::tag::Tag;
+use super::{tag::Tag, todo::TodoEvent};
 
 #[derive(Clone, Debug, EnumString, AsRefStr, Serialize, Deserialize)]
 pub enum NodeType {
@@ -28,6 +27,8 @@ pub struct Node {
     pub node_type: NodeType,
 
     pub domain: String,
+
+    pub todo_status: Option<TodoEvent>,
     pub parsed_info: ContentParsedInfo,
 
     #[serde(default)]
@@ -39,7 +40,7 @@ pub struct Node {
     pub readonly: bool,
 
     pub version_time: DateTime<Utc>,
-    pub initial_time: DateTime<Utc>,
+    pub initial_time: DateTime<FixedOffset>,
 }
 
 #[derive(Default, Serialize, Deserialize, Debug, Clone)]

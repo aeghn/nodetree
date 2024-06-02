@@ -2,9 +2,9 @@ use std::fmt;
 
 use serde::{de, Deserialize, Deserializer, Serialize};
 
-use crate::parser::toent::retain_not_empty_parts;
+use crate::{model::todo::TodoEvent, parser::toent::retain_not_empty_parts};
 
-use super::{timeevent::TimeEvent, todoevent::TodoEvent, EventBuilder, GuessType};
+use super::{timeevent::TimeEvent, EventBuilder, GuessType};
 
 #[derive(Clone, Debug)]
 pub enum EventEnum {

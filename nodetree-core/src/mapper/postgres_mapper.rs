@@ -5,19 +5,22 @@ use std::{
 
 use async_trait::async_trait;
 use bytes::BytesMut;
+use chin_tools::log_and_bail;
 use chrono::Utc;
 use deadpool_postgres::{Client, GenericClient, Pool};
+use num_traits::ToPrimitive;
 use postgres_types::{to_sql_checked, ToSql};
 use serde::Deserialize;
 use tokio_postgres::Row;
 use tracing::{error, info};
 
 use crate::{
-    constants, log_and_bail,
+    constants,
     mapper::node::NodeInsertResult,
     model::{
         asset::Asset,
         node::{ContentParsedInfo, MagicNodeId, Node, NodeId, NodeType},
+        todo::TodoEvent,
     },
 };
 
@@ -28,6 +31,7 @@ use super::{
         NodeUpdateReadonlyReq,
     },
     nodefilter::NodeFetchReq,
+    todo::{NodeTodoHistory, TodoCreateReq, TodoMapper},
     Mapper,
 };
 
@@ -115,6 +119,7 @@ impl PostgresMapper {
             initial_time: row.get("initial_time"),
             node_type: NodeType::from_str(row.get("node_type")).unwrap(),
             readonly: row.get("readonly"),
+            todo_status: super::todo::to_todo_status(row.get("todo_status")),
         }
     }
 }
@@ -512,6 +517,7 @@ impl Mapper for PostgresMapper {
     content TEXT NOT NULL,
     node_type VARCHAR(255) NOT NULL,
     domain TEXT NOT NULL,
+    todo_status VARCHAR(10) default NULL,
     delete_time timestamptz DEFAULT NULL,
     parent_id VARCHAR(40) NOT NULL,
     prev_sliding_id VARCHAR(40) NOT NULL,
@@ -531,6 +537,7 @@ impl Mapper for PostgresMapper {
     content TEXT NOT NULL,
     node_type VARCHAR(255) NOT NULL,
     domain TEXT NOT NULL,
+    todo_status VARCHAR(10) default NULL,
     delete_time timestamptz DEFAULT NULL,
     readonly bool not null default false,
     version_time timestamptz NOT NULL default CURRENT_TIMESTAMP,
@@ -554,6 +561,29 @@ impl Mapper for PostgresMapper {
         self.create_table(constants::TABLE_NAME_TAGS, "").await
     }
 
+    async fn ensure_table_todos(&self) -> anyhow::Result<()> {
+        self.create_table(
+            constants::TABLE_NAME_TODOS,
+            "CREATE TABLE todos (
+    node_id VARCHAR(40) NOT NULL,
+    todo_status VARCHAR(10) default null,
+    create_type tinyint not null default 0 comment 'Auto(0) Manual(1)',
+    domain TEXT NOT NULL,
+    create_time timestamptz NOT NULL default CURRENT_TIMESTAMP
+    );",
+        )
+        .await?;
+
+        self.get_client()
+            .await?
+            .execute(
+                "CREATE INDEX if not exists idx_todos_node_id ON todos (node_id);",
+                &[],
+            )
+            .await?;
+
+        Ok(())
+    }
     async fn ensure_table_alarm_instances(&self) -> anyhow::Result<()> {
         Ok(())
     }
@@ -589,6 +619,38 @@ impl Mapper for PostgresMapper {
 );",
         )
         .await
+    }
+}
+
+#[async_trait]
+
+impl TodoMapper for PostgresMapper {
+    async fn insert_todo_and_update(&self, req: &TodoCreateReq) -> anyhow::Result<()> {
+        let stmt = self.pool.get().await?;
+
+        if stmt
+            .execute(
+                "update nodes set todo_status = $1 where id = $2",
+                &[&req.todo_event.as_ref().map(|e| e.as_ref()), &req.id],
+            )
+            .await?
+            <= 0
+        {
+            return log_and_bail!("_delete_relation, there are no node with id: {:?}", req.id);
+        };
+
+        stmt.execute(
+            "insert into todos(node_id, todo_status, create_type, domain) values($1,$2,$3,$4)",
+            &[
+                &req.id,
+                &req.todo_event.as_ref().map(|e| e.as_ref()),
+                &req.create_type.to_i32().unwrap(),
+                &"",
+            ],
+        )
+        .await?;
+
+        Ok(())
     }
 }
 
