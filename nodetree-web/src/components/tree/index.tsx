@@ -162,7 +162,7 @@ export const NTTree: React.FC<{
         onRename={onRename}
         onCreate={onCreate}
         onDelete={onDelete}
-        openByDefault={true}
+        openByDefault={false}
         onActivate={(node) => {
           if (node.data !== oldNode.current) {
             setNode(node.data);
