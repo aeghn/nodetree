@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
-
 @layer base {
   * {
     @apply box-border;
@@ -23,9 +21,8 @@ html {
 
 .ProseMirror {
   @apply p-1 pl-4 max-w-full max-h-full h-full rounded-lg prose-ol:px-4 prose-sm prose prose-p:text-black prose-strong:text-black prose-ul:px-4 prose-headings:text-black prose-headings:my-2 sm:prose-base focus:outline-none overflow-auto prose-p:my-0 prose-p:py-0 prose-ol:m-0 prose-ul:m-0 prose-li:m-0;
-  font-family: '朱雀仿宋（预览测试版）', 'ZhuQueFangSong', serif;
+  font-family: sans-serif;
 }
-
 
 ::-webkit-scrollbar {
   width: 12px;
@@ -36,4 +33,3 @@ html {
   background-color: #303030;
   border-radius: 6px;
 }
-
