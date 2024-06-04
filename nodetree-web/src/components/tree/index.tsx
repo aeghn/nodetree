@@ -231,7 +231,7 @@ function Input({ node }: { node: NodeApi<NTNode> }) {
 function FolderArrow({ node }: { node: NodeApi<NTNode> }) {
   if (node.isLeaf || node.children?.length == 0) return <span></span>;
   return (
-    <span>
+    <span className={styles.arrow}>
       {node.isOpen ? (
         <LuChevronDown onClick={() => node.toggle()} />
       ) : (

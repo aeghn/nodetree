@@ -10,12 +10,12 @@
 }
 
 [role="treeitem"]:has(.node):focus-visible {
-  background-color: rgba(100, 48, 48, 0.2);
+  background-color: rgba(120, 48, 120, 0.2);
   outline: none;
 }
 
 [role="treeitem"]:has(.node:global(.willReceiveDrop)) {
-  background-color: rgba(255, 1, 1, 0.4);
+  background-color: rgba(120, 48, 120, 0.4);
   border: 1px dashed #a00;
 }
 
@@ -41,7 +41,7 @@
 
   [role="treeitem"][aria-selected="true"] .node {
     @apply after:opacity-100 after:scale-100 after:shadow-[0px_0px_0px_1px_rgba(60,64,67,0.00),0px_1.5px_4px_rgba(60,64,67,0.03),0px_3px_10px_rgba(60,64,67,0.1)];
-    background-color: rgba(240, 200, 200, 0.9);
+    background-color: rgba(194, 194, 239, 0.6);
   }
 
   [role="treeitem"]:has(.node):hover {
@@ -75,4 +75,10 @@
   height: 0px;
   border-top: 2px dotted #888;
   position: absolute;
+}
+
+.arrow {
+  display: flex;
+  padding-left: 10px;
+  font-size: 20px;
 }
