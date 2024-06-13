@@ -33,7 +33,7 @@ export const moveNode = async (
   id: NodeId,
   parentId: NodeId,
   prevSlidingId: NodeId
-): Promise<any> => {
+): Promise<unknown> => {
   console.info("move node", id, parentId, prevSlidingId);
   return requests.post("api/move-node", {
     id: id,

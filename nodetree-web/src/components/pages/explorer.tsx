@@ -12,7 +12,6 @@ function Explorer() {
 
   const [treeDataList, setTreeDataList] = useState<NTNode[]>();
 
-
   useEffect(() => {
     try {
       fetchAllNodes().then((nodes) => {
@@ -29,10 +28,7 @@ function Explorer() {
       <div className="flex flex-row m-0 h-full content-center" ref={heightRef}>
         <div className="w-4/12 m-0 h-full pr-4">
           {treeDataList ? (
-            <NTTree
-              height={height}
-              treeDataList={treeDataList}
-            />
+            <NTTree height={height} treeDataList={treeDataList} />
           ) : (
             <Loading
               customIcon={<LuTreePine size={128} strokeWidth={1} />}
@@ -42,9 +38,7 @@ function Explorer() {
         </div>
 
         <div className="w-8/12 h-full border-solid border rounded-md border-gray-300 bg-white shadow-lg">
-          <FullEditor
-            height={height}
-          />
+          <FullEditor height={height} />
         </div>
       </div>
     </div>

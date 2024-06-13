@@ -19,10 +19,13 @@ import {
   getInitialTime,
   contentChangedAtom,
   setNodeAtom,
-  currentNodeAtom,
+  activeNodeAtom,
+  setNodeNameAtom,
+  useGetNodeNameAtom,
 } from "@/state/explorer";
 import Loading from "../element/loading";
 import { debounce } from "@/helpers/debouce";
+import { JSONContent } from "@tiptap/core";
 
 const topbarElemClassName =
   "border border-solid border-gray-300 rounded-lg p-1 bg-slate-100 ml-2";
@@ -51,7 +54,7 @@ const deferredSave = debounce(onSave, 600);
 const EditorTopbarSaver = () => {
   const [saving, setSaving] = useState(false);
 
-  const [currentNode] = useAtom(currentNodeAtom);
+  const [currentNode] = useAtom(activeNodeAtom);
 
   const [, setParsedInfo] = useAtom(setParsedInfoAtom);
   const [contentChanged, setContentChanged] = useAtom(contentChangedAtom);
@@ -132,14 +135,16 @@ const EditorTopbar: React.FC<{ nodeId: NodeId }> = ({ nodeId }) => {
 const FullEditor: React.FC<{
   height: number | undefined;
 }> = ({ height }) => {
-  console.log("full", height);
+  console.log("full editor", height);
   const [nodeContent, setNodeContent] = useState<string>();
 
   const [readonly] = useAtom(readonlyAtom);
   const [nodeId] = useAtom(getNodeIdAtom);
+  const [nodeName] = useAtom(useGetNodeNameAtom());
   const [, setContent] = useAtom(setContentAtom);
   const [, setTreeId] = useAtom(setTreeNodeIdAtom);
   const [, setNode] = useAtom(setNodeAtom);
+  const [, setNodeTitle] = useAtom(setNodeNameAtom);
 
   useEffect(() => {
     setNodeContent(undefined);
@@ -162,8 +167,26 @@ const FullEditor: React.FC<{
     }
   }, [nodeId, setNode, setNodeContent]);
 
-  const contentChangeCallback = useCallback((nodeContent: string) => {
-    setContent(nodeContent, new Date());
+  const contentChangeCallback = useCallback((nodeContent: JSONContent) => {
+    const firstElem = nodeContent.content?.at(0);
+    /*     if (firstElem) {
+      if (firstElem.type === "heading") {
+        const firstCont = firstElem.content?.at(0);
+        if (
+          firstCont?.type === "text" &&
+          firstCont.text &&
+          firstCont.text?.length > 0
+        ) {
+          console.log("set node content");
+          setNodeTitle(firstCont.text);
+        } else {
+          console.log("set node content 2");
+          setNodeTitle("Untitled");
+        }
+      }
+    }
+ */
+    setContent(JSON.stringify(nodeContent), new Date());
   }, []);
 
   const idChangeCallback = useCallback(
@@ -173,16 +196,45 @@ const FullEditor: React.FC<{
     [setTreeId]
   );
 
+  const defaultWithTitle = (title: string | undefined) => {
+    return {
+      type: "doc",
+      content: [
+        {
+          type: "heading",
+          attrs: {
+            level: 1,
+          },
+          content: [
+            {
+              type: "text",
+              text: title,
+            },
+          ],
+        },
+      ],
+    };
+  };
+
+  let content;
+  if (nodeContent) {
+    content = JSON.parse(nodeContent);
+    
+  } else {
+    content = defaultWithTitle(nodeName);
+  }
+
   return nodeId && nodeContent != undefined ? (
     <div className="h-full">
       <EditorTopbar nodeId={nodeId} />
       <MininalEditor
         nodeId={nodeId}
         readonly={readonly}
-        content={nodeContent ?? ""}
+        content={content}
         height={height ? height - 50 : undefined}
         contentChangeCallback={contentChangeCallback}
         idChangeCallback={idChangeCallback}
+        alwaysWithTitle={true}
       />
     </div>
   ) : (

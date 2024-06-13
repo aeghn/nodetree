@@ -31,6 +31,7 @@ import React from "react";
 import { LuChevronRight, LuChevronDown } from "react-icons/lu";
 import { useAtom } from "jotai";
 import {
+  useGetNodeIdNameAtom,
   setNodeAtom,
   setTreeNodeIdAtom,
   treeNodeIdAtom,
@@ -41,13 +42,33 @@ export const NTTree: React.FC<{
   height?: number;
   treeDataList: NTNode[];
 }> = ({ height, treeDataList }) => {
+  console.log("tree render");
+
   const [treeData, setTreeData] = useState<NTNode[]>(treeDataList);
-  const tree = useMemo(() => new SimpleTree<NTNode>(treeData), [treeData]);
+  const tree = useMemo(() => {
+    console.log("set tree ========================");
+    return new SimpleTree<NTNode>(treeData);
+  }, [treeData]);
   const oldNode = useRef<NTNode | undefined>();
 
   const [activeNodeId] = useAtom(treeNodeIdAtom);
+  const [activeNodeIdName] = useAtom(useGetNodeIdNameAtom());
   const [, setTreeNodeId] = useAtom(setTreeNodeIdAtom);
   const [, setNode] = useAtom(setNodeAtom);
+
+  const setNodeNameById = (
+    id: string,
+    name: string,
+    tree: SimpleTree<NTNode>
+  ) => {
+    tree.update({ id, changes: { name } as NTNode });
+    try {
+      updateNodeName(id, name);
+    } catch (error) {
+      console.log(error);
+    }
+    setTreeData(tree.data);
+  };
 
   const treeFind = (nodeId?: NodeId | null) => {
     if (nodeId) {
@@ -73,12 +94,10 @@ export const NTTree: React.FC<{
       }
 
       try {
-        moveNode(id, strToNodeId(args.parentId), strToNodeId(prev)).then(
-          (_res: any) => {
-            tree.move({ id, parentId: args.parentId, index: args.index });
-            setTreeData(tree.data);
-          }
-        );
+        moveNode(id, strToNodeId(args.parentId), strToNodeId(prev)).then(() => {
+          tree.move({ id, parentId: args.parentId, index: args.index });
+          setTreeData(tree.data);
+        });
       } catch (error) {
         console.log(error);
       }
@@ -86,13 +105,7 @@ export const NTTree: React.FC<{
   };
 
   const onRename: RenameHandler<NTNode> = ({ name, id }) => {
-    tree.update({ id, changes: { name } as NTNode });
-    try {
-      updateNodeName(id, name);
-    } catch (error) {
-      console.log(error);
-    }
-    setTreeData(tree.data);
+    setNodeNameById(id, name, tree);
   };
 
   const onCreate: CreateHandler<NTNode> = ({ parentId, index, type }) => {
@@ -146,7 +159,19 @@ export const NTTree: React.FC<{
         oldNode.current = an.data;
       }
     }
-  }, [tree, activeNodeId]);
+  }, [activeNodeId, tree]);
+
+  useEffect(() => {
+    if (
+      activeNodeIdName.id &&
+      activeNodeIdName.name &&
+      activeNodeIdName.name !== tree.find(activeNodeIdName.id)?.data.name
+    ) {
+      const id = activeNodeIdName.id;
+      const name = activeNodeIdName.name;
+      setNodeNameById(id, name, tree);
+    }
+  }, [activeNodeIdName, tree]);
 
   return (
     <div className={styles.treeContainer}>
@@ -165,6 +190,8 @@ export const NTTree: React.FC<{
         openByDefault={false}
         onActivate={(node) => {
           if (node.data !== oldNode.current) {
+            console.log("new node", node.data);
+            console.log("old node", oldNode.current);
             setNode(node.data);
             oldNode.current = node.data;
             setTreeNodeId(node.id);

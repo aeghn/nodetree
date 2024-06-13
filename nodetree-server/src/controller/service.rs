@@ -30,10 +30,10 @@ pub fn routes() -> Router<WebAppState> {
         .route("/api/fetch-all-nodes", get(fetch_all_nodes))
         .route("/api/move-node", post(move_node))
         .route("/api/delete-node", post(delete_node))
-        .route("/api/update-node-name", post(update_node_name))
         .route("/api/guess-toent", post(guess_toent))
         .route("/api/update-node-content", post(update_node_content))
         .route("/api/update-node-readonly", post(update_node_readonly))
+        .route("/api/update-node-name", post(update_node_name))
 }
 
 async fn insert_node(state: State<WebAppState>, Json(node): Json<Node>) -> impl IntoResponse {

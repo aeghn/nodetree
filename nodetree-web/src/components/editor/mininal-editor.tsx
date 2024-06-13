@@ -1,4 +1,4 @@
-import { EditorContent, useEditor } from "@tiptap/react";
+import { EditorContent, JSONContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import "tiptap-extension-resizable-image/styles.css";
 import { Highlight } from "@tiptap/extension-highlight";
@@ -22,21 +22,26 @@ import { cx } from "class-variance-authority";
 import "@/styles/editor.css";
 import { Backlink, Hashtag, Reminder } from "./extensions/interactive-input";
 import { setShouldShowSuggestion } from "./extensions/interactive-input/suggestion/suggestion-options-builder";
+import Document from "@tiptap/extension-document";
 
-export const MininalEditor: React.FC<{
+export interface MininalEditorProps {
   nodeId: NodeId;
   readonly?: boolean;
-  content: string | undefined;
+  content: JSONContent | undefined;
   height: number | undefined;
-  contentChangeCallback: (content: string, nodeId: NodeId) => void;
+  contentChangeCallback: (content: JSONContent, nodeId: NodeId) => void;
   idChangeCallback: (id: NodeId) => void;
-}> = ({
+  alwaysWithTitle: boolean;
+}
+
+export const MininalEditor: React.FC<MininalEditorProps> = ({
   nodeId,
   readonly,
   content,
   height,
   contentChangeCallback,
   idChangeCallback,
+  alwaysWithTitle,
 }) => {
   const uploadFile = async (file: File) => {
     return (
@@ -44,10 +49,20 @@ export const MininalEditor: React.FC<{
     );
   };
 
+  // https://tiptap.dev/examples/custom-document
+  const CustomDoc = alwaysWithTitle
+    ? Document.extend({
+        content: "heading block*",
+      })
+    : Document;
+
   const editor = useEditor(
     {
       extensions: [
-        StarterKit,
+        CustomDoc,
+        StarterKit.configure({
+          document: false,
+        }),
         ImageExtension().configure({
           HTMLAttributes: {
             class: "rounded-lg border border-custom-border-300",
@@ -88,8 +103,8 @@ export const MininalEditor: React.FC<{
         }, */
         handlePaste: (view, event) => {
           if (typeof window !== "undefined") {
-            const selection: any = window?.getSelection();
-            if (selection.rangeCount !== 0) {
+            const selection: Selection | null = window?.getSelection();
+            if (selection && selection.rangeCount !== 0) {
               const range = selection.getRangeAt(0);
               if (findTableAncestor(range.startContainer)) {
                 return;
@@ -137,7 +152,7 @@ export const MininalEditor: React.FC<{
         setShouldShowSuggestion(true);
         const json = editor.getJSON();
         if (json) {
-          contentChangeCallback(JSON.stringify(json), nodeId);
+          contentChangeCallback(json, nodeId);
         }
       },
     },
