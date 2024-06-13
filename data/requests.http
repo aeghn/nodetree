@@ -59,7 +59,7 @@ title
 Content-Disposition: form-data; name="image"; filename="example.png"
 Content-Type: image/png
 
-< /home/chin/Projects/nodetree/data/example.png
+< /home/chin/Projects/chnots/data/example.png
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
 ### Download File

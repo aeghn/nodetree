@@ -6,7 +6,7 @@
     "configurations": [
         {
             "name": "ntweb dev",
-            "cwd": "${workspaceFolder}/nodetree-web",
+            "cwd": "${workspaceFolder}/chnots-web",
             "runtimeExecutable": "pnpm",
             "runtimeArgs": [
                 "run",
@@ -21,19 +21,22 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'nodetree-server'",
+            "name": "Debug executable 'chnots-server'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=nodetree-server",
-                    "--package=nodetree-server"
+                    "--bin=chnots-server",
+                    "--package=chnots-server"
                 ],
                 "filter": {
-                    "name": "nodetree-server",
+                    "name": "chnots-server",
                     "kind": "bin"
                 }
             },
-            "args": ["--config", "./data/config.example.toml"],
+            "args": [
+                "--config",
+                "./data/config.example.toml"
+            ],
             "cwd": "${workspaceFolder}",
             "env": {}
         }

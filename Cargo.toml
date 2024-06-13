@@ -1,5 +1,7 @@
 [workspace]
-members = ["nodetree-core", "nodetree-server"]
+resolver = "2"
+members = ["chnots-core", "chnots-server"]
+
 
 [workspace.dependencies]
 anyhow = "1.0.75"
